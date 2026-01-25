@@ -26,24 +26,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
-import java.util.EventObject;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.AbstractCellEditor;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
 
 @SystemForm(name = "Responsive Layout", description = "responsive layout user interface", tags = {"card"})
-public class formmenu extends Form {
+public class formmenu1 extends Form {
 
     private ArrayList<dtosanpham> list_Sp;
     private List<MenuCard> cards;
@@ -62,13 +54,7 @@ public class formmenu extends Form {
     private int manv;
     private ArrayList<dtosanpham> list_SP_has_money = new ArrayList<>();
     private busctphieunhap busctpn = new busctphieunhap();
-    private JTable cartTable;
-    private DefaultTableModel cartModel;
-    private JTextField discountField;
-    private JLabel cartTotalLabel;
-    private JButton btnCheckoutCart;
-    private Map<Integer, Integer> productStockById = new HashMap<>();
-    public formmenu(int ma_nv) throws SQLException {
+    public formmenu1(int ma_nv) throws SQLException {
         init();
         formInit();
         manv = ma_nv;
@@ -90,60 +76,49 @@ public class formmenu extends Form {
 
         list_Sp = busSP.listHidden();
         list_SP_has_money.clear();
-        productStockById.clear();
-
-        // Preload tồn kho theo mã sản phẩm để tránh vòng lặp lồng nhau
-        Map<Integer, dtoctphieunhap> productStockMap = new HashMap<>();
-        try {
-            list_Sp.stream()
-                    .map(dtosanpham::getMaNCC)
-                    .distinct()
-                    .flatMap(maNCC -> safeListPN(maNCC).stream())
-                    .flatMap(pn -> safeListCTPN(pn.getMaPhieuNhap()).stream())
-                    .forEach(ctpn -> productStockMap.putIfAbsent(ctpn.getMaSanPham(), ctpn));
-        } catch (Exception ex) {
-            Logger.getLogger(formmenu.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        // Chỉ còn 1 vòng lặp để tạo card
         for (dtosanpham sp : list_Sp) {
-            dtoctphieunhap stockInfo = productStockMap.get(sp.getMaSanPham());
-            if (stockInfo != null) {
-                sp.setGiaBan(stockInfo.getGiaBan());
-                sp.setSoLuong(stockInfo.getSoluongtonkho());
-                productStockById.put(sp.getMaSanPham(), stockInfo.getSoluongtonkho());
-            } else {
-                sp.setSoLuong(0);
-                productStockById.put(sp.getMaSanPham(), 0);
-            }
-            list_SP_has_money.add(sp);
-            MenuCard card = new MenuCard(sp, createEventCard(), this::addProductToCart);
-            cards.add(card);
-            panelCard.add(card);
-        }
+            try {
+                list_PN = busSP.listPN(sp.getMaNCC()); 
+                
+                boolean checkTwice = false;
+                for (dtophieunhap pn : list_PN) {
+                    Integer maPN = pn.getMaPhieuNhap();
+                    list_CTPN = busSP.listCTPN(maPN);
 
-        refreshCartTable();
+                    boolean isCardAdded = false; 
+
+                    for (dtoctphieunhap ctpn : list_CTPN) {
+                        if (ctpn.getMaSanPham() == sp.getMaSanPham()) {
+                            sp.setGiaBan(ctpn.getGiaBan());
+                            sp.setSoLuong(ctpn.getSoluongtonkho());
+                            list_SP_has_money.add(sp);
+                            MenuCard card = new MenuCard(sp, createEventCard(), null);
+                            cards.add(card);
+                            panelCard.add(card);
+                            isCardAdded = true;
+                            break;
+                        }
+                    }
+
+                    if (isCardAdded) {
+                        checkTwice = true;
+                        break; 
+                    }
+                }
+                if (!checkTwice) {
+                    sp.setSoLuong(0);
+                    list_SP_has_money.add(sp);
+                    MenuCard card = new MenuCard(sp, createEventCard(), null);
+                    cards.add(card);
+                    panelCard.add(card);
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(formmenu1.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
 
         panelCard.repaint();
         panelCard.revalidate();
-    }
-
-    private List<dtophieunhap> safeListPN(Integer maNCC) {
-        try {
-            return busSP.listPN(maNCC);
-        } catch (SQLException ex) {
-            Logger.getLogger(formmenu.class.getName()).log(Level.SEVERE, null, ex);
-            return new ArrayList<>();
-        }
-    }
-
-    private List<dtoctphieunhap> safeListCTPN(Integer maPN) {
-        try {
-            return busSP.listCTPN(maPN);
-        } catch (SQLException ex) {
-            Logger.getLogger(formmenu.class.getName()).log(Level.SEVERE, null, ex);
-            return new ArrayList<>();
-        }
     }
 
 
@@ -267,7 +242,7 @@ public class formmenu extends Form {
                 showDialog.setLocationRelativeTo(null);
                 showDialog.setVisible(true);
             } catch (SQLException ex) {
-                Logger.getLogger(formmenu.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(formmenu1.class.getName()).log(Level.SEVERE, null, ex);
             }
         };   
     }
@@ -420,7 +395,6 @@ public class formmenu extends Form {
 
 
     
-    
     private void addField(JPanel panel, GridBagConstraints gbc, String label, int row, String value) throws SQLException {
         gbc.gridx = 0;
         gbc.gridy = row;
@@ -476,7 +450,7 @@ public class formmenu extends Form {
             String tenmpl = (String) comboMaPL.getSelectedItem();
             boolean found = false;
 
-            list_Sp = busSP.listHidden();
+            list_Sp = busSP.list();
             if(!tenmpl.equals("Mặc định")){
                 ArrayList<dtosanpham> list_sp_tmp = new ArrayList<>();
                 for(dtosanpham sp : list_SP_has_money){
@@ -486,7 +460,7 @@ public class formmenu extends Form {
                 }
                 if(searchText.equals("")){
                     for (dtosanpham sp : list_sp_tmp) {
-                        MenuCard card = new MenuCard(sp, createEventCard(), this::addProductToCart);
+                        MenuCard card = new MenuCard(sp, createEventCard(), null);
                         cards.add(card);
                         panelCard.add(card);
                         found = true;
@@ -500,7 +474,7 @@ public class formmenu extends Form {
                     for (dtosanpham sp : list_sp_tmp) {
                         String tenSanPham = sp.getTenSanPham().toLowerCase();
                         if (tenSanPham.contains(searchText)) {
-                            MenuCard card = new MenuCard(sp, createEventCard(), this::addProductToCart);
+                            MenuCard card = new MenuCard(sp, createEventCard(), null);
                             cards.add(card);
                             panelCard.add(card);
                             found = true;
@@ -524,7 +498,7 @@ public class formmenu extends Form {
                 for (dtosanpham sp : list_SP_has_money) {
                     String tenSanPham = sp.getTenSanPham().toLowerCase();
                     if (tenSanPham.contains(searchText)) {
-                        MenuCard card = new MenuCard(sp, createEventCard(), this::addProductToCart);
+                        MenuCard card = new MenuCard(sp, createEventCard(), null);
                         cards.add(card);
                         panelCard.add(card);
                         found = true;
@@ -550,10 +524,29 @@ public class formmenu extends Form {
             formInit();
         });
         
+        JCheckBox selectAllCheckbox = new JCheckBox("Chọn tất cả");
+        selectAllCheckbox.addActionListener(e -> selectAll(selectAllCheckbox.isSelected()));
+        JButton cmdAddCart = new JButton("Thêm vào giỏ hàng");
+
+        JButton cmdViewCart = new JButton("Xem giỏ hàng");
+        cmdViewCart.addActionListener(e -> {
+            viewCart();           
+        });
+        cmdAddCart.addActionListener(e -> {               
+                if (selectAllCheckbox.isSelected()) {
+                selectAllCheckbox.setSelected(false);
+            }
+                addCart();
+        });
+        
         panel.add(txtSearch);
         panel.add(comboMaPL);
         panel.add(btnSearch);
         panel.add(btnReset);
+        panel.add(selectAllCheckbox);
+        panel.add(cmdAddCart);
+  
+        panel.add(cmdViewCart);
 
         panel.putClientProperty(FlatClientProperties.STYLE, "" +
                 "background:null;");
@@ -750,7 +743,6 @@ public class formmenu extends Form {
 
             
             
-            
             JButton btnCheckout = new JButton("Thanh toán");
             btnCheckout.addActionListener(e -> {
                 if(!list_donhang.isEmpty()){
@@ -791,358 +783,6 @@ public class formmenu extends Form {
             giohangDialog.setVisible(true);
     }
 
-    private JPanel createCartPanel() {
-        JPanel cartPanel = new JPanel(new BorderLayout());
-        cartPanel.setBackground(Color.WHITE);
-
-        JLabel title = new JLabel("Giỏ hàng", SwingConstants.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 16));
-        title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        cartPanel.add(title, BorderLayout.NORTH);
-
-        cartTable = new JTable();
-        cartTable.setRowHeight(28);
-        cartTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane cartScroll = new JScrollPane(cartTable);
-        cartPanel.add(cartScroll, BorderLayout.CENTER);
-
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
-        cartTotalLabel = new JLabel("Tổng tiền: 0 VND");
-        cartTotalLabel.setFont(new Font("Arial", Font.BOLD, 13));
-        cartTotalLabel.setForeground(Color.red);
-        btnCheckoutCart = new JButton("Thanh toán");
-        btnCheckoutCart.addActionListener(e -> checkoutFromCartPanel());
-        bottomPanel.add(cartTotalLabel);
-        bottomPanel.add(btnCheckoutCart);
-
-        cartPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        setupCartTableModel();
-        return cartPanel;
-    }
-
-    private void setupCartTableModel() {
-        String[] columns = {"Tên sản phẩm", "Đơn vị", "Số lượng", "Giá", "Xóa"};
-        cartModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 3 || column == 2 || column == 4; // giá, số lượng, xóa
-            }
-
-            @Override
-            public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 2) return Integer.class;
-                if (columnIndex == 3) return Double.class;
-                if (columnIndex == 4) return Object.class;
-                return String.class;
-            }
-        };
-        cartModel.addTableModelListener(new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 3) {
-                    int row = e.getFirstRow();
-                    if (row >= 0 && row < list_donhang.size()) {
-                        Object value = cartModel.getValueAt(row, 3);
-                        try {
-                            double price = Double.parseDouble(String.valueOf(value));
-                            list_donhang.get(row).setTt(price);
-                        } catch (NumberFormatException ex) {
-                            // ignore invalid input
-                        }
-                    }
-                }
-            }
-        });
-        cartTable.setModel(cartModel);
-        cartTable.getColumnModel().getColumn(2).setCellRenderer(new QuantityCellRenderer());
-        cartTable.getColumnModel().getColumn(2).setCellEditor(new QuantityCellEditor());
-        cartTable.getColumnModel().getColumn(4).setCellRenderer(new DeleteButtonRenderer());
-        cartTable.getColumnModel().getColumn(4).setCellEditor(new DeleteButtonEditor());
-        refreshCartTable();
-    }
-
-    private void refreshCartTable() {
-        if (cartModel == null) {
-            return;
-        }
-        cartModel.setRowCount(0);
-        for (dtodonhang dh : list_donhang) {
-            cartModel.addRow(new Object[]{
-                dh.getTen(),
-                "cái",
-                dh.getSl(),
-                dh.getTt(),
-                "Xóa"
-            });
-        }
-        if (cartTotalLabel != null) {
-            cartTotalLabel.setText("Tổng tiền: " + calculateTotal() + " VND");
-        }
-    }
-
-    private Integer changeQuantityAtRow(int row, int delta) {
-        if (row < 0 || row >= list_donhang.size()) {
-            return null;
-        }
-        dtodonhang dh = list_donhang.get(row);
-        int newQty = dh.getSl() + delta;
-        int stock = productStockById.getOrDefault(dh.getMa(), Integer.MAX_VALUE);
-        if (newQty < 1) {
-            return null;
-        }
-        if (newQty > stock) {
-            JOptionPane.showMessageDialog(this, "Số lượng vượt quá tồn kho");
-            return null;
-        }
-        dh.setSl(newQty);
-        if (cartModel != null && row < cartModel.getRowCount()) {
-            cartModel.setValueAt(newQty, row, 2);
-            cartModel.fireTableRowsUpdated(row, row);
-        }
-        if (cartTotalLabel != null) {
-            cartTotalLabel.setText("Tổng tiền: " + calculateTotal() + " VND");
-        }
-        if (cartTable != null && row < cartTable.getRowCount()) {
-            cartTable.setRowSelectionInterval(row, row);
-        }
-        return newQty;
-    }
-
-    private void removeCartRow(int row) {
-        if (row < 0 || row >= list_donhang.size()) {
-            return;
-        }
-        list_donhang.remove(row);
-        refreshCartTable();
-    }
-
-    private class QuantityCellRenderer extends JPanel implements TableCellRenderer {
-        private final JButton btnMinus = new JButton("-");
-        private final JLabel label = new JLabel("0", SwingConstants.CENTER);
-        private final JButton btnPlus = new JButton("+");
-
-        public QuantityCellRenderer() {
-            setLayout(new BorderLayout(4, 0));
-            btnMinus.setEnabled(false);
-            btnPlus.setEnabled(false);
-            add(btnMinus, BorderLayout.WEST);
-            add(label, BorderLayout.CENTER);
-            add(btnPlus, BorderLayout.EAST);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            label.setText(String.valueOf(value));
-            return this;
-        }
-    }
-
-    private class QuantityCellEditor extends AbstractCellEditor implements TableCellEditor {
-        private final JPanel panel = new JPanel(new BorderLayout(4, 0));
-        private final JButton btnMinus = new JButton("-");
-        private final JLabel label = new JLabel("0", SwingConstants.CENTER);
-        private final JButton btnPlus = new JButton("+");
-        private int editingRow = -1;
-        private java.awt.event.MouseEvent lastMouseEvent;
-
-        public QuantityCellEditor() {
-            panel.add(btnMinus, BorderLayout.WEST);
-            panel.add(label, BorderLayout.CENTER);
-            panel.add(btnPlus, BorderLayout.EAST);
-            btnMinus.setFocusable(false);
-            btnPlus.setFocusable(false);
-
-            btnMinus.addActionListener(e -> {
-                Integer newQty = changeQuantityAtRow(editingRow, -1);
-                if (newQty != null) {
-                    label.setText(String.valueOf(newQty));
-                }
-                stopCellEditing();
-            });
-            btnPlus.addActionListener(e -> {
-                Integer newQty = changeQuantityAtRow(editingRow, 1);
-                if (newQty != null) {
-                    label.setText(String.valueOf(newQty));
-                }
-                stopCellEditing();
-            });
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            editingRow = row;
-            label.setText(String.valueOf(value));
-            if (lastMouseEvent != null) {
-                Rectangle rect = table.getCellRect(row, column, false);
-                int x = lastMouseEvent.getX() - rect.x;
-                if (x < rect.width / 3) {
-                    SwingUtilities.invokeLater(btnMinus::doClick);
-                } else if (x > (rect.width * 2) / 3) {
-                    SwingUtilities.invokeLater(btnPlus::doClick);
-                }
-                lastMouseEvent = null;
-            }
-            return panel;
-        }
-
-        @Override
-        public boolean isCellEditable(EventObject e) {
-            if (e instanceof java.awt.event.MouseEvent) {
-                lastMouseEvent = (java.awt.event.MouseEvent) e;
-                return true;
-            }
-            return true;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return label.getText();
-        }
-    }
-
-    private class DeleteButtonRenderer extends JButton implements TableCellRenderer {
-        public DeleteButtonRenderer() {
-            setText("🗑");
-            setBorderPainted(false);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return this;
-        }
-    }
-
-    private class DeleteButtonEditor extends AbstractCellEditor implements TableCellEditor {
-        private final JButton button = new JButton("🗑");
-        private int editingRow = -1;
-        private java.awt.event.MouseEvent lastMouseEvent;
-
-        public DeleteButtonEditor() {
-            button.setBorderPainted(false);
-            button.setFocusable(false);
-            button.addActionListener(e -> {
-                removeCartRow(editingRow);
-                stopCellEditing();
-            });
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            editingRow = row;
-            if (lastMouseEvent != null) {
-                SwingUtilities.invokeLater(button::doClick);
-                lastMouseEvent = null;
-            }
-            return button;
-        }
-
-        @Override
-        public boolean isCellEditable(EventObject e) {
-            if (e instanceof java.awt.event.MouseEvent) {
-                lastMouseEvent = (java.awt.event.MouseEvent) e;
-                return true;
-            }
-            return true;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return "Xóa";
-        }
-    }
-
-    private void checkoutFromCartPanel() {
-        if (list_donhang.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Giỏ hàng rỗng không thể thanh toán");
-            return;
-        }
-        ArrayList<dtocthoadon> list = new ArrayList<>();
-        for (dtodonhang i : list_donhang) {
-            dtocthoadon a = new dtocthoadon();
-            a.setMaSanPham(i.getMa());
-            a.setSoLuong(i.getSl());
-            a.setTensanpham(i.getTen());
-            list.add(a);
-        }
-        formthanhtoan formth = new formthanhtoan(list, manv);
-        formth.setSize(510, 750);
-        formth.setResizable(false);
-        formth.setLocationRelativeTo(null);
-        list_donhang.clear();
-        refreshCartTable();
-        formth.setVisible(true);
-        formth.toFront();
-    }
-
-    private void addProductToCart(dtosanpham sp) {
-        Integer stock = productStockById.getOrDefault(sp.getMaSanPham(), 0);
-        if (stock <= 0) {
-            JOptionPane.showMessageDialog(this, "Sản phẩm này đã hết hàng");
-            return;
-        }
-        for (dtodonhang dh : list_donhang) {
-            if (dh.getMa() == sp.getMaSanPham()) {
-                if (dh.getSl() + 1 > stock) {
-                    JOptionPane.showMessageDialog(this, "Số lượng vượt quá tồn kho");
-                    return;
-                }
-                dh.setSl(dh.getSl() + 1);
-                refreshCartTable();
-                return;
-            }
-        }
-        dtodonhang dh = new dtodonhang();
-        dh.setMa(sp.getMaSanPham());
-        dh.setTen(sp.getTenSanPham());
-        dh.setTt(sp.getGiaBan());
-        dh.setSl(1);
-        list_donhang.add(dh);
-        refreshCartTable();
-    }
-
-    private void changeSelectedQuantity(int delta) {
-        int row = cartTable.getSelectedRow();
-        if (row < 0 || row >= list_donhang.size()) {
-            return;
-        }
-        dtodonhang dh = list_donhang.get(row);
-        int newQty = dh.getSl() + delta;
-        int stock = productStockById.getOrDefault(dh.getMa(), Integer.MAX_VALUE);
-        if (newQty < 1) {
-            return;
-        }
-        if (newQty > stock) {
-            JOptionPane.showMessageDialog(this, "Số lượng vượt quá tồn kho");
-            return;
-        }
-        dh.setSl(newQty);
-        refreshCartTable();
-        cartTable.setRowSelectionInterval(row, row);
-    }
-
-    private void applyDiscountToSelectedRow() {
-        int row = cartTable.getSelectedRow();
-        if (row < 0 || row >= list_donhang.size()) {
-            return;
-        }
-        try {
-            double percent = Double.parseDouble(discountField.getText());
-            if (percent < 0 || percent > 100) {
-                JOptionPane.showMessageDialog(this, "% giảm phải từ 0 đến 100");
-                return;
-            }
-            dtodonhang dh = list_donhang.get(row);
-            double newPrice = dh.getTt() * (1 - percent / 100.0);
-            dh.setTt(Math.max(newPrice, 0));
-            refreshCartTable();
-            cartTable.setRowSelectionInterval(row, row);
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "% giảm không hợp lệ");
-        }
-    }
-
 
 
 
@@ -1164,25 +804,11 @@ public class formmenu extends Form {
                 "thumbInsets:0,0,0,0;" +
                 "width:7;");
         scrollPane.setBorder(null);
-
-        // Menu (right) container with header
-        JPanel menuContainer = new JPanel(new BorderLayout());
-        menuContainer.setBackground(Color.WHITE);
-        JLabel menuTitle = new JLabel("THỰC ĐƠN", SwingConstants.CENTER);
-        menuTitle.setFont(new Font("Arial", Font.BOLD, 16));
-        menuTitle.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        menuContainer.add(menuTitle, BorderLayout.NORTH);
-        menuContainer.add(scrollPane, BorderLayout.CENTER);
-
-        // Cart (left) panel
-        JPanel cartPanel = createCartPanel();
-
         JSplitPane splitPane = new JSplitPane();
-        splitPane.setLeftComponent(cartPanel);
-        splitPane.setRightComponent(menuContainer);
-        splitPane.setResizeWeight(0.6);
-        splitPane.setDividerSize(2);
-        splitPane.setBorder(null);
+        splitPane.setLeftComponent(scrollPane);
+        splitPane.setRightComponent(Box.createGlue());
+        splitPane.setResizeWeight(1);
+         splitPane.setDividerSize(0);
         return splitPane;
     }
     private ImageIcon resizeIcon(ImageIcon icon, int width, int height) {

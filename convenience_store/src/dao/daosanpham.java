@@ -54,6 +54,36 @@ public class daosanpham {
         }
         return list_sp;
     }
+
+    public ArrayList<dtosanpham> listHidden() {
+        ArrayList<dtosanpham> hiddenList = new ArrayList<>();
+        java.sql.Connection con = connect.connection();
+        String sql = "SELECT * FROM sanpham where isHidden = 1";
+        try {
+            PreparedStatement pst = con.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                dtosanpham sp = new dtosanpham();
+                sp.setMaSanPham(rs.getInt("maSanPham"));
+                sp.setTenSanPham(rs.getString("tenSanPham"));
+                sp.setSoLuong(rs.getInt("soLuong"));
+                sp.setNgayThem(rs.getDate("ngayThem"));
+                sp.setMaPhanLoai(rs.getInt("maPhanLoai"));
+                sp.setImg(rs.getString("img"));
+                sp.setMaNCC(rs.getInt("maNhaCungCap"));
+                hiddenList.add(sp);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(daosanpham.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                con.close();
+            } catch (SQLException e) {
+                Logger.getLogger(daosanpham.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return hiddenList;
+    }
     
     public ArrayList<dtosanpham> getList(){
         return list_sp;

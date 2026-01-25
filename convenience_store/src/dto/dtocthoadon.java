@@ -78,7 +78,16 @@ public class dtocthoadon {
 
     public void setTensanpham(int masanpham) {
         bussanpham sp = new bussanpham();
-        this.tensanpham = sp.getById(masanpham).getTenSanPham();
+        dtosanpham spItem = sp.getById(masanpham);
+        if (spItem != null) {
+            this.tensanpham = spItem.getTenSanPham();
+        } else {
+            this.tensanpham = "";
+        }
+    }
+
+    public void setTensanpham(String tensanpham) {
+        this.tensanpham = tensanpham;
     }
 
     @Override

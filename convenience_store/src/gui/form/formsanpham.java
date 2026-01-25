@@ -111,7 +111,7 @@ public class formsanpham extends Form {
     public void formInit() {
         busSP = new bussanpham();
         panelCard.removeAll();
-        list_SP = busSP.list(); // Fetch list of products
+        list_SP = busSP.listHidden(); // Fetch hidden products
         for (dtosanpham sp : list_SP) {
             try {
                 list_PN = busSP.listPN(sp.getMaNCC()); // Get list of purchase orders for each product's supplier
@@ -508,7 +508,7 @@ public class formsanpham extends Form {
             panelCard.removeAll(); // Xóa các card cũ khỏi panelCard
             String searchText = txtSearch.getText().toLowerCase().trim(); // Lấy chuỗi tìm kiếm và loại bỏ khoảng trắng thừa
             String tenmpl = (String) comboMaPL.getSelectedItem();
-            list_SP = busSP.list();
+            list_SP = busSP.listHidden();
             if(!tenmpl.equals("Mặc định")){
                 ArrayList<dtosanpham> list_sp_tmp = new ArrayList<>();
                 for(dtosanpham sp : list_SP){

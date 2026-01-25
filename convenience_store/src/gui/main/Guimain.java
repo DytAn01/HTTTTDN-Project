@@ -79,6 +79,9 @@ public class Guimain extends javax.swing.JFrame {
         header = new Header(manv, macv);
         
         main = new MainForm();
+        if (nv != null) {
+            main.showWelcome(nv.getTennhanvien());
+        }
         
         
         menu.addEvent(new EventMenuSelected() {

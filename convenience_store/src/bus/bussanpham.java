@@ -29,6 +29,12 @@ public class bussanpham {
         list_sp = daoSanPham.list();
         return list_sp;
     }
+
+    public ArrayList<dtosanpham> listHidden(){
+        daoSanPham = new daosanpham();
+        list_sp = daoSanPham.listHidden();
+        return list_sp;
+    }
     public ArrayList<dtosanpham> listByNhaCungCapID (int maNCC){
         daoSanPham = new daosanpham();
         list_sp = daoSanPham.listByNhaCungCapID(maNCC);
