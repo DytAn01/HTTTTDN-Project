@@ -81,6 +81,14 @@ public class Menu extends javax.swing.JPanel {
                     submenu.add(cn.getTenChucNang());
                 }
             }
+            if (macv != 1 && "Nhân Viên".equalsIgnoreCase(dm.getTenDanhMuc())) {
+                if (!submenu.contains("Bảng chấm công của tôi")) {
+                    submenu.add("Bảng chấm công của tôi");
+                }
+                if (!submenu.contains("Cách tính lương")) {
+                    submenu.add("Cách tính lương");
+                }
+            }
             if(!submenu.isEmpty()){
                 addMenu(new ModelMenu(new ImageIcon(getClass().getResource(dm.getIcon())), dm.getTenDanhMuc(),  submenu.toArray(String[]::new)));
             }

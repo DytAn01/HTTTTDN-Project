@@ -8,9 +8,11 @@ import gui.comp.Header;
 import gui.comp.Menu;
 import gui.event.EventMenuSelected;
 import gui.form.formchamcong;
+import gui.form.formchamcongcuatoi;
 import gui.form.formchamconghangngay;
 import gui.form.formchucnang;
 import gui.form.formchucvu;
+import gui.form.formcachtinhluong;
 import gui.form.formnhanvien;
 import gui.form.formmenu;
 import gui.form.formsanpham;
@@ -218,6 +220,12 @@ public class Guimain extends javax.swing.JFrame {
         break;
     case "Cham cong hang ngay": // Thay "Chấm công hằng ngày" thành "Cham cong hang ngay"
         main.showForm(new formchamconghangngay(nv.getManhanvien()));
+        break;
+    case "Bang cham cong cua toi":
+        main.showForm(new formchamcongcuatoi(nv.getManhanvien()));
+        break;
+    case "Cach tinh luong":
+        main.showForm(new formcachtinhluong(nv.getManhanvien()));
         break;
     default:
         System.out.println("Khong tim thay form cho submenu: " + submenuName);
