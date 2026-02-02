@@ -30,6 +30,7 @@ public class SimpleInputFormsNhanVien extends JPanel {
     private busnhanvien bus_nv;
     private String nameImg = "";
     private File selectedFile;
+    private JLabel lblLoadingChucVu;
     
     
     public SimpleInputFormsNhanVien() throws SQLException {
@@ -75,12 +76,10 @@ public class SimpleInputFormsNhanVien extends JPanel {
         add(comboGioitinh);
         
         add(new JLabel("Chức vụ: ") , "gapy 5 0");
-        bus_nv = new busnhanvien();
-        list_cv = bus_nv.listChucVu();
-        for(dtochucvu cv : list_cv){
-            comboChucvu.addItem(cv.getTenchucvu());
-        }
+        comboChucvu.setEnabled(false);
+        lblLoadingChucVu = new JLabel("Đang tải chức vụ...");
         add(comboChucvu);
+        add(lblLoadingChucVu, "gapy 3 0");
         
         add(new JLabel("Hình ảnh"), "gapy 5 0");
 
@@ -104,7 +103,45 @@ public class SimpleInputFormsNhanVien extends JPanel {
             }
         });
         add(fileChooserButton , "gapy 5 0");
+
+        loadChucVuAsync();
       
+    }
+
+    private void loadChucVuAsync() {
+        SwingWorker<BusChucVuData, Void> worker = new SwingWorker<BusChucVuData, Void>() {
+            @Override
+            protected BusChucVuData doInBackground() throws Exception {
+                busnhanvien bus = new busnhanvien();
+                ArrayList<dtochucvu> list = bus.listChucVu();
+                return new BusChucVuData(bus, list);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    BusChucVuData data = get();
+                    bus_nv = data.bus;
+                    list_cv = data.list;
+                    comboChucvu.removeAllItems();
+                    for (dtochucvu cv : list_cv) {
+                        comboChucvu.addItem(cv.getTenchucvu());
+                    }
+                    comboChucvu.setEnabled(true);
+                    if (lblLoadingChucVu != null) {
+                        remove(lblLoadingChucVu);
+                        lblLoadingChucVu = null;
+                        revalidate();
+                        repaint();
+                    }
+                } catch (Exception ex) {
+                    if (lblLoadingChucVu != null) {
+                        lblLoadingChucVu.setText("Không tải được chức vụ");
+                    }
+                }
+            }
+        };
+        worker.execute();
     }
 
     
@@ -120,6 +157,10 @@ public class SimpleInputFormsNhanVien extends JPanel {
     }
     
     public boolean check_NV(dtonhanvien nv) throws SQLException{
+        if (bus_nv == null) {
+            JOptionPane.showMessageDialog(null, "Dữ liệu đang tải, vui lòng đợi...");
+            return false;
+        }
         String regexTenNV = "^[A-Za-zÀ-ỹ]+( [A-Za-zÀ-ỹ]+)*$";
         String regexSDT = "^0\\d{9}$";
         String regexEmail = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
@@ -198,6 +239,9 @@ public class SimpleInputFormsNhanVien extends JPanel {
     }
 
     public dtonhanvien getNhanVien() throws ParseException, SQLException {
+        if (bus_nv == null) {
+            throw new SQLException("Dữ liệu đang tải, vui lòng đợi...");
+        }
         bus_nv = new busnhanvien();
         dtonhanvien nv = new dtonhanvien();
 
@@ -228,6 +272,16 @@ public class SimpleInputFormsNhanVien extends JPanel {
         nv.setSdt(sdt.getText());
 
         return nv;
+    }
+
+    private static class BusChucVuData {
+        private final busnhanvien bus;
+        private final ArrayList<dtochucvu> list;
+
+        private BusChucVuData(busnhanvien bus, ArrayList<dtochucvu> list) {
+            this.bus = bus;
+            this.list = list;
+        }
     }
 
 

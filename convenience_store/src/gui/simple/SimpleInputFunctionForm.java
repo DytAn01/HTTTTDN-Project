@@ -17,6 +17,7 @@ public class SimpleInputFunctionForm extends JPanel {
     public JComboBox<dtodanhmuc> cboDanhMuc; // ComboBox cho danh mục
     private daochucnang daoChucNang; // Lớp DAO chức năng
     private daodanhmuc daoDanhMuc; // Lớp DAO danh mục
+    private JLabel lblLoadingDanhMuc;
 
     public SimpleInputFunctionForm() throws SQLException {
         daoChucNang = new daochucnang(); // Khởi tạo DAO chức năng
@@ -29,7 +30,17 @@ public class SimpleInputFunctionForm extends JPanel {
         
         txtTenChucNang = new JTextField();
         cboDanhMuc = new JComboBox<>();
-        populateComboBoxes();
+        cboDanhMuc.setEnabled(false);
+        cboDanhMuc.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel();
+            if (value != null) {
+                label.setText(value.getDropdownDisplay());
+            } else if (cboDanhMuc.getItemCount() == 0) {
+                label.setText("Đang tải...");
+            }
+            return label;
+        });
+        lblLoadingDanhMuc = new JLabel("Đang tải danh mục...");
         
         // Thêm các thành phần vào panel
         createTitle("Thông tin chức năng");
@@ -41,23 +52,45 @@ public class SimpleInputFunctionForm extends JPanel {
         // ComboBox danh mục
         add(new JLabel("Chọn danh mục"), "gapy 5 0");
         add(cboDanhMuc);
+        add(lblLoadingDanhMuc, "gapy 3 0");
+
+        loadDanhMucAsync();
     }
 
-    private void populateComboBoxes() throws SQLException {
-        // Lấy danh sách danh mục từ DAO và thêm vào ComboBox
-        List<dtodanhmuc> danhMucList = daoDanhMuc.getlist();
+    private void loadDanhMucAsync() {
+        SwingWorker<List<dtodanhmuc>, Void> worker = new SwingWorker<List<dtodanhmuc>, Void>() {
+            @Override
+            protected List<dtodanhmuc> doInBackground() throws Exception {
+                return daoDanhMuc.getlist();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    List<dtodanhmuc> danhMucList = get();
+                    applyDanhMucList(danhMucList);
+                } catch (Exception ex) {
+                    if (lblLoadingDanhMuc != null) {
+                        lblLoadingDanhMuc.setText("Không tải được danh mục");
+                    }
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void applyDanhMucList(List<dtodanhmuc> danhMucList) {
+        cboDanhMuc.removeAllItems();
         for (dtodanhmuc danhMuc : danhMucList) {
             cboDanhMuc.addItem(danhMuc);
         }
-        
-        // Hiển thị danh mục trong ComboBox
-        cboDanhMuc.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel();
-            if (value != null) {
-                label.setText(value.getDropdownDisplay()); // Đặt tên danh mục
-            }
-            return label;
-        });
+        cboDanhMuc.setEnabled(true);
+        if (lblLoadingDanhMuc != null) {
+            remove(lblLoadingDanhMuc);
+            revalidate();
+            repaint();
+            lblLoadingDanhMuc = null;
+        }
     }
 
     // Tạo tiêu đề cho form
@@ -70,6 +103,10 @@ public class SimpleInputFunctionForm extends JPanel {
 
     public void addChucNang() {
     try {
+        if (!cboDanhMuc.isEnabled() || cboDanhMuc.getItemCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Danh mục đang tải, vui lòng đợi...");
+            return;
+        }
         String tenChucNang = txtTenChucNang.getText().trim();
         dtodanhmuc selectedDanhMuc = (dtodanhmuc) cboDanhMuc.getSelectedItem();
         if (selectedDanhMuc == null) {
@@ -133,7 +170,9 @@ public class SimpleInputFunctionForm extends JPanel {
 
     private void resetFields() {
         txtTenChucNang.setText("");
-        cboDanhMuc.setSelectedIndex(0);
+        if (cboDanhMuc.getItemCount() > 0) {
+            cboDanhMuc.setSelectedIndex(0);
+        }
     }
 
     public static void main(String[] args) {

@@ -37,6 +37,7 @@ public class formchamconghangngay extends javax.swing.JPanel {
     public formchamconghangngay(int manv) throws SQLException {
         startClock();
         initComponents();
+        this.manv = manv;
         nv.setManhanvien(manv);
         getInfo(nv);
         
@@ -77,7 +78,7 @@ public class formchamconghangngay extends javax.swing.JPanel {
         int Month  = cal.get(Calendar.MONTH) + 1;
         int Year = cal.get(Calendar.YEAR);
         dtochamcong cc = new dtochamcong();
-        cc.setManhanvien(manv);
+        cc.setManhanvien(this.manv);
         cc.setThangchamcong(Month);
         cc.setNamchamcong(Year);
         
@@ -298,7 +299,7 @@ public class formchamconghangngay extends javax.swing.JPanel {
             cc = buscc.get(cc);
             if (cc == null) {
                 dtochamcong newCC = new dtochamcong();
-                newCC.setManhanvien(manv);
+                newCC.setManhanvien(this.manv);
                 newCC.setThangchamcong(checkInTime.getMonthValue());
                 newCC.setNamchamcong(checkInTime.getYear());
                 newCC.setSogiolamviec(0);
@@ -307,7 +308,7 @@ public class formchamconghangngay extends javax.swing.JPanel {
                 newCC.setChitiet("");
                 buscc.create(newCC);
                 buscc.getlist();
-                cc = buscc.get(cc);
+                cc = buscc.get(newCC);
             }
             if (cc == null) {
                 JOptionPane.showMessageDialog(this, "Không thể tạo bảng chấm công tháng hiện tại.");
@@ -341,11 +342,15 @@ public class formchamconghangngay extends javax.swing.JPanel {
                 "Thời gian làm việc: " + hours + " giờ " + minutes + " phút\nHình thức làm việc: " + workMode,
                 "Hoàn Tất Ca", JOptionPane.INFORMATION_MESSAGE);
             dtochamcong cc = new dtochamcong();
-            cc.setManhanvien(manv);
+            cc.setManhanvien(this.manv);
             cc.setThangchamcong(checkInTime.getMonthValue());
             cc.setNamchamcong(checkInTime.getYear());
             
             cc = buscc.get(cc);
+            if (cc == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy bảng chấm công tháng hiện tại.");
+                return;
+            }
             dtochitietchamcong ctcc = busctcc.getctccab(Date.from(checkInTime.atZone(ZoneId.systemDefault()).toInstant()), Timestamp.valueOf(checkInTime), Timestamp.valueOf(checkOutTime));
             
             int time = ctcc.getSogiolam();

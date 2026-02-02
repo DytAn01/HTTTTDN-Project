@@ -34,6 +34,7 @@ import gui.swing.icon.IconFontSwing;
 import helper.UnicodeUtils;
 
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
@@ -59,6 +60,7 @@ public class Guimain extends javax.swing.JFrame {
     private Animator animator;
     private dtonhanvien nv;
     private String submenuText;
+    private LoadingGlassPane loadingPane;
     public Guimain(int manv) throws SQLException, ParseException {
         initComponents();
         init(manv);
@@ -67,6 +69,10 @@ public class Guimain extends javax.swing.JFrame {
     private void init(int manv) throws SQLException, ParseException {
         layout = new MigLayout("fill", "0[]0[100%, fill]0", "0[fill, top]0");
         bg.setLayout(layout);
+
+        loadingPane = new LoadingGlassPane();
+        setGlassPane(loadingPane);
+        loadingPane.setVisible(false);
         
         busnhanvien busnv = new busnhanvien();
         ArrayList<dtonhanvien> nvlist = busnv.getNhanVienList();
@@ -166,72 +172,83 @@ public class Guimain extends javax.swing.JFrame {
         e.printStackTrace();
     }
 
-    switch (submenuName) {
-         case "Menu":
-        main.showForm(new formmenu(nv.getManhanvien()));
-        break;
-    case "Hoa don": // Thay "Hóa đơn" thành "Hoa don"
-        main.showForm(new formhoadon());
-        break;
-    case "San pham": // Thay "Sản phẩm" thành "San pham"
-        main.showForm(new formsanpham());
-        break;
-    case "Nha cung cap": // Thay "Nhà cung cấp" thành "Nha cung cap"
-        main.showForm(new formnhacungcap());
-        break;
-    case "Phieu nhap": // Thay "Phiếu nhập" thành "Phieu nhap"
-        main.showForm(new formphieunhap(nv.getManhanvien()));
-        break;
-    case "Thong tin nhan vien": // Thay "Thông tin nhân viên" thành "Thong tin nhan vien"
-        main.showForm(new formnhanvien());
-        break;
-    case "Tai khoan": // Thay "Tài khoản" thành "Tai khoan"
-        main.showForm(new formtaikhoan());
-        break;
-    case "Cham cong": // Thay "Chấm công" thành "Cham cong"
-        main.showForm(new formchamcong());
-        break;
-    case "Chuc vu": // Thay "Chấm công hằng ngày" thành "Cham cong hang ngay"
-        main.showForm(new formchucvu());
-        break;
-    case "Luong": // Thay "Lương" thành "Luong"
-        main.showForm(new formluong());
-        break;
-    case "Hop dong lao dong": // Thay "Hợp đồng lao động" thành "Hop dong lao dong"
-        main.showForm(new formhopdong());
-        break;
-    case "Thong tin khach hang": // Thay "Thông tin khách hàng" thành "Thong tin khach hang"
-        main.showForm(new formkhachhang());
-        break;
-    case "Uu dai & khuyen mai": // Thay "Ưu đãi & khuyến mãi" thành "Uu dai & khuyen mai"
-        main.showForm(new formuudaivakhuyenmai());
-        break;
-    case "Tong quan": // Thay "Tổng quan" thành "Tong quan"
-        main.showForm(new formthongke());
-        break;
-    case "Thong ke san pham": // Thay "Thống kê sản phẩm" thành "Thong ke san pham"
-        main.showForm(new formthongkesp());
-        break;
-    case "Chuc nang": // Thay "Chức năng" thành "Chuc nang"
-        main.showForm(new formchucnang());
-        break;
-    case "Phan loai": // Thay "Phân loại" thành "Phan loai"
-        main.showForm(new formphanloai());
-        break;
-    case "Cham cong hang ngay": // Thay "Chấm công hằng ngày" thành "Cham cong hang ngay"
-        main.showForm(new formchamconghangngay(nv.getManhanvien()));
-        break;
-    case "Bang cham cong cua toi":
-        main.showForm(new formchamcongcuatoi(nv.getManhanvien()));
-        break;
-    case "Cach tinh luong":
-        main.showForm(new formcachtinhluong(nv.getManhanvien()));
-        break;
-    default:
-        System.out.println("Khong tim thay form cho submenu: " + submenuName);
-        break;
-    }
+    showLoading("Đang tải dữ liệu...");
+    EventQueue.invokeLater(() -> {
+        try {
+            Component form = createForm(submenuName);
+            if (form != null) {
+                main.showForm(form);
+            } else {
+                System.out.println("Khong tim thay form cho submenu: " + submenuName);
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(Guimain.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            hideLoading();
+        }
+    });
 }
+
+    private Component createForm(String submenuName) throws SQLException, ParseException {
+        switch (submenuName) {
+            case "Menu":
+                return new formmenu(nv.getManhanvien());
+            case "Hoa don":
+                return new formhoadon();
+            case "San pham":
+                return new formsanpham();
+            case "Nha cung cap":
+                return new formnhacungcap();
+            case "Phieu nhap":
+                return new formphieunhap(nv.getManhanvien());
+            case "Thong tin nhan vien":
+                return new formnhanvien();
+            case "Tai khoan":
+                return new formtaikhoan();
+            case "Cham cong":
+                return new formchamcong();
+            case "Chuc vu":
+                return new formchucvu();
+            case "Luong":
+                return new formluong();
+            case "Hop dong lao dong":
+                return new formhopdong();
+            case "Thong tin khach hang":
+                return new formkhachhang();
+            case "Uu dai & khuyen mai":
+                return new formuudaivakhuyenmai();
+            case "Tong quan":
+                return new formthongke();
+            case "Thong ke san pham":
+                return new formthongkesp();
+            case "Chuc nang":
+                return new formchucnang();
+            case "Phan loai":
+                return new formphanloai();
+            case "Cham cong hang ngay":
+                return new formchamconghangngay(nv.getManhanvien());
+            case "Bang cham cong cua toi":
+                return new formchamcongcuatoi(nv.getManhanvien());
+            case "Cach tinh luong":
+                return new formcachtinhluong(nv.getManhanvien());
+            default:
+                return null;
+        }
+    }
+
+    private void showLoading(String message) {
+        if (loadingPane != null) {
+            loadingPane.setMessage(message);
+            loadingPane.setVisible(true);
+            loadingPane.repaint();
+        }
+    }
+
+    private void hideLoading() {
+        if (loadingPane != null) {
+            loadingPane.setVisible(false);
+        }
+    }
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {

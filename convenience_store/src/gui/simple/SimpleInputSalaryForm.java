@@ -30,6 +30,8 @@ public class SimpleInputSalaryForm extends JPanel {
     private daoluong daoLuong;
     private daochamcong daoChamCong;
     private daonhanvien daoNhanVien;
+    private JLabel lblLoadingChamCong;
+    private JLabel lblLoadingNhanVien;
 
     public SimpleInputSalaryForm() throws SQLException {
         daoLuong = new daoluong(); 
@@ -52,15 +54,20 @@ public class SimpleInputSalaryForm extends JPanel {
         dateChooserNgayNhanLuong = new JDateChooser();
         dateChooserNgayNhanLuong.setDateFormatString("dd/MM/yyyy");
 
-        populateComboBoxes();
+        cboMaChamCong.setEnabled(false);
+        cboTenNhanVien.setEnabled(false);
+        lblLoadingChamCong = new JLabel("Đang tải chấm công...");
+        lblLoadingNhanVien = new JLabel("Đang tải nhân viên...");
 
         createTitle("Thông tin lương");
 
         add(new JLabel("Mã chấm công"), "gapy 5 0");
         add(cboMaChamCong);
+        add(lblLoadingChamCong, "gapy 3 0");
 
         add(new JLabel("Tên nhân viên"), "gapy 5 0");
         add(cboTenNhanVien);
+        add(lblLoadingNhanVien, "gapy 3 0");
 
         add(new JLabel("Phụ cấp"), "gapy 5 0");
         add(txtPhuCap);
@@ -82,15 +89,55 @@ public class SimpleInputSalaryForm extends JPanel {
 
         add(new JLabel("Ngày nhận lương"), "gapy 5 0");
         add(dateChooserNgayNhanLuong);
+
+        loadComboDataAsync();
     }
 
-    private void populateComboBoxes() throws SQLException {
-        List<dtochamcong> chamCongList = daoChamCong.getAllChamCong();
+    private void loadComboDataAsync() {
+        SwingWorker<SalaryData, Void> worker = new SwingWorker<SalaryData, Void>() {
+            @Override
+            protected SalaryData doInBackground() throws Exception {
+                SalaryData data = new SalaryData();
+                data.chamCongList = daoChamCong.getAllChamCong();
+                data.nhanVienList = daoNhanVien.getNhanVienList();
+                return data;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    SalaryData data = get();
+                    applyChamCongList(data.chamCongList);
+                    applyNhanVienList(data.nhanVienList);
+                } catch (Exception ex) {
+                    if (lblLoadingChamCong != null) {
+                        lblLoadingChamCong.setText("Không tải được chấm công");
+                    }
+                    if (lblLoadingNhanVien != null) {
+                        lblLoadingNhanVien.setText("Không tải được nhân viên");
+                    }
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void applyChamCongList(List<dtochamcong> chamCongList) {
+        cboMaChamCong.removeAllItems();
         for (dtochamcong chamCong : chamCongList) {
             cboMaChamCong.addItem(chamCong.getMachamcong());
         }
+        cboMaChamCong.setEnabled(true);
+        if (lblLoadingChamCong != null) {
+            remove(lblLoadingChamCong);
+            lblLoadingChamCong = null;
+            revalidate();
+            repaint();
+        }
+    }
 
-        List<dtonhanvien> nhanVienList = daoNhanVien.getNhanVienList();
+    private void applyNhanVienList(List<dtonhanvien> nhanVienList) {
+        cboTenNhanVien.removeAllItems();
         for (dtonhanvien nhanVien : nhanVienList) {
             cboTenNhanVien.addItem(nhanVien);
         }
@@ -101,6 +148,18 @@ public class SimpleInputSalaryForm extends JPanel {
             }
             return label;
         });
+        cboTenNhanVien.setEnabled(true);
+        if (lblLoadingNhanVien != null) {
+            remove(lblLoadingNhanVien);
+            lblLoadingNhanVien = null;
+            revalidate();
+            repaint();
+        }
+    }
+
+    private static class SalaryData {
+        private List<dtochamcong> chamCongList;
+        private List<dtonhanvien> nhanVienList;
     }
 
     public void addLuong() {

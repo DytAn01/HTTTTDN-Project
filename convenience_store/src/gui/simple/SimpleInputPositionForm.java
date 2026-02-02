@@ -15,7 +15,6 @@ public class SimpleInputPositionForm extends JPanel {
     private buschucvu busChucVu; // Khai báo bus
 
     public SimpleInputPositionForm() throws SQLException {
-        busChucVu = new buschucvu(); // Khởi tạo bus
         init();
     }
 
@@ -45,6 +44,9 @@ public class SimpleInputPositionForm extends JPanel {
 
     public void addChucVu() {
     try {
+        if (busChucVu == null) {
+            busChucVu = new buschucvu();
+        }
         String tenChucVu = txtTenChucVu.getText().trim();
         
         if (tenChucVu.isEmpty()) {

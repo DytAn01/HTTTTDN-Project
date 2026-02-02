@@ -18,7 +18,6 @@ public class SimpleInputSupplierForm extends JPanel {
     private busnhacungcap busNhaCungCap; // Khai báo lớp bus nhà cung cấp
 
     public SimpleInputSupplierForm() throws SQLException {
-        busNhaCungCap = new busnhacungcap(); // Khởi tạo bus nhà cung cấp
         init();
     }
 
@@ -59,6 +58,9 @@ public class SimpleInputSupplierForm extends JPanel {
 
     public void addNhaCungCap() {
         try {
+            if (busNhaCungCap == null) {
+                busNhaCungCap = new busnhacungcap();
+            }
             String tenNhaCungCap = txtTenNhaCungCap.getText().trim();
             String SDT = txtSDT.getText().trim();
             String email = txtEmail.getText().trim();

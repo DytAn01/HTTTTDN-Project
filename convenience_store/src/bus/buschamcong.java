@@ -38,6 +38,12 @@ public class buschamcong {
         dao.update(cc);
     }
     public dtochamcong get(dtochamcong chamcong){
+        if (chamcong == null) {
+            return null;
+        }
+        if (dscc == null) {
+            getlist();
+        }
         for (dtochamcong cc: dscc){
             if(cc.getThangchamcong() == chamcong.getThangchamcong() && cc.getNamchamcong() == chamcong.getNamchamcong()){
                 return cc;
@@ -61,6 +67,9 @@ public class buschamcong {
     }
     
     public boolean isexist(int currmonth, int curryear){
+        if (dscc == null) {
+            getlist();
+        }
         for (dtochamcong cc: dscc){
             if(cc.getThangchamcong() == currmonth && cc.getNamchamcong() == curryear){
                 return true;

@@ -34,6 +34,8 @@ public class SimpleInputFormsSanPham extends JPanel {
     private ArrayList<dtonhacungcap> listNCC = new ArrayList<>();
     private Map<String, Integer> categoryMaNCC;
     private File selectedFile;
+    private JLabel lblLoadingPhanLoai;
+    private JLabel lblLoadingNCC;
     
     public SimpleInputFormsSanPham() {
         init();
@@ -56,43 +58,20 @@ public class SimpleInputFormsSanPham extends JPanel {
         add(new JLabel("Phân loại"), "gapy 5 0");
         comboBox.setFont(new Font("Arial", Font.PLAIN, 16));
         comboBox.setPreferredSize(new Dimension(150, 30));
-        Map<String, Integer> categoryMapPL = new HashMap<>();
-        try {
-            listpl = bussp.listPhanloai();
-            for(int i = 0 ; i < listpl.size(); i++){
-                dtophanloai pl = listpl.get(i);
-                String tenPhanLoai = pl.getTenPhanLoai();
-                Integer maPhanLoai = pl.getMaPhanLoai();
-                categoryMapPL.put(tenPhanLoai, maPhanLoai);
-                comboBox.addItem(tenPhanLoai); 
-            }
-            add(comboBox);
-
-        } catch (SQLException ex) {
-            Logger.getLogger(SimpleInputFormsSanPham.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        comboBox.setEnabled(false);
+        lblLoadingPhanLoai = new JLabel("Đang tải phân loại...");
         add(comboBox);
+        add(lblLoadingPhanLoai, "gapy 3 0");
         
         
         add(new JLabel("Nhà cung cấp"), "gapy 5 0");
         comboxBoxNCC.setFont(new Font("Arial" , Font.PLAIN, 16));
         comboxBoxNCC.setPreferredSize(new Dimension(150, 30));
+        comboxBoxNCC.setEnabled(false);
         categoryMaNCC = new HashMap<>();
-        try {
-            listNCC = bussp.listNCC();
-            System.out.println(listpl.size());
-            for(int i = 0 ; i < listNCC.size(); i++){
-                dtonhacungcap ncc = listNCC.get(i);
-                String tenNCC = ncc.getTenNhaCungCap();
-                Integer maNCC = ncc.getMaNhaCungCap();
-                categoryMaNCC.put(tenNCC, maNCC);
-                comboxBoxNCC.addItem(tenNCC); 
-            }
-            add(comboxBoxNCC);
-
-        } catch (SQLException ex) {
-            Logger.getLogger(SimpleInputFormsSanPham.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        lblLoadingNCC = new JLabel("Đang tải nhà cung cấp...");
+        add(comboxBoxNCC);
+        add(lblLoadingNCC, "gapy 3 0");
         
         
         add(new JLabel("Hình ảnh"), "gapy 5 0");
@@ -117,6 +96,8 @@ public class SimpleInputFormsSanPham extends JPanel {
             }
         });
         add(fileChooserButton , "gapy 5 0");
+
+        loadDataAsync();
         
 
     }
@@ -130,6 +111,75 @@ public class SimpleInputFormsSanPham extends JPanel {
         } else {
             label.setIcon(null);
         }
+    }
+
+    private void loadDataAsync() {
+        SwingWorker<SanPhamData, Void> worker = new SwingWorker<SanPhamData, Void>() {
+            @Override
+            protected SanPhamData doInBackground() throws Exception {
+                SanPhamData data = new SanPhamData();
+                data.phanLoaiList = bussp.listPhanloai();
+                data.nccList = bussp.listNCC();
+                return data;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    SanPhamData data = get();
+                    applyPhanLoai(data.phanLoaiList);
+                    applyNhaCungCap(data.nccList);
+                } catch (Exception ex) {
+                    if (lblLoadingPhanLoai != null) {
+                        lblLoadingPhanLoai.setText("Không tải được phân loại");
+                    }
+                    if (lblLoadingNCC != null) {
+                        lblLoadingNCC.setText("Không tải được nhà cung cấp");
+                    }
+                    Logger.getLogger(SimpleInputFormsSanPham.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void applyPhanLoai(ArrayList<dtophanloai> phanLoaiList) {
+        listpl = phanLoaiList;
+        comboBox.removeAllItems();
+        for (dtophanloai pl : listpl) {
+            comboBox.addItem(pl.getTenPhanLoai());
+        }
+        comboBox.setEnabled(true);
+        if (lblLoadingPhanLoai != null) {
+            remove(lblLoadingPhanLoai);
+            lblLoadingPhanLoai = null;
+            revalidate();
+            repaint();
+        }
+    }
+
+    private void applyNhaCungCap(ArrayList<dtonhacungcap> nccList) {
+        listNCC = nccList;
+        categoryMaNCC.clear();
+        comboxBoxNCC.removeAllItems();
+        for (dtonhacungcap ncc : listNCC) {
+            String tenNCC = ncc.getTenNhaCungCap();
+            Integer maNCC = ncc.getMaNhaCungCap();
+            categoryMaNCC.put(tenNCC, maNCC);
+            comboxBoxNCC.addItem(tenNCC);
+        }
+        comboxBoxNCC.setEnabled(true);
+        if (lblLoadingNCC != null) {
+            remove(lblLoadingNCC);
+            lblLoadingNCC = null;
+            revalidate();
+            repaint();
+        }
+    }
+
+    private static class SanPhamData {
+        private ArrayList<dtophanloai> phanLoaiList;
+        private ArrayList<dtonhacungcap> nccList;
     }
     
     

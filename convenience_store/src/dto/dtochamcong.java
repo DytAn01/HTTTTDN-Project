@@ -5,14 +5,11 @@
 package dto;
 
 import bus.busnhanvien;
-
 import java.sql.SQLException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 
 /**
  *
- * @author PHUONG ANH
+ * 
  */
 public class dtochamcong {
     private int machamcong;

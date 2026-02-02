@@ -21,7 +21,6 @@ public class SimpleInputDirectoryForm extends JPanel {
     private busdanhmuc busDanhMuc; // Category bus layer
 
     public SimpleInputDirectoryForm() throws SQLException {
-        busDanhMuc = new busdanhmuc(); // Initialize bus layer
         init();
     }
 
@@ -73,6 +72,9 @@ public class SimpleInputDirectoryForm extends JPanel {
 
     public void addDanhmuc() {
         try {
+            if (busDanhMuc == null) {
+                busDanhMuc = new busdanhmuc();
+            }
             String tenDanhMuc = txtTenDanhMuc.getText();
 
             if (tenDanhMuc.isEmpty()) {

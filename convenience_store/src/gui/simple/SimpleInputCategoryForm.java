@@ -15,7 +15,6 @@ public class SimpleInputCategoryForm extends JPanel {
     private busphanloai busPhanLoai; // Khai báo lớp bus phân loại
 
     public SimpleInputCategoryForm() throws SQLException {
-        busPhanLoai = new busphanloai(); // Khởi tạo bus phân loại
         init();
     }
 
@@ -45,6 +44,9 @@ public class SimpleInputCategoryForm extends JPanel {
 
     public void addPhanLoai() {
         try {
+            if (busPhanLoai == null) {
+                busPhanLoai = new busphanloai();
+            }
             String tenPhanLoai = txtTenPhanLoai.getText();
             if (tenPhanLoai.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Tên phân loại không được để trống!");

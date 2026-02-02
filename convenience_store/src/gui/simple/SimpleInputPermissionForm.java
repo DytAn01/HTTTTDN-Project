@@ -20,6 +20,8 @@ public class SimpleInputPermissionForm extends JPanel {
     private daochucvu daoChucVu; // DAO cho chức vụ
     private daochucnang daoChucNang; // DAO cho chức năng
     private daophanquyen daoPhanQuyen; // DAO cho phân quyền
+    private JLabel lblLoadingChucVu;
+    private JLabel lblLoadingChucNang;
 
     public SimpleInputPermissionForm() throws SQLException {
         daoChucVu = new daochucvu(); // Khởi tạo DAO chức vụ
@@ -32,10 +34,20 @@ public class SimpleInputPermissionForm extends JPanel {
         setLayout(new MigLayout("fillx,wrap,insets 5 35 5 35,width 400", "[fill]", ""));
 
         cboChucVu = new JComboBox<>();
+        cboChucVu.setEnabled(false);
+        cboChucVu.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel();
+            if (value != null) {
+                label.setText(value.getDropdownDisplay()); // Hiển thị tên chức vụ
+            } else if (cboChucVu.getItemCount() == 0) {
+                label.setText("Đang tải...");
+            }
+            return label;
+        });
         pnlChucNang = new JPanel(new MigLayout("wrap 2", "[fill]"));
-
-        populateComboBoxes();
-        populateChucNangPanel();
+        lblLoadingChucVu = new JLabel("Đang tải chức vụ...");
+        lblLoadingChucNang = new JLabel("Đang tải chức năng...");
+        pnlChucNang.add(lblLoadingChucNang, "span");
 
         // Thêm các thành phần vào panel
         createTitle("Thông tin phân quyền");
@@ -48,30 +60,59 @@ public class SimpleInputPermissionForm extends JPanel {
         add(new JLabel("Chọn chức năng"), "gapy 5 0");
         add(new JScrollPane(pnlChucNang), "h 200!");
 
+        add(lblLoadingChucVu, "gapy 3 0");
+
+        loadPermissionDataAsync();
+
         
         
     }
 
-    private void populateComboBoxes() throws SQLException {
-        // Lấy danh sách chức vụ từ DAO và thêm vào ComboBox
-        List<dtochucvu> chucVuList = daoChucVu.getlist();
+    private void loadPermissionDataAsync() {
+        SwingWorker<PermissionData, Void> worker = new SwingWorker<PermissionData, Void>() {
+            @Override
+            protected PermissionData doInBackground() throws Exception {
+                PermissionData data = new PermissionData();
+                data.chucVuList = daoChucVu.getlist();
+                data.chucNangList = daoChucNang.getList();
+                return data;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    PermissionData data = get();
+                    applyChucVuList(data.chucVuList);
+                    applyChucNangList(data.chucNangList);
+                } catch (Exception ex) {
+                    pnlChucNang.removeAll();
+                    pnlChucNang.add(new JLabel("Không tải được danh sách chức năng."), "span");
+                    pnlChucNang.revalidate();
+                    pnlChucNang.repaint();
+                    if (lblLoadingChucVu != null) {
+                        lblLoadingChucVu.setText("Không tải được chức vụ");
+                    }
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void applyChucVuList(List<dtochucvu> chucVuList) {
+        cboChucVu.removeAllItems();
         for (dtochucvu chucVu : chucVuList) {
             cboChucVu.addItem(chucVu);
         }
-
-        // Hiển thị chức vụ trong ComboBox
-        cboChucVu.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel();
-            if (value != null) {
-                label.setText(value.getDropdownDisplay()); // Hiển thị tên chức vụ
-            }
-            return label;
-        });
+        cboChucVu.setEnabled(true);
+        if (lblLoadingChucVu != null) {
+            remove(lblLoadingChucVu);
+            lblLoadingChucVu = null;
+            revalidate();
+            repaint();
+        }
     }
 
-    private void populateChucNangPanel() throws SQLException {
-        // Lấy danh sách chức năng từ DAO và thêm checkbox vào panel
-        List<dtochucnang> chucNangList = daoChucNang.getList();
+    private void applyChucNangList(List<dtochucnang> chucNangList) {
         pnlChucNang.removeAll();
         for (dtochucnang chucNang : chucNangList) {
             JCheckBox chk = new JCheckBox(chucNang.getTenChucNang());
@@ -80,6 +121,11 @@ public class SimpleInputPermissionForm extends JPanel {
         }
         pnlChucNang.revalidate();
         pnlChucNang.repaint();
+    }
+
+    private static class PermissionData {
+        private List<dtochucvu> chucVuList;
+        private List<dtochucnang> chucNangList;
     }
 
     private void createTitle(String title) {
