@@ -53,13 +53,13 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
 
     private void initRegister() {
         fgpwd.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]10[]25[]push"));
-        JLabel label = new JLabel("Reset Password");
+        JLabel label = new JLabel("Đặt lại mật khẩu");
         label.setFont(new Font("sansserif", 1, 30));
         label.setForeground(new Color(7, 164, 121));
         fgpwd.add(label);
         txtUser = new MyTextField();
         txtUser.setPrefixIcon(resizeIcon(new ImageIcon(getClass().getResource("/source/image/icon/user.png")), 20, 20));
-        txtUser.setHint("Username");
+        txtUser.setHint("Tên đăng nhập");
         txtUser.setSuffixIcon(resizeIcon(new ImageIcon(getClass().getResource("/source/image/icon/find.png")), 20, 20));
         txtUser.setSuffixActionListener(() -> {
             String user = txtUser.getText();
@@ -83,16 +83,16 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
         txtCode = new MyPasswordField();
         txtCode.setEchoChar('●');
         txtCode.setPrefixIcon(resizeIcon(new ImageIcon(getClass().getResource("/source/image/icon/verify.png")), 20, 20));
-        txtCode.setHint("Verify Code");
+        txtCode.setHint("Mã xác nhận");
         fgpwd.add(txtCode, "w 60%");
         Button sendCode = new Button();
         sendCode.setBackground(new Color(7, 164, 121));
         sendCode.setForeground(new Color(250, 250, 250));
-        sendCode.setText("SEND CODE");
+        sendCode.setText("Gửi mã xác nhận");
         Button verify = new Button();
         verify.setBackground(new Color(7, 164, 121));
         verify.setForeground(new Color(250, 250, 250));
-        verify.setText("VERIFY CODE");
+        verify.setText("Xác nhận");
         fgpwd.add(sendCode, "w 30%, h 40,split 2");
         fgpwd.add(verify, "w 30%, h 40");
         sendCode.addActionListener(new ActionListener() {
@@ -128,10 +128,10 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
                     countdown--;
                     if (countdown <= 0) {
                         sendCode.setEnabled(true); 
-                        sendCode.setText("SEND CODE"); 
+                        sendCode.setText("Gửi mã xác nhận"); 
                         timer.stop(); // Dừng bộ đếm
                     } else {
-                        sendCode.setText("Resend Code (" + countdown + "s)");      
+                        sendCode.setText("Gửi lại mã xác nhận (" + countdown + "s)");      
                     }
                 }
             });
@@ -172,16 +172,16 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
 
     private void initLogin() {
         login.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]10[]25[]push"));
-        JLabel label = new JLabel("Sign In");
+        JLabel label = new JLabel("Đăng Nhập");
         label.setFont(new Font("sansserif", 1, 30));
         label.setForeground(new Color(7, 164, 121));
         login.add(label);
         txtUsername = new MyTextField();
         txtUsername.setPrefixIcon(resizeIcon(new ImageIcon(getClass().getResource("/source/image/icon/user.png")), 20, 20));
-        txtUsername.setHint("Username");
+        txtUsername.setHint("Tên đăng nhập hoặc email");
         login.add(txtUsername, "w 60%"); 
         txtPass = new MyPasswordField();
-        txtPass.setHint("Password");
+        txtPass.setHint("Mật khẩu");
         txtPass.setEchoChar('●');
         txtPass.setPrefixIcon(resizeIcon(new ImageIcon(getClass().getResource("/source/image/icon/pass.png")), 20, 20));
         txtPass.addKeyListener(new KeyAdapter() {
@@ -206,7 +206,7 @@ public class PanelLoginAndRegister extends javax.swing.JLayeredPane {
         Button cmd = new Button();
         cmd.setBackground(new Color(7, 164, 121));
         cmd.setForeground(new Color(250, 250, 250));
-        cmd.setText("SIGN IN");
+        cmd.setText("Đăng Nhập");
         login.add(cmd, "w 40%, h 40");
         
         cmd.addActionListener(new java.awt.event.ActionListener() {

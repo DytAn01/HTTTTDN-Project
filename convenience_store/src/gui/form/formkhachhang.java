@@ -1,15 +1,15 @@
 package gui.form;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.ArrayList;
-import dto.dtokhachhang;
 import bus.buskhachhang;
 import bus.busuudai;
+import dto.dtokhachhang;
+import java.awt.*;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class formkhachhang extends JPanel {
 
@@ -78,9 +78,13 @@ public class formkhachhang extends JPanel {
         // Add panel at the top
         add(panelTop, BorderLayout.NORTH);
 
-        // Add table and details panels
-        add(scrollPane, BorderLayout.CENTER);
-        add(panelDetails, BorderLayout.SOUTH);
+        // Create center panel to hold details and table
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.add(panelDetails, BorderLayout.NORTH);
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Add center panel
+        add(centerPanel, BorderLayout.CENTER);
     }
         private void loadDanhSachMaUuDai() {
             // Lấy danh sách mã ưu đãi từ BUS

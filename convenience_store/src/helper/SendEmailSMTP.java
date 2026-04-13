@@ -27,8 +27,8 @@ public class SendEmailSMTP {
            .append("<p style=\"font-size: 25px; font-weight: 700; color:#2d3436; font-family:'Roboto', sans-serif; text-align: center;\">TOANDICODEDAO</p>")
            .append("<img src=\"https://bit.ly/imgBtom\" width=\"750\" style=\"display: block; margin-left: auto; margin-right: auto;\" alt=\"\">")
            .append("</div></div></section>");
-            String username = "pvt8626@gmail.com";
-            String password = "gvqeaoegprsxxnkv";
+            String username = "duytan100104@gmail.com";
+            String password = "Tanle1298";
             String subject = "Bạn đang gửi yêu cầu đặt lại mật khẩu";
         Properties prop = new Properties();
         prop.put("mail.smtp.host", "smtp.gmail.com");

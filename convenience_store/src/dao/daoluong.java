@@ -237,6 +237,125 @@ public class daoluong {
         return count;
     }
 
+    // Get salary by employee and month/year
+    public ArrayList<dtoluong> getByNhanVienAndMonth(int maNhanVien, int month, int year) {
+        ArrayList<dtoluong> list = new ArrayList<>();
+        Connection con = connect.connection();
+        String sql = "SELECT l.* FROM luong l " +
+                    "JOIN chamcong cc ON l.maChamCong = cc.maChamCong " +
+                    "WHERE l.maNhanVien = ? AND cc.thangChamCong = ? AND cc.namChamCong = ?";
+
+        try {
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setInt(1, maNhanVien);
+            pst.setInt(2, month);
+            pst.setInt(3, year);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                dtoluong luong = new dtoluong(
+                         rs.getInt("maLuong"),
+                         rs.getInt("maChamCong"),
+                         rs.getDouble("phuCap"),
+                         rs.getDouble("luongThucTe"),
+                         rs.getDouble("luongThuong"),
+                         rs.getDouble("khoanBaoHiem"),
+                         rs.getDouble("khoanThue"),
+                         rs.getDouble("thuclanh"),
+                         rs.getDouble("luongLamThem"),
+                         rs.getDate("ngayNhanLuong"),
+                         rs.getInt("maNhanVien")
+                );
+                list.add(luong);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                con.close();
+            } catch (SQLException e) {
+                Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return list;
+    }
+
+    // Get all salary of employee in a year
+    public ArrayList<dtoluong> getByNhanVienYear(int maNhanVien, int year) {
+        ArrayList<dtoluong> list = new ArrayList<>();
+        Connection con = connect.connection();
+        String sql = "SELECT l.* FROM luong l " +
+                    "JOIN chamcong cc ON l.maChamCong = cc.maChamCong " +
+                    "WHERE l.maNhanVien = ? AND cc.namChamCong = ? " +
+                    "ORDER BY cc.thangChamCong";
+
+        try {
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setInt(1, maNhanVien);
+            pst.setInt(2, year);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                dtoluong luong = new dtoluong(
+                         rs.getInt("maLuong"),
+                         rs.getInt("maChamCong"),
+                         rs.getDouble("phuCap"),
+                         rs.getDouble("luongThucTe"),
+                         rs.getDouble("luongThuong"),
+                         rs.getDouble("khoanBaoHiem"),
+                         rs.getDouble("khoanThue"),
+                         rs.getDouble("thuclanh"),
+                         rs.getDouble("luongLamThem"),
+                         rs.getDate("ngayNhanLuong"),
+                         rs.getInt("maNhanVien")
+                );
+                list.add(luong);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                con.close();
+            } catch (SQLException e) {
+                Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return list;
+    }
+
+    // Get salary calculation info by employee
+    public ArrayList<Object[]> getLuongInfo(int maNhanVien) {
+        ArrayList<Object[]> list = new ArrayList<>();
+        Connection con = connect.connection();
+        String sql = "SELECT hd.luongcoban, " +
+                    "ROUND(hd.luongcoban/26, 2) as luongMotNgay, " +
+                    "ROUND(hd.luongcoban/26/8, 2) as luongMotGio " +
+                    "FROM hopdong hd WHERE hd.maNhanVien = ? AND hd.isDelete = 0";
+
+        try {
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setInt(1, maNhanVien);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                Object[] row = new Object[3];
+                row[0] = rs.getDouble("luongcoban");
+                row[1] = rs.getDouble("luongMotNgay");
+                row[2] = rs.getDouble("luongMotGio");
+                list.add(row);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                con.close();
+            } catch (SQLException e) {
+                Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return list;
+    }
+
     public static void main(String[] args) {
         daoluong daoLuong = new daoluong();
         /*

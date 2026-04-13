@@ -1178,10 +1178,11 @@ public class formmenu extends Form {
         JPanel cartPanel = createCartPanel();
 
         JSplitPane splitPane = new JSplitPane();
-        splitPane.setLeftComponent(cartPanel);
-        splitPane.setRightComponent(menuContainer);
-        splitPane.setResizeWeight(0.6);
-        splitPane.setDividerSize(2);
+        splitPane.setLeftComponent(menuContainer);
+        splitPane.setRightComponent(cartPanel);
+        splitPane.setResizeWeight(0.75);
+        splitPane.setDividerSize(0);
+        splitPane.setEnabled(false);
         splitPane.setBorder(null);
         return splitPane;
     }
