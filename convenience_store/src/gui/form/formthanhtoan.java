@@ -1,989 +1,640 @@
-
 package gui.form;
 
-/**
- *
- * @author AD
- */
 import bus.*;
 import dto.*;
 import gui.comp.Combobox;
 import gui.comp.TableSorter;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.print.PageFormat;
-import java.awt.print.Paper;
-import java.awt.print.Printable;
-import static java.awt.print.Printable.NO_SUCH_PAGE;
-import static java.awt.print.Printable.PAGE_EXISTS;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
-import java.sql.Timestamp;
+import gui.comp.HintTextArea;
+import com.formdev.flatlaf.FlatClientProperties;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import javax.swing.table.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.print.*;
 import java.util.ArrayList;
 import java.util.Date;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableModel;
 
+public class formthanhtoan extends JDialog {
 
-public class formthanhtoan extends javax.swing.JFrame {
-    
+    // ── Palette ───────────────────────────────────────────────────
+    private static final Color ACCENT = new Color(99, 102, 241);
+    private static final Color ACCENT_SOFT = new Color(238, 242, 255);
+    private static final Color SUCCESS = new Color(22, 163, 74);
+    private static final Color DANGER = new Color(239, 68, 68);
+    private static final Color WARNING = new Color(234, 179, 8);
+    private static final Color TEXT_MUTED = new Color(100, 116, 139);
+    private static final Color BG_SUBTLE = new Color(248, 250, 252);
 
-    /**
-     * Creates new form formthanhtoan
-     */
-    static ArrayList<dtosanpham> list = new ArrayList<>();
-    static int manv =0;
-    int mnv;
-    buskhuyenmai khuyenmai = new buskhuyenmai();
-    bushoadon hoadon = new bushoadon();
-    bussanpham sanpham = new bussanpham();
-    busuudai uudai = new busuudai();
-    bustichdiem tichdiem = new bustichdiem();
-    buskhachhang khachhang = new buskhachhang();
-    busnhanvien nhanvien = new busnhanvien();
-    buscthoadon cthoadon = new buscthoadon();
-    busctphieunhap ctphieunhap = new busctphieunhap();
-    ArrayList<dtocthoadon> limenu;
-    
-    dtokhachhang kh = new dtokhachhang();
-    dtouudai ud = new dtouudai();
-    dtokhuyenmai km = new dtokhuyenmai();
-    dtotichdiem td = new dtotichdiem();
-    dtonhanvien nv = new dtonhanvien();
-    dtohoadon hd = new dtohoadon();
-    
-    double tongtien;
-    double tongtienkm;
-    double tongtienud;
-    double tongtienfi;
-    int diem;
-    public void arr_jt (JTable jTable, ArrayList<dtocthoadon> spOrder) {
-        DefaultTableModel model = (DefaultTableModel) paymentTable.getModel();
-        int i = 0;
-        for (dtocthoadon cthd : spOrder) {
-            i++;
-            dtosanpham sp = new dtosanpham();
-            sp.setMaSanPham(cthd.getMaSanPham());
-            sp = sanpham.getsp(sp);
-            
-            int soluong = cthd.getSoLuong();
-            dtoctphieunhap ctpn = ctphieunhap.getspnhap(cthd.getMaSanPham());
-            double giaban = ctpn.getGiaBan();
-            double tonggia = soluong*giaban;
-            model.addRow(new Object[]{Integer.toString(i), sp.getTenSanPham(),Integer.toString(soluong),Double.toString(giaban), Double.toString(tonggia)});
-        }
-        jTable.setModel(model);
-        jTable.revalidate();
-        jTable.repaint();
-    }
-    public void cbimport(Combobox jcb,ArrayList<dtokhuyenmai> list){
-        ArrayList<String> tenKhuyenMai = new ArrayList<>();
-        jcb.removeAllItems();
-//        tenKhuyenMai.add("Bỏ chọn");
-        for(dtokhuyenmai i: list){
-            tenKhuyenMai.add(i.getTenKhuyenMai());
-           
-        }
-        String[] tenKhuyenMaiArray = tenKhuyenMai.toArray(new String[0]);
-        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(tenKhuyenMaiArray);
-        jcb.setModel(model);
-        jcb.setSelectedIndex(-1);
-    }
-    public formthanhtoan(ArrayList<dtocthoadon> list,int ma_nv) {
-        init();
-        // loading
+    // ── BUS ───────────────────────────────────────────────────────
+    private final buskhuyenmai busKM = new buskhuyenmai();
+    private final bushoadon busHD = new bushoadon();
+    private final bussanpham busSP = new bussanpham();
+    private final busuudai busUD = new busuudai();
+    private final bustichdiem busTD = new bustichdiem();
+    private final buskhachhang busKH = new buskhachhang();
+    private final busnhanvien busNV = new busnhanvien();
+    private final buscthoadon busCTHD = new buscthoadon();
+    private final busctphieunhap busCTPN = new busctphieunhap();
+
+    // ── DTO state ─────────────────────────────────────────────────
+    private dtokhachhang kh = new dtokhachhang();
+    private dtouudai ud = new dtouudai();
+    private dtokhuyenmai km = new dtokhuyenmai();
+    private dtotichdiem td = new dtotichdiem();
+    private dtonhanvien nv = new dtonhanvien();
+    private dtohoadon hd = new dtohoadon();
+
+    private ArrayList<dtocthoadon> limenu;
+
+    private double tongtien, tongtienkm, tongtienud, tongtienfi;
+    private int diem;
+    double bHeight = 0.0;
+
+    // ── UI fields ─────────────────────────────────────────────────
+    private JTextField txtPhone, txtName;
+    private JTable paymentTable;
+    private DefaultTableModel tableModel;
+    private Combobox cboKhuyenMai;
+    private JTextArea txtNote;
+
+    // Read-only summary fields
+    private JTextField tfDiscount, tfSale, tfCredit, tfTotal;
+
+    // ─────────────────────────────────────────────────────────────
+    public formthanhtoan(ArrayList<dtocthoadon> list, int ma_nv) {
+        super((Frame) null, "Thanh toán", true);
+        limenu = list;
+
         nv.setManhanvien(ma_nv);
-        nv = nhanvien.getnv(nv);
-
-        double total = cthoadon.gettongtien(list);
-        discountValue.setText("0");
-        
-        arr_jt(paymentTable, list);
-        cbimport(khuyenMai,khuyenmai.getkhuyenmaitoday());
-        khuyenMai.setSelectedIndex(-1);
-        tongtien = total;
-        totalValue.setText(Double.toString(total));
-        
-        tongtienfi = total;
+        nv = busNV.getnv(nv);
         hd.setMaNhanVien(ma_nv);
         hd.setTennhanvien(ma_nv);
-        
-        limenu =  list;
-        
+
+        tongtien = busCTHD.gettongtien(list);
+        tongtienkm = 0;
+        tongtienud = 0;
+        tongtienfi = tongtien;
+
+        buildUI();
+        loadPaymentTable(list);
+        loadKhuyenMai();
+
+        setSize(1100, 760);
+        setMinimumSize(new Dimension(900, 700));
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
 
-    public void init() {
-        jSplitPane1 = new javax.swing.JSplitPane();
-        optionLayoutUtils1 = new gui.modal.layout.OptionLayoutUtils();
-        jPanel2 = new javax.swing.JPanel();
-        phonejLabel = new javax.swing.JLabel();
-        namejLabel = new javax.swing.JLabel();
-        phoneTextField = new gui.swing.login.MyTextField();
-        nameTextField = new gui.swing.login.MyTextField();
-        checkPhoneBtn = new gui.swing.login.Button();
-        newCustomerBtn = new gui.swing.login.Button();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        DefaultTableModel model = new DefaultTableModel();
-        paymentTable = new JTable(model);
-        khuyenMai = new gui.comp.Combobox();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        note = new gui.comp.HintTextArea();
-        discountValue = new gui.swing.login.MyTextField();
-        creditPoint = new javax.swing.JLabel();
-        sale = new javax.swing.JLabel();
-        total = new javax.swing.JLabel();
-        creditPointValue = new gui.swing.login.MyTextField();
-        totalValue = new gui.swing.login.MyTextField();
-        saleValue = new gui.swing.login.MyTextField();
-        thanhToanBtn = new gui.swing.login.Button();
+    // ─────────────────────────────────────────────────────────────
+    //  BUILD UI
+    // ─────────────────────────────────────────────────────────────
+    private void buildUI() {
+        JPanel root = new JPanel(new MigLayout(
+                "fill, insets 0", "[fill]", "[shrink 0][fill,grow][shrink 0]"));
+        root.setBackground(Color.WHITE);
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
+        root.add(buildTitleBar(), "growx, wrap");
+        root.add(buildBody(), "grow, wrap");
+        root.add(buildFooter(), "growx");
 
-        phonejLabel.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        phonejLabel.setText("Số điện thoại");
+        setContentPane(root);
+    }
 
-        namejLabel.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        namejLabel.setText("Tên khách hàng");
+    // ── Title bar ─────────────────────────────────────────────────
+    private JPanel buildTitleBar() {
+        JPanel p = new JPanel(new MigLayout("fillx, insets 14 20 14 20", "[fill]push[]", "[]"));
+        p.setBackground(ACCENT);
 
-        phoneTextField.setToolTipText("");
-        phoneTextField.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        phoneTextField.setHint("Nhập số điện thoại khách hàng");
-        phoneTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                phoneTextFieldActionPerformed(evt);
+        JLabel lbl = new JLabel("Thanh toán đơn hàng");
+        lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 16f));
+        lbl.setForeground(Color.WHITE);
+        p.add(lbl);
+
+        JButton btnClose = new JButton("✕");
+        btnClose.putClientProperty(FlatClientProperties.STYLE,
+                "background: #7c3aed; foreground: #ffffff; arc: 8; borderWidth: 0; focusWidth: 0;");
+        btnClose.setFocusPainted(false);
+        btnClose.addActionListener(e -> dispose());
+        p.add(btnClose, "width 32!, height 32!");
+        return p;
+    }
+
+    // ── Body (2 columns) ──────────────────────────────────────────
+    private JPanel buildBody() {
+        JPanel p = new JPanel(new MigLayout(
+                "fill, insets 16 20 8 20, gap 16",
+                "[grow 40][grow 60]",
+                "[fill]"
+        ));
+        p.setBackground(Color.WHITE);
+
+        p.add(buildLeftPanel(), "grow");
+        p.add(buildRightPanel(), "grow");
+        return p;
+    }
+
+    // ── LEFT: Khách hàng + Khuyến mãi + Tóm tắt ─────────────────
+    private JPanel buildLeftPanel() {
+        JPanel p = new JPanel(new MigLayout(
+                "fillx, wrap, insets 0", "[fill,grow][8!][grow 30]", "[][16!][][16!][][16!][]"));
+        p.setBackground(Color.WHITE);
+
+        // ── Customer card ─────────────────────────────────────────
+        JPanel custCard = card("Thông tin khách hàng");
+        JPanel content = (JPanel) custCard.getComponent(1);
+
+        content.setLayout(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]8[]8[]"));
+
+        txtPhone = styledField("Nhập số điện thoại...");
+        txtName = styledField("Tên khách hàng");
+        txtName.setEnabled(false);
+
+        JPanel phoneRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][90!]", "[]"));
+        phoneRow.setBackground(Color.WHITE);
+        phoneRow.add(txtPhone, "height 34!");
+        JButton btnCheck = accentBtn("Kiểm tra", ACCENT);
+        btnCheck.addActionListener(e -> checkPhone());
+        phoneRow.add(btnCheck, "height 34!");
+
+        JPanel nameRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][90!]", "[]"));
+        nameRow.setBackground(Color.WHITE);
+        nameRow.add(txtName, "height 34!");
+        JButton btnNew = accentBtn("Tạo mới", new Color(79, 70, 229));
+        btnNew.addActionListener(e -> createNewCustomer());
+        nameRow.add(btnNew, "height 34!");
+
+        custCard.add(fieldLbl("Số điện thoại"));
+        custCard.add(phoneRow, "growx");
+        custCard.add(fieldLbl("Tên khách hàng"));
+        custCard.add(nameRow, "growx");
+        p.add(custCard, "growx");
+
+        // ── Khuyến mãi card ───────────────────────────────────────
+        JPanel kmCard = card("Khuyến mãi");
+        kmCard.setLayout(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]8[]"));
+
+        cboKhuyenMai = new Combobox();
+        cboKhuyenMai.setLabeText("Chọn khuyến mãi");
+        cboKhuyenMai.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
+        cboKhuyenMai.addActionListener(e -> onKhuyenMaiChanged());
+
+        tfDiscount = readonlyField("0 đ");
+        JPanel kmRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][shrink 0]", "[]"));
+        kmRow.setBackground(Color.WHITE);
+        kmRow.add(cboKhuyenMai, "height 36!");
+        kmRow.add(tfDiscount, "height 36!, width 110!");
+
+        kmCard.add(fieldLbl("Chương trình giảm giá"));
+        kmCard.add(kmRow, "growx");
+        p.add(kmCard, "growx");
+
+        // ── Summary card ──────────────────────────────────────────
+        JPanel sumCard = card("Tóm tắt thanh toán");
+        sumCard.setLayout(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]6[]6[]6[]"));
+
+        tfSale = readonlyField("0 đ");
+        tfCredit = readonlyField("0 đ");
+        tfTotal = readonlyField(fmt(tongtien));
+        tfTotal.setFont(tfTotal.getFont().deriveFont(Font.BOLD, 14f));
+        tfTotal.setForeground(DANGER);
+
+        sumCard.add(summaryRow("Ưu đãi khách hàng", tfSale));
+        sumCard.add(summaryRow("Điểm tích lũy", tfCredit));
+
+        JSeparator sep = new JSeparator();
+        sep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
+        sumCard.add(sep, "growx, height 1!");
+
+        sumCard.add(summaryRow("Thành tiền", tfTotal));
+        p.add(sumCard, "growx");
+
+        return p;
+    }
+
+    // ── RIGHT: Bảng sản phẩm + Ghi chú ──────────────────────────
+    private JPanel buildRightPanel() {
+        JPanel p = new JPanel(new MigLayout(
+                "fill, wrap, insets 0", "[fill]", "[fill,grow][8!][shrink 0]"));
+        p.setBackground(Color.WHITE);
+
+        // Table card
+        JPanel tblCard = card("Danh sách sản phẩm");
+        tblCard.setLayout(new MigLayout("fill, insets 0", "[fill]", "[shrink 0][1!][fill,grow]"));
+
+        tableModel = new DefaultTableModel(
+                new Object[]{"#", "Tên sản phẩm", "SL", "Đơn giá", "Thành tiền"}, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
             }
-        });
-
-        nameTextField.setToolTipText("");
-        nameTextField.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        nameTextField.setHint("Tên khách hàng");
-        nameTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nameTextFieldActionPerformed(evt);
-            }
-        });
-
-        checkPhoneBtn.setBackground(new java.awt.Color(0, 204, 204));
-        checkPhoneBtn.setText("Kiểm tra");
-        checkPhoneBtn.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        checkPhoneBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkPhoneBtnActionPerformed(evt);
-            }
-        });
-
-        newCustomerBtn.setBackground(new java.awt.Color(0, 204, 204));
-        newCustomerBtn.setText("Tạo mới");
-        newCustomerBtn.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        newCustomerBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newCustomerBtnActionPerformed(evt);
-            }
-        });
-
-        paymentTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        paymentTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "ID", "Tên sản phẩm", "Số lượng", "Đơn giá", "Thành tiền"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        TableSorter.configureTableColumnSorter(paymentTable, 0, TableSorter.INTEGER_COMPARATOR);
-        TableSorter.configureTableColumnSorter(paymentTable, 1, TableSorter.STRING_COMPARATOR);
-        TableSorter.configureTableColumnSorter(paymentTable, 2, TableSorter.INTEGER_COMPARATOR);
-        TableSorter.configureTableColumnSorter(paymentTable, 3, TableSorter.VND_CURRENCY_COMPARATOR);
-        TableSorter.configureTableColumnSorter(paymentTable, 4, TableSorter.VND_CURRENCY_COMPARATOR);
+        };
+        paymentTable = new JTable(tableModel);
+        paymentTable.setRowHeight(34);
+        paymentTable.setShowGrid(false);
+        paymentTable.setFillsViewportHeight(true);
+        paymentTable.putClientProperty(FlatClientProperties.STYLE,
+                "rowHeight:34; showHorizontalLines:true; intercellSpacing:0,1;"
+                + "selectionBackground:$TableHeader.hoverBackground;"
+                + "selectionForeground:$Table.foreground;");
+        paymentTable.getTableHeader().putClientProperty(FlatClientProperties.STYLE,
+                "height:32; hoverBackground:null; pressedBackground:null;"
+                + "separatorColor:$TableHeader.background; font:bold;");
         paymentTable.getTableHeader().setReorderingAllowed(false);
-        jScrollPane1.setViewportView(paymentTable);
 
-        khuyenMai.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        khuyenMai.setLabeText("Khuyến mãi");
-        khuyenMai.setLineColor(new java.awt.Color(0, 204, 204));
-        khuyenMai.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                khuyenMaiActionPerformed(evt);
-            }
-        });
-        khuyenMai.setRenderer(new DefaultListCellRenderer() {
-    @Override
-    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        // Gọi phương thức gốc để lấy thành phần cơ bản
-        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        setBorder(new EmptyBorder(5, 5, 5, 5));
-        if (value != null && value.toString().equals("Bỏ chọn")) {
-            // Đặt màu nền và chữ riêng cho "Bỏ chọn"
-            setForeground(Color.GRAY); // Màu chữ xám
-            if (isSelected) {
-                setBackground(Color.LIGHT_GRAY); // Màu nền nhạt khi chọn
-            } else {
-                setBackground(Color.WHITE); // Màu nền trắng khi không chọn
-            }
+        int[] widths = {30, 140, 40, 90, 90};
+        for (int i = 0; i < widths.length; i++) {
+            paymentTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+        right.setHorizontalAlignment(SwingConstants.RIGHT);
+        paymentTable.getColumnModel().getColumn(0).setCellRenderer(center);
+        paymentTable.getColumnModel().getColumn(2).setCellRenderer(center);
+        paymentTable.getColumnModel().getColumn(3).setCellRenderer(right);
+        paymentTable.getColumnModel().getColumn(4).setCellRenderer(right);
+
+        JScrollPane scroll = new JScrollPane(paymentTable);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.getVerticalScrollBar().putClientProperty(FlatClientProperties.STYLE,
+                "trackArc:$ScrollBar.thumbArc; thumbInsets:0,2,0,2; width:7;");
+
+        JSeparator tblSep = new JSeparator();
+        tblSep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
+
+        tblCard.add(new JLabel(), "height 0!");  // spacer for card header padding
+        tblCard.add(tblSep, "growx, height 1!");
+        tblCard.add(scroll, "grow");
+
+        p.add(tblCard, "grow, push");
+
+        // Note card
+        JPanel noteCard = card("Ghi chú");
+        noteCard.setLayout(new MigLayout("fill, insets 12 14 12 14", "[fill]", "[fill]"));
+        txtNote = new JTextArea();
+        txtNote.setRows(3);
+        txtNote.setLineWrap(true);
+        txtNote.setWrapStyleWord(true);
+        txtNote.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
+        JScrollPane noteScroll = new JScrollPane(txtNote);
+        noteScroll.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
+        noteScroll.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true));
+        noteCard.add(noteScroll, "grow, height 80!");
+        p.add(noteCard, "growx");
+
+        return p;
+    }
+
+    // ── Footer ────────────────────────────────────────────────────
+    private JPanel buildFooter() {
+        JPanel p = new JPanel(new MigLayout(
+                "fillx, insets 12 20 16 20", "push[]16[]", "[]"));
+        p.setBackground(Color.WHITE);
+        p.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(226, 232, 240)));
+
+        JButton btnCancel = outlineBtn("Hủy");
+        btnCancel.addActionListener(e -> dispose());
+
+        JButton btnPay = accentBtn("💳  Xác nhận thanh toán", SUCCESS);
+        btnPay.setFont(btnPay.getFont().deriveFont(Font.BOLD, 13f));
+        btnPay.addActionListener(e -> processPayment());
+
+        p.add(btnCancel, "height 38!, width 100!");
+        p.add(btnPay, "height 38!, width 200!");
+        return p;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  DATA
+    // ─────────────────────────────────────────────────────────────
+    private void loadPaymentTable(ArrayList<dtocthoadon> list) {
+        tableModel.setRowCount(0);
+        int i = 0;
+        for (dtocthoadon ct : list) {
+            i++;
+            dtosanpham sp = new dtosanpham();
+            sp.setMaSanPham(ct.getMaSanPham());
+            sp = busSP.getsp(sp);
+            dtoctphieunhap ctpn = busCTPN.getspnhap(ct.getMaSanPham());
+            double donGia = ctpn.getGiaBan();
+            double tongGia = ct.getSoLuong() * donGia;
+            tableModel.addRow(new Object[]{
+                i, sp.getTenSanPham(), ct.getSoLuong(),
+                fmt(donGia), fmt(tongGia)
+            });
+        }
+    }
+
+    private void loadKhuyenMai() {
+        cboKhuyenMai.removeAllItems();
+        for (dtokhuyenmai item : busKM.getkhuyenmaitoday()) {
+            cboKhuyenMai.addItem(item.getTenKhuyenMai());
+        }
+        cboKhuyenMai.setSelectedIndex(-1);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  ACTIONS
+    // ─────────────────────────────────────────────────────────────
+    private void checkPhone() {
+        String phone = txtPhone.getText().trim();
+        if (phone.isEmpty()) {
+            warn("Chưa nhập số điện thoại!");
+            return;
+        }
+        if (!busKH.checkphone(phone)) {
+            kh = busKH.getkhbyphone(phone);
+            hd.setMaKhachHang(kh.getMaKhachHang());
+            txtName.setText(kh.getTenKhachHang());
+
+            ud.setMaUuDai(kh.getMaUudai());
+            ud = busUD.getud(ud);
+            double tienud = (tongtien * ud.getTiLeGiam()) / 100;
+            tongtienud = tienud;
+            tongtienfi = tongtien - tongtienkm - tongtienud;
+
+            td = busTD.gettdbytien(tongtien);
+            hd.setMaTichDiem(td.getMaTichDiem());
+            diem = td.getDiemTichLuy();
+
+            tfSale.setText("- " + fmt(tienud) + "  (" + ud.getTiLeGiam() + "%)");
+            tfCredit.setText(diem + " điểm");
+            tfTotal.setText(fmt(tongtienfi));
+            info("Đã tìm thấy khách hàng: " + kh.getTenKhachHang());
         } else {
-            // Đặt màu mặc định cho các mục khác
-            setForeground(Color.BLACK);
-            setBackground(isSelected ? Color.LIGHT_GRAY : Color.WHITE);
-        }
-
-        return component;
-    }
-});
-        note.setColumns(20);
-        note.setRows(5);
-        note.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        note.setHint("Nhập ghi chú...");
-        jScrollPane3.setViewportView(note);
-
-        discountValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        discountValue.setToolTipText("");
-        discountValue.setEnabled(false);
-        discountValue.setFocusable(false);
-        discountValue.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        discountValue.setHint("0");
-        discountValue.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                discountValueActionPerformed(evt);
-            }
-        });
-
-        creditPoint.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        creditPoint.setText("Điểm tích luỹ");
-
-        sale.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        sale.setText("Ưu đãi");
-
-        total.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        total.setText("Tổng tiền");
-
-        creditPointValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        creditPointValue.setToolTipText("");
-        creditPointValue.setEnabled(false);
-        creditPointValue.setFocusable(false);
-        creditPointValue.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        creditPointValue.setHint("0");
-        creditPointValue.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                creditPointValueActionPerformed(evt);
-            }
-        });
-
-        totalValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        totalValue.setToolTipText("");
-        totalValue.setEnabled(false);
-        totalValue.setFocusable(false);
-        totalValue.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        totalValue.setHint("0");
-        totalValue.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                totalValueActionPerformed(evt);
-            }
-        });
-
-        saleValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        saleValue.setToolTipText("");
-        saleValue.setEnabled(false);
-        saleValue.setFocusable(false);
-        saleValue.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        saleValue.setHint("0");
-        saleValue.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saleValueActionPerformed(evt);
-            }
-        });
-
-        thanhToanBtn.setBackground(new java.awt.Color(0, 204, 204));
-        thanhToanBtn.setText("Thanh toán");
-        thanhToanBtn.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        thanhToanBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                thanhToanBtnActionPerformed(evt);
-            }
-        });
-
-     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-getContentPane().setLayout(layout);
-
-layout.setHorizontalGroup(
-    layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-    .addGroup(layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            // Các phần tử trong jPanel2 được chuyển vào layout chính
-            .addComponent(thanhToanBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jScrollPane3)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(phonejLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(namejLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(phoneTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(nameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(checkPhoneBtn, javax.swing.GroupLayout.DEFAULT_SIZE, 105, Short.MAX_VALUE)
-                    .addComponent(newCustomerBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(khuyenMai, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(discountValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(creditPoint, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                    .addComponent(sale, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(total, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(creditPointValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(saleValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(totalValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-        .addContainerGap())
-);
-
-layout.setVerticalGroup(
-    layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-    .addGroup(layout.createSequentialGroup()
-        .addGap(7, 7, 7)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(checkPhoneBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(phonejLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(phoneTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-        .addGap(18, 18, 18)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(newCustomerBtn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(namejLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-            .addComponent(khuyenMai, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(discountValue, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addComponent(sale, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(creditPoint, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(total, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(saleValue, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(creditPointValue, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(totalValue, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)))
-        .addGap(18, 18, 18)
-        .addComponent(thanhToanBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-);
-    }
-    double bHeight = 0.0;
-    
-    public PageFormat getPageFormat(PrinterJob pj) {
-        PageFormat pf = pj.defaultPage();
-        Paper paper = pf.getPaper();
-        
-        double bodyHeight = bHeight;
-        double headerHeight = 5.0;
-        double footerHeight = 5.0;
-        double width = cm_to_pp(14.5);
-        double height = cm_to_pp(14.8);
-        paper.setSize(width, height);
-        paper.setImageableArea(0, 5, width, height);
-        
-        pf.setOrientation(PageFormat.PORTRAIT);
-        pf.setPaper(paper);
-        return pf;
-    }
-    
-    protected static double cm_to_pp(double cm) {
-        return toPPI(cm * 0.393600787);
-    }
-    
-    protected static double toPPI(double inch) {
-        return inch* 72d;
-    }
-    
-    public class BillPrintable implements Printable {
-           
-        @Override
-        public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
-            int r = 10;
-            int result = NO_SUCH_PAGE;
-            if(pageIndex == 0) {
-                Graphics2D g2d = (Graphics2D) graphics;
-                double width = pageFormat.getImageableWidth();
-                g2d.translate((int) pageFormat.getImageableX(),(int) pageFormat.getImageableY());
-                
-                try{
-                    int y = 20;
-                    int yShift = 10;
-                    int headerRectHeight = 15;
-                    int a = 125;
-                    int stt=0;
-                    g2d.setFont(new Font("Times New Roman",Font.PLAIN,9));
-//                    g2d.drawImage(s);
-                    g2d.drawString("-------------------------------------------------------------", a, y);y+=yShift;
-                    g2d.drawString("            CỬA HÀNG TIỆN LỢI ABC                           ", a, y);y+=yShift;
-                    g2d.drawString("       ĐỊA CHỈ: xxxxxxxxxxxxxxxxxx                          ", a, y);y+=yShift;
-                    g2d.drawString("       SĐT: xxxxxxxxxxxxxxxxxx                              ", a, y);y+=yShift;
-                    g2d.drawString("       Ngày mua: "+hd.getNgayMua()+"                         ", a, y);y+=yShift;
-                    g2d.drawString("       Mã hóa đơn: "+hd.getMaHoaDon()+"                         ", a, y);y+=yShift;
-                    g2d.drawString("       Tên Nhân viên: "+nv.getTennhanvien()+"                       ", a, y);y+=yShift;
-                    g2d.drawString("       Tên khách hàng: "+kh.getTenKhachHang()+"                  ", a, y);y+=yShift;
-                    g2d.drawString("-------------------------------------------------------------", a, y);y+=headerRectHeight;
-                    
-                    g2d.drawString("   Tên sản phẩm                              Tổng tiền(VND)   ", a, y);y+=yShift;
-                    g2d.drawString("-------------------------------------------------------------", a, y);y+=headerRectHeight;
-
-                    for (dtocthoadon i : limenu) {
-                        stt++;
-                        dtoctphieunhap ctpn = ctphieunhap.getspnhap(i.getMaSanPham());
-                        g2d.drawString("    "+stt+" "+i.getTensanpham()+"                                        ", a, y);y+=headerRectHeight;
-                        g2d.drawString("        "+ctpn.getGiaBan()+"      *"+i.getSoLuong()+"                            "+i.getSoLuong()*ctpn.getGiaBan(), a, y);y+=yShift;
-                        
-                    }
-                    g2d.drawString("-------------------------------------------------------------", a, y);y+=yShift;
-                    g2d.drawString("    Tổng tiền mua:                                     "+tongtien, a, y);y+=yShift;
-                    g2d.drawString("-------------------------------------------------------------", a, y);y+=yShift;
-                    g2d.drawString("    Áp dụng Khuyến mãi:                                -"+tongtienkm, a, y);y+=yShift;
-                    g2d.drawString("-------------------------------------------------------------", a, y);y+=yShift;
-                    g2d.drawString("    Ưu đãi khách hàng:                                   -"+tongtienud, a, y);y+=yShift;
-                    g2d.drawString("-------------------------------------------------------------", a, y);y+=yShift;
-                    g2d.drawString("    Thành tiền:                                           "+tongtienfi, a, y);y+=yShift;
-                    
-                    g2d.drawString("********************************************", a, y);y+=yShift;
-                    g2d.drawString("                       CẢM ƠN QUÝ KHÁCH                      ", a, y);y+=yShift;
-                    g2d.drawString("********************************************", a, y);y+=yShift;
-                    
-                }
-                catch(Exception e){
-                    e.printStackTrace();
-                }
-                result = PAGE_EXISTS;
-            }
-            return result;
+            warn("Không tìm thấy số điện thoại trong hệ thống!");
         }
     }
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
 
-        jSplitPane1 = new javax.swing.JSplitPane();
-        optionLayoutUtils1 = new gui.modal.layout.OptionLayoutUtils();
-        jPanel2 = new javax.swing.JPanel();
-        phonejLabel = new javax.swing.JLabel();
-        namejLabel = new javax.swing.JLabel();
-        phoneTextField = new gui.swing.login.MyTextField();
-        nameTextField = new gui.swing.login.MyTextField();
-        checkPhoneBtn = new gui.swing.login.Button();
-        newCustomerBtn = new gui.swing.login.Button();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        paymentTable = new javax.swing.JTable();
-        khuyenMai = new gui.comp.Combobox();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        note = new gui.comp.HintTextArea();
-        discountValue = new gui.swing.login.MyTextField();
-        creditPoint = new javax.swing.JLabel();
-        sale = new javax.swing.JLabel();
-        total = new javax.swing.JLabel();
-        creditPointValue = new gui.swing.login.MyTextField();
-        totalValue = new gui.swing.login.MyTextField();
-        saleValue = new gui.swing.login.MyTextField();
-        thanhToanBtn = new gui.swing.login.Button();
-
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
-
-        phonejLabel.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        phonejLabel.setText("Số điện thoại");
-
-        namejLabel.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        namejLabel.setText("Tên khách hàng");
-
-        phoneTextField.setToolTipText("");
-        phoneTextField.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        phoneTextField.setHint("Nhập số điện thoại khách hàng");
-        phoneTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                phoneTextFieldActionPerformed(evt);
-            }
-        });
-
-        nameTextField.setToolTipText("");
-        nameTextField.setEnabled(false);
-        nameTextField.setFocusable(false);
-        nameTextField.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        nameTextField.setHint("Tên khách hàng");
-        nameTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nameTextFieldActionPerformed(evt);
-            }
-        });
-
-        checkPhoneBtn.setBackground(new java.awt.Color(0, 204, 204));
-        checkPhoneBtn.setText("Kiểm tra");
-        checkPhoneBtn.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        checkPhoneBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkPhoneBtnActionPerformed(evt);
-            }
-        });
-
-        newCustomerBtn.setBackground(new java.awt.Color(0, 204, 204));
-        newCustomerBtn.setText("Tạo mới");
-        newCustomerBtn.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        newCustomerBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newCustomerBtnActionPerformed(evt);
-            }
-        });
-
-        paymentTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        paymentTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "ID", "Tên sản phẩm", "Số lượng", "Đơn giá", "Thành tiền"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        jScrollPane1.setViewportView(paymentTable);
-        if (paymentTable.getColumnModel().getColumnCount() > 0) {
-            paymentTable.getColumnModel().getColumn(0).setResizable(false);
-            paymentTable.getColumnModel().getColumn(1).setResizable(false);
-            paymentTable.getColumnModel().getColumn(2).setResizable(false);
-            paymentTable.getColumnModel().getColumn(3).setResizable(false);
-            paymentTable.getColumnModel().getColumn(4).setResizable(false);
+    private void createNewCustomer() {
+        String phone = txtPhone.getText().trim();
+        String name = txtName.getText().trim();
+        if (phone.isEmpty() || name.isEmpty()) {
+            warn("Vui lòng nhập số điện thoại và tên khách hàng!");
+            return;
         }
-
-        khuyenMai.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        khuyenMai.setLabeText("Khuyến mãi");
-        khuyenMai.setLineColor(new java.awt.Color(0, 204, 204));
-        khuyenMai.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                khuyenMaiActionPerformed(evt);
-            }
-        });
-
-        note.setColumns(20);
-        note.setRows(5);
-        note.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        note.setHint("Nhập ghi chú...");
-        jScrollPane3.setViewportView(note);
-
-        discountValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        discountValue.setToolTipText("");
-        discountValue.setEnabled(false);
-        discountValue.setFocusable(false);
-        discountValue.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        discountValue.setHint("0");
-        discountValue.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                discountValueActionPerformed(evt);
-            }
-        });
-
-        creditPoint.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        creditPoint.setText("Điểm tích luỹ");
-
-        sale.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        sale.setText("Ưu đãi");
-
-        total.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        total.setText("Tổng tiền");
-
-        creditPointValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        creditPointValue.setToolTipText("");
-        creditPointValue.setEnabled(false);
-        creditPointValue.setFocusable(false);
-        creditPointValue.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        creditPointValue.setHint("0");
-        creditPointValue.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                creditPointValueActionPerformed(evt);
-            }
-        });
-
-        totalValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        totalValue.setToolTipText("");
-        totalValue.setEnabled(false);
-        totalValue.setFocusable(false);
-        totalValue.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        totalValue.setHint("0");
-        totalValue.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                totalValueActionPerformed(evt);
-            }
-        });
-
-        saleValue.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        saleValue.setToolTipText("");
-        saleValue.setEnabled(false);
-        saleValue.setFocusable(false);
-        saleValue.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        saleValue.setHint("0");
-        saleValue.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saleValueActionPerformed(evt);
-            }
-        });
-
-        thanhToanBtn.setBackground(new java.awt.Color(0, 204, 204));
-        thanhToanBtn.setText("Thanh toán");
-        thanhToanBtn.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        thanhToanBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                thanhToanBtnActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(thanhToanBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane3)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(phonejLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(namejLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(phoneTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(nameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(checkPhoneBtn, javax.swing.GroupLayout.DEFAULT_SIZE, 105, Short.MAX_VALUE)
-                            .addComponent(newCustomerBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(khuyenMai, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(discountValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(creditPoint, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                            .addComponent(sale, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(total, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(18, 18, 18)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(creditPointValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(saleValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(totalValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(7, 7, 7)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(checkPhoneBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(phonejLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(phoneTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(newCustomerBtn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(namejLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(khuyenMai, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(discountValue, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(5, 5, 5)
-                        .addComponent(sale, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(creditPoint, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(total, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(saleValue, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(creditPointValue, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(totalValue, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(18, 18, 18)
-                .addComponent(thanhToanBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void newCustomerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newCustomerBtnActionPerformed
-        buskhachhang buskh = new buskhachhang();
-        String sdt = phoneTextField.getText();
-        String tenkh = nameTextField.getText();
-        dtokhachhang khmoi = new dtokhachhang(1,sdt,tenkh, 0, 1);
-        System.out.println(sdt);
-        System.out.println(tenkh);
-        if (sdt.isEmpty()||tenkh.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Nhập đầy đủ thông tin");
+        dtokhachhang khmoi = new dtokhachhang(1, phone, name, 0, 1);
+        if (busKH.addKhachHang(khmoi)) {
+            info("Thêm khách hàng mới thành công!");
         }
-        else {
-        boolean result = buskh.addKhachHang(khmoi);
-        if (result) {
-            JOptionPane.showMessageDialog(null, "Đã thêm khách hàng mới thành công");
+    }
+
+    private void onKhuyenMaiChanged() {
+        Object sel = cboKhuyenMai.getSelectedItem();
+        if (sel == null) {
+            return;
         }
+        String ten = sel.toString();
+        if (ten.equals("Bỏ chọn")) {
+            tongtienkm = 0;
+            tongtienfi = tongtien - tongtienud;
+            tfDiscount.setText("0 đ");
+            tfTotal.setText(fmt(tongtienfi));
+            cboKhuyenMai.setSelectedIndex(-1);
+            loadKhuyenMai();
+            return;
         }
-    }//GEN-LAST:event_newCustomerBtnActionPerformed
-
-    private void checkPhoneBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkPhoneBtnActionPerformed
-        // TODO add your handling code here:
-        if(!phoneTextField.getText().isEmpty()){
-            String phone = phoneTextField.getText();
-            if(!khachhang.checkphone(phone)){
-                JOptionPane.showMessageDialog(jPanel2, "Đã tìm thấy!");
-                
-                kh = khachhang.getkhbyphone(phone);
-                hd.setMaKhachHang(kh.getMaKhachHang());
-                nameTextField.setText(kh.getTenKhachHang());
-                ud.setMaUuDai(kh.getMaUudai());
-                ud = uudai.getud(ud);
-                double tienud = (tongtien*ud.getTiLeGiam())/100;
-                td = tichdiem.gettdbytien(tongtien);
-                hd.setMaTichDiem(td.getMaTichDiem());
-                diem = td.getDiemTichLuy();
-                tongtienfi = tongtienfi - tienud;
-                tongtienud = tienud;
-                saleValue.setText("- "+Integer.toString((int)tienud)+" đ "+Integer.toString(ud.getTiLeGiam())+" %");
-                creditPointValue.setText(Integer.toString(diem));
-                totalValue.setText(Integer.toString((int)tongtienfi));
-            }
-            else{
-                JOptionPane.showMessageDialog(jPanel2, "Không tìm thấy!");
-            }
+        km = busKM.getkmbyname(ten);
+        hd.setMaKhuyenMai(km.getMaKhuyenMai());
+        double tienkm = (tongtien * km.getPhanTram()) / 100;
+        tongtienkm = tienkm;
+        tongtienfi = tongtien - tongtienkm - tongtienud;
+        tfDiscount.setText("- " + fmt(tienkm));
+        tfTotal.setText(fmt(tongtienfi));
+        if (!"Bỏ chọn".equals(cboKhuyenMai.getItemAt(cboKhuyenMai.getItemCount() - 1))) {
+            cboKhuyenMai.addItem("Bỏ chọn");
         }
-        else{
-            JOptionPane.showMessageDialog(jPanel2, "Chưa nhập số điện thoại cần kiểm tra!");
-        }
-    }//GEN-LAST:event_checkPhoneBtnActionPerformed
+    }
 
-    private void nameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_nameTextFieldActionPerformed
-
-    private void phoneTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_phoneTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_phoneTextFieldActionPerformed
-
-    private void khuyenMaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_khuyenMaiActionPerformed
-        // TODO add your handling code here:
-        if (khuyenMai.getSelectedItem() != null) {
-            String selectedItem = khuyenMai.getSelectedItem().toString();
-
-            // Nếu "Bỏ chọn" được chọn
-            if (selectedItem.equals("Bỏ chọn")) {
-                // Loại bỏ khuyến mãi
-                khuyenMai.setSelectedIndex(-1); // Đặt lại combobox về trạng thái chưa chọn
-                cbimport(khuyenMai, khuyenmai.getkhuyenmaitoday()); // Load lại danh sách khuyến mãi
-                tongtienkm = 0; // Không có giảm giá
-                tongtienfi = tongtien; // Trả lại tổng tiền ban đầu
-                discountValue.setText("0 đ"); // Hiển thị không có giảm giá
-                totalValue.setText(Integer.toString((int) tongtien)); // Hiển thị tổng tiền gốc
-                khuyenMai.setFocusable(true);
-            } else { 
-                String tenkhuyenmai = selectedItem;
-                km = khuyenmai.getkmbyname(tenkhuyenmai);
-
-
-                hd.setMaKhuyenMai(km.getMaKhuyenMai());
-                double tienkm = (tongtien * km.getPhanTram()) / 100; 
-                tongtienkm = tienkm;
-                tongtienfi = tongtien - tongtienkm; 
-
-
-                discountValue.setText("-" + Integer.toString((int) tienkm) + " đ (" + Double.toString(km.getPhanTram()) + "%)");
-                totalValue.setText(Integer.toString((int) tongtienfi));
-
-
-                if (!"Bỏ chọn".equals(khuyenMai.getItemAt(khuyenMai.getItemCount() - 1))) {
-                    khuyenMai.addItem("Bỏ chọn");
-                }
-
-                khuyenMai.setFocusable(false); 
-            }
-        }
-    }//GEN-LAST:event_khuyenMaiActionPerformed
-
-    private void discountValueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_discountValueActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_discountValueActionPerformed
-
-    private void creditPointValueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_creditPointValueActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_creditPointValueActionPerformed
-
-    private void totalValueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_totalValueActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_totalValueActionPerformed
-
-    private void saleValueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saleValueActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_saleValueActionPerformed
-
-    private void thanhToanBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thanhToanBtnActionPerformed
-        // TODO add your handling code here:
-        hd.setGhiChu(note.getText());
-        hd.setNgayMua(new java.sql.Timestamp(((java.util.Date) new Date()).getTime()));
+    private void processPayment() {
+        hd.setGhiChu(txtNote.getText());
+        hd.setNgayMua(new java.sql.Timestamp(new Date().getTime()));
         hd.setTongTien(tongtienfi);
         hd.setIsHidden(0);
-        int mahd = hoadon.maxID()+1;
+        int mahd = busHD.maxID() + 1;
         hd.setMaHoaDon(mahd);
-        if(hd.getMaKhachHang() == 0 && hd.getMaKhuyenMai() == 0){
-            hoadon.addhdnokmkh(hd);
+
+        if (hd.getMaKhachHang() == 0 && hd.getMaKhuyenMai() == 0) {
+            busHD.addhdnokmkh(hd);
+        } else if (hd.getMaKhachHang() == 0) {
+            busHD.addhdnokh(hd);
+            updateKM();
+        } else if (hd.getMaKhuyenMai() == 0) {
+            busHD.addhdnokm(hd);
+            updateKH();
+        } else {
+            busHD.add(hd);
+            updateKM();
+            updateKH();
         }
-        else if(hd.getMaKhachHang() ==0 ){
-            hoadon.addhdnokh(hd);
-            
-            km.setSoLuongDaDung(km.getSoLuongDaDung()+1);
-            khuyenmai.updatekhuyenmai(km);
-        }
-        else if(hd.getMaKhuyenMai() ==0 ){
-            hoadon.addhdnokm(hd);
-            
-            kh.setDiemTichLuy(kh.getDiemTichLuy()+diem);
-            kh.setMaUudai(uudai.setudbydiem(kh.getDiemTichLuy()).getMaUuDai());
-            khachhang.updatediemtichluy(kh);
-        }
-        else{
-            hoadon.add(hd);
-            
-            km.setSoLuongDaDung(km.getSoLuongDaDung()+1);
-            khuyenmai.updatekhuyenmai(km);
-                        
-            kh.setDiemTichLuy(kh.getDiemTichLuy()+diem);
-            kh.setMaUudai(uudai.setudbydiem(kh.getDiemTichLuy()).getMaUuDai());
-            khachhang.updatediemtichluy(kh);
-        }
-        hoadon.getlist();
+
+        busHD.getlist();
         hd.setMaHoaDon(mahd);
-        // add chi tiet hoa don
-        for(dtocthoadon i: limenu){
-            i.setMaHoaDon(mahd);
-            dtoctphieunhap ctpn = ctphieunhap.getspnhap(i.getMaSanPham());
-            i.setDonGia(ctpn.getGiaBan());
-            cthoadon.add(i);
-            
-            int masp = i.getMaSanPham();
-            int soluong = ctpn.getSoluongtonkho() - i.getSoLuong();
-            ctpn.setSoluongtonkho(soluong);
-            ctphieunhap.update(ctpn);
+        for (dtocthoadon ct : limenu) {
+            ct.setMaHoaDon(mahd);
+            dtoctphieunhap ctpn = busCTPN.getspnhap(ct.getMaSanPham());
+            ct.setDonGia(ctpn.getGiaBan());
+            busCTHD.add(ct);
+            ctpn.setSoluongtonkho(ctpn.getSoluongtonkho() - ct.getSoLuong());
+            busCTPN.update(ctpn);
         }
-        JOptionPane.showMessageDialog(this, "Thanh toán thành công! In hóa đơn");
 
-        bHeight = Double.valueOf(limenu.size());
-
+        info("Thanh toán thành công! Đang in hóa đơn...");
+        bHeight = limenu.size();
         PrinterJob pj = PrinterJob.getPrinterJob();
         pj.setPrintable(new BillPrintable(), getPageFormat(pj));
-         try {
+        try {
             pj.print();
         } catch (PrinterException ex) {
             ex.printStackTrace();
         }
-        
-        this.dispose();
-    }//GEN-LAST:event_thanhToanBtnActionPerformed
-     public static void main(String[] args) {
-        // Tạo danh sách sản phẩm mẫu cho `dtocthoadon`
-        ArrayList<dtocthoadon> sampleList = new ArrayList<>();
+        dispose();
+    }
 
-        // Thêm dữ liệu giả lập
-        for (int i = 1; i <= 5; i++) {
-            dtocthoadon item = new dtocthoadon();
-            item.setMaSanPham(i);      // ID sản phẩm
-            item.setSoLuong(i * 2);    // Số lượng
-            sampleList.add(item);
+    private void updateKM() {
+        km.setSoLuongDaDung(km.getSoLuongDaDung() + 1);
+        busKM.updatekhuyenmai(km);
+    }
+
+    private void updateKH() {
+        kh.setDiemTichLuy(kh.getDiemTichLuy() + diem);
+        kh.setMaUudai(busUD.setudbydiem(kh.getDiemTichLuy()).getMaUuDai());
+        busKH.updatediemtichluy(kh);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  PRINT
+    // ─────────────────────────────────────────────────────────────
+    public PageFormat getPageFormat(PrinterJob pj) {
+        PageFormat pf = pj.defaultPage();
+        Paper paper = pf.getPaper();
+        double w = cm_to_pp(14.5), h = cm_to_pp(14.8);
+        paper.setSize(w, h);
+        paper.setImageableArea(0, 5, w, h);
+        pf.setOrientation(PageFormat.PORTRAIT);
+        pf.setPaper(paper);
+        return pf;
+    }
+
+    protected static double cm_to_pp(double cm) {
+        return toPPI(cm * 0.393600787);
+    }
+
+    protected static double toPPI(double inch) {
+        return inch * 72d;
+    }
+
+    public class BillPrintable implements Printable {
+
+        @Override
+        public int print(Graphics g, PageFormat pf, int pageIndex) throws PrinterException {
+            if (pageIndex != 0) {
+                return NO_SUCH_PAGE;
+            }
+            Graphics2D g2 = (Graphics2D) g;
+            g2.translate((int) pf.getImageableX(), (int) pf.getImageableY());
+            g2.setFont(new Font("Times New Roman", Font.PLAIN, 9));
+            int a = 125, y = 20, ys = 10, rh = 15;
+            g2.drawString("-------------------------------------------------------------", a, y);
+            y += ys;
+            g2.drawString("            CỬA HÀNG TIỆN LỢI ABC", a, y);
+            y += ys;
+            g2.drawString("       Ngày mua: " + hd.getNgayMua(), a, y);
+            y += ys;
+            g2.drawString("       Mã HĐ: " + hd.getMaHoaDon(), a, y);
+            y += ys;
+            g2.drawString("       Nhân viên: " + nv.getTennhanvien(), a, y);
+            y += ys;
+            g2.drawString("       Khách hàng: " + kh.getTenKhachHang(), a, y);
+            y += ys;
+            g2.drawString("-------------------------------------------------------------", a, y);
+            y += rh;
+            g2.drawString("   Tên sản phẩm                        Tổng tiền (VND)", a, y);
+            y += ys;
+            g2.drawString("-------------------------------------------------------------", a, y);
+            y += rh;
+            int stt = 0;
+            for (dtocthoadon i : limenu) {
+                stt++;
+                dtoctphieunhap ctpn = busCTPN.getspnhap(i.getMaSanPham());
+                g2.drawString("  " + stt + " " + i.getTensanpham(), a, y);
+                y += rh;
+                g2.drawString("      " + ctpn.getGiaBan() + " x " + i.getSoLuong() + " = " + i.getSoLuong() * ctpn.getGiaBan(), a, y);
+                y += ys;
+            }
+            g2.drawString("-------------------------------------------------------------", a, y);
+            y += ys;
+            g2.drawString("    Tổng tiền:       " + tongtien, a, y);
+            y += ys;
+            g2.drawString("    Khuyến mãi:    - " + tongtienkm, a, y);
+            y += ys;
+            g2.drawString("    Ưu đãi KH:     - " + tongtienud, a, y);
+            y += ys;
+            g2.drawString("    Thành tiền:      " + tongtienfi, a, y);
+            y += ys;
+            g2.drawString("-------------------------------------------------------------", a, y);
+            y += ys;
+            g2.drawString("                    CẢM ƠN QUÝ KHÁCH", a, y);
+            return PAGE_EXISTS;
         }
+    }
 
-        // ID nhân viên mẫu
-        int maNhanVien = 123;
+    // ─────────────────────────────────────────────────────────────
+    //  UI HELPERS
+    // ─────────────────────────────────────────────────────────────
+    private JPanel card(String title) {
+        JPanel container = new JPanel(new MigLayout(
+                "wrap, fillx, insets 0",
+                "[fill]",
+                "[][fill]"
+        ));
 
-        // Chạy JFrame `formthanhtoan`
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            formthanhtoan form = new formthanhtoan(sampleList, maNhanVien);
-            form.setTitle("Form Thanh Toán");
-            form.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-            form.setSize(510, 687);
-            form.setLocationRelativeTo(null);
-            form.setVisible(true);
-        });
-     }
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private gui.swing.login.Button checkPhoneBtn;
-    private javax.swing.JLabel creditPoint;
-    private gui.swing.login.MyTextField creditPointValue;
-    private gui.swing.login.MyTextField discountValue;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JSplitPane jSplitPane1;
-    private gui.comp.Combobox khuyenMai;
-    private gui.swing.login.MyTextField nameTextField;
-    private javax.swing.JLabel namejLabel;
-    private gui.swing.login.Button newCustomerBtn;
-    private gui.comp.HintTextArea note;
-    private gui.modal.layout.OptionLayoutUtils optionLayoutUtils1;
-    private javax.swing.JTable paymentTable;
-    private gui.swing.login.MyTextField phoneTextField;
-    private javax.swing.JLabel phonejLabel;
-    private javax.swing.JLabel sale;
-    private gui.swing.login.MyTextField saleValue;
-    private gui.swing.login.Button thanhToanBtn;
-    private javax.swing.JLabel total;
-    private gui.swing.login.MyTextField totalValue;
-    // End of variables declaration//GEN-END:variables
+        container.putClientProperty(FlatClientProperties.STYLE,
+                "background: $Panel.background; border: 1,1,1,1,$Component.borderColor,,10;");
 
+        JLabel lbl = new JLabel(title);
+        lbl.putClientProperty(FlatClientProperties.STYLE, "font: bold +1;");
+        lbl.setBorder(BorderFactory.createEmptyBorder(10, 14, 8, 14));
+
+        JPanel content = new JPanel();
+        content.setOpaque(false);
+
+        container.add(lbl);
+        container.add(content, "grow");
+
+        return container;
+    }
+
+    private JPanel summaryRow(String label, JTextField valueField) {
+        JPanel row = new JPanel(new MigLayout("fillx, insets 0", "[fill,grow][130!]", "[]"));
+        row.setBackground(Color.WHITE);
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(lbl.getFont().deriveFont(Font.PLAIN, 12f));
+        lbl.setForeground(TEXT_MUTED);
+        row.add(lbl);
+        row.add(valueField, "height 34!");
+        return row;
+    }
+
+    private JTextField styledField(String placeholder) {
+        JTextField tf = new JTextField();
+        tf.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, placeholder);
+        tf.putClientProperty(FlatClientProperties.STYLE,
+                "arc: 8; borderWidth: 1; focusedBorderColor: #6366f1;");
+        return tf;
+    }
+
+    private JTextField readonlyField(String val) {
+        JTextField tf = new JTextField(val);
+        tf.setEditable(false);
+        tf.setHorizontalAlignment(SwingConstants.RIGHT);
+        tf.putClientProperty(FlatClientProperties.STYLE,
+                "arc: 8; borderWidth: 1; background: $Panel.background;");
+        return tf;
+    }
+
+    private JLabel fieldLbl(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(l.getFont().deriveFont(Font.PLAIN, 11f));
+        l.setForeground(TEXT_MUTED);
+        l.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
+        return l;
+    }
+
+    private JButton accentBtn(String text, Color bg) {
+        JButton btn = new JButton(text);
+        btn.putClientProperty(FlatClientProperties.STYLE,
+                "background: " + hex(bg) + "; foreground: #ffffff;"
+                + "borderWidth: 0; arc: 8; focusWidth: 0;");
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private JButton outlineBtn(String text) {
+        JButton btn = new JButton(text);
+        btn.putClientProperty(FlatClientProperties.STYLE, "arc: 8; borderWidth: 1; focusWidth: 0;");
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private static String hex(Color c) {
+        return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
+    }
+
+    private static String fmt(double val) {
+        return String.format("%,.0f đ", val);
+    }
+
+    private void info(String msg) {
+        JOptionPane.showMessageDialog(this, msg, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void warn(String msg) {
+        JOptionPane.showMessageDialog(this, msg, "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
 }

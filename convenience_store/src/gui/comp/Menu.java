@@ -81,12 +81,21 @@ public class Menu extends javax.swing.JPanel {
                     submenu.add(cn.getTenChucNang());
                 }
             }
-            if (macv != 1 && "Nhân Viên".equalsIgnoreCase(dm.getTenDanhMuc())) {
-                if (!submenu.contains("Thông tin cá nhân")) {
-                    submenu.add("Thông tin cá nhân");
-                }
-                if (!submenu.contains("Cách tính lương")) {
-                    submenu.add("Cách tính lương");
+            if ("Nhân Viên".equalsIgnoreCase(dm.getTenDanhMuc())) {
+                if (macv == 1) {
+                    if (!submenu.contains("Nghỉ phép")) {
+                        submenu.add("Nghỉ phép");
+                    }
+                } else {
+                    if (!submenu.contains("Làm đơn nghỉ phép")) {
+                        submenu.add("Làm đơn nghỉ phép");
+                    }
+                    if (!submenu.contains("Thông tin cá nhân")) {
+                        submenu.add("Thông tin cá nhân");
+                    }
+                    if (!submenu.contains("Cách tính lương")) {
+                        submenu.add("Cách tính lương");
+                    }
                 }
             }
             if(!submenu.isEmpty()){

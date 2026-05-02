@@ -19,6 +19,7 @@ import gui.form.formhoadon;
 import gui.form.formhopdong;
 import gui.form.formphieunhap;
 import gui.form.formkhachhang;
+import gui.form.formnghiphep;
 import gui.form.formluong;
 import gui.form.formnhacungcap;
 import gui.form.formphanloai;
@@ -226,6 +227,10 @@ public class Guimain extends javax.swing.JFrame {
                 return new formphanloai();
             case "Cach tinh luong":
                 return new formcachtinhluong(nv.getManhanvien());
+            case "Nghi phep":
+                return new formnghiphep(nv.getManhanvien(), true);
+            case "Lam don nghi phep":
+                return new formnghiphep(nv.getManhanvien(), false);
             default:
                 return null;
         }
