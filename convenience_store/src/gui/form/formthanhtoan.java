@@ -81,8 +81,9 @@ public class formthanhtoan extends JDialog {
         loadPaymentTable(list);
         loadKhuyenMai();
 
-        setSize(1100, 760);
-        setMinimumSize(new Dimension(900, 700));
+        setPreferredSize(new Dimension(2000, 750));
+        pack();
+        setLocationRelativeTo(null);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
@@ -124,93 +125,106 @@ public class formthanhtoan extends JDialog {
     // ── Body (2 columns) ──────────────────────────────────────────
     private JPanel buildBody() {
         JPanel p = new JPanel(new MigLayout(
-                "fill, insets 16 20 8 20, gap 16",
-                "[grow 40][grow 60]",
+                "fill, insets 16 20 8 20, gap 20",
+                "[grow 35][grow 65]", // LEFT nhỏ hơn, RIGHT to ra
                 "[fill]"
         ));
         p.setBackground(Color.WHITE);
 
         p.add(buildLeftPanel(), "grow");
         p.add(buildRightPanel(), "grow");
+
         return p;
     }
 
     // ── LEFT: Khách hàng + Khuyến mãi + Tóm tắt ─────────────────
     private JPanel buildLeftPanel() {
         JPanel p = new JPanel(new MigLayout(
-                "fillx, wrap, insets 0", "[fill,grow][8!][grow 30]", "[][16!][][16!][][16!][]"));
+                "fillx, wrap, insets 0, gap 16",
+                "[grow]",
+                "[]"
+        ));
         p.setBackground(Color.WHITE);
 
-        // ── Customer card ─────────────────────────────────────────
-        JPanel custCard = card("Thông tin khách hàng");
-        JPanel content = (JPanel) custCard.getComponent(1);
+        p.add(buildCustomerCard(), "growx");
+        p.add(buildKhuyenMaiCard(), "growx");
+        p.add(buildSummaryCard(), "growx");
 
-        content.setLayout(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]8[]8[]"));
+        return p;
+    }
+
+    private JPanel buildCustomerCard() {
+        JPanel card = card("Thông tin khách hàng");
+        JPanel content = (JPanel) card.getComponent(1);
+
+        content.setLayout(new MigLayout(
+                "fillx, wrap",
+                "[grow]",
+                "[]8[]8[]8[]"
+        ));
 
         txtPhone = styledField("Nhập số điện thoại...");
         txtName = styledField("Tên khách hàng");
         txtName.setEnabled(false);
 
-        JPanel phoneRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][90!]", "[]"));
-        phoneRow.setBackground(Color.WHITE);
-        phoneRow.add(txtPhone, "height 34!");
         JButton btnCheck = accentBtn("Kiểm tra", ACCENT);
-        btnCheck.addActionListener(e -> checkPhone());
-        phoneRow.add(btnCheck, "height 34!");
+        JButton btnNew = accentBtn("Tạo mới", ACCENT);
 
-        JPanel nameRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][90!]", "[]"));
-        nameRow.setBackground(Color.WHITE);
-        nameRow.add(txtName, "height 34!");
-        JButton btnNew = accentBtn("Tạo mới", new Color(79, 70, 229));
-        btnNew.addActionListener(e -> createNewCustomer());
-        nameRow.add(btnNew, "height 34!");
+        content.add(fieldLbl("Số điện thoại"));
+        content.add(txtPhone, "growx, h 35!");
+        content.add(btnCheck, "w 100!, h 35!");
 
-        custCard.add(fieldLbl("Số điện thoại"));
-        custCard.add(phoneRow, "growx");
-        custCard.add(fieldLbl("Tên khách hàng"));
-        custCard.add(nameRow, "growx");
-        p.add(custCard, "growx");
+        content.add(fieldLbl("Tên khách hàng"));
+        content.add(txtName, "growx, h 35!");
+        content.add(btnNew, "w 100!, h 35!");
 
-        // ── Khuyến mãi card ───────────────────────────────────────
-        JPanel kmCard = card("Khuyến mãi");
-        kmCard.setLayout(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]8[]"));
+        return card;
+    }
+
+    private JPanel buildKhuyenMaiCard() {
+        JPanel card = card("Khuyến mãi");
+        JPanel content = (JPanel) card.getComponent(1);
+
+        content.setLayout(new MigLayout(
+                "fillx, wrap",
+                "[grow][120!]",
+                "[]8[]"
+        ));
 
         cboKhuyenMai = new Combobox();
-        cboKhuyenMai.setLabeText("Chọn khuyến mãi");
-        cboKhuyenMai.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
-        cboKhuyenMai.addActionListener(e -> onKhuyenMaiChanged());
-
         tfDiscount = readonlyField("0 đ");
-        JPanel kmRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][shrink 0]", "[]"));
-        kmRow.setBackground(Color.WHITE);
-        kmRow.add(cboKhuyenMai, "height 36!");
-        kmRow.add(tfDiscount, "height 36!, width 110!");
 
-        kmCard.add(fieldLbl("Chương trình giảm giá"));
-        kmCard.add(kmRow, "growx");
-        p.add(kmCard, "growx");
+        content.add(fieldLbl("Chương trình giảm giá"), "span");
+        content.add(cboKhuyenMai, "growx, h 35!");
+        content.add(tfDiscount, "h 35!");
 
-        // ── Summary card ──────────────────────────────────────────
-        JPanel sumCard = card("Tóm tắt thanh toán");
-        sumCard.setLayout(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]6[]6[]6[]"));
+        return card;
+    }
+
+    private JPanel buildSummaryCard() {
+        JPanel card = card("Tóm tắt thanh toán");
+        JPanel content = (JPanel) card.getComponent(1);
+
+        content.setLayout(new MigLayout(
+                "fillx, wrap",
+                "[grow][120!]",
+                "[]8[]8[]"
+        ));
 
         tfSale = readonlyField("0 đ");
         tfCredit = readonlyField("0 đ");
         tfTotal = readonlyField(fmt(tongtien));
-        tfTotal.setFont(tfTotal.getFont().deriveFont(Font.BOLD, 14f));
-        tfTotal.setForeground(DANGER);
 
-        sumCard.add(summaryRow("Ưu đãi khách hàng", tfSale));
-        sumCard.add(summaryRow("Điểm tích lũy", tfCredit));
+        content.add(new JLabel("Ưu đãi khách hàng"));
+        content.add(tfSale);
 
-        JSeparator sep = new JSeparator();
-        sep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
-        sumCard.add(sep, "growx, height 1!");
+        content.add(new JLabel("Điểm tích lũy"));
+        content.add(tfCredit);
 
-        sumCard.add(summaryRow("Thành tiền", tfTotal));
-        p.add(sumCard, "growx");
+        content.add(new JLabel("Thành tiền"));
+        content.add(tfTotal);
 
-        return p;
+        return card;
     }
 
     // ── RIGHT: Bảng sản phẩm + Ghi chú ──────────────────────────
@@ -546,24 +560,19 @@ public class formthanhtoan extends JDialog {
     //  UI HELPERS
     // ─────────────────────────────────────────────────────────────
     private JPanel card(String title) {
-        JPanel container = new JPanel(new MigLayout(
-                "wrap, fillx, insets 0",
-                "[fill]",
-                "[][fill]"
-        ));
+        JPanel container = new JPanel(new BorderLayout());
 
         container.putClientProperty(FlatClientProperties.STYLE,
                 "background: $Panel.background; border: 1,1,1,1,$Component.borderColor,,10;");
 
         JLabel lbl = new JLabel(title);
-        lbl.putClientProperty(FlatClientProperties.STYLE, "font: bold +1;");
         lbl.setBorder(BorderFactory.createEmptyBorder(10, 14, 8, 14));
 
         JPanel content = new JPanel();
         content.setOpaque(false);
 
-        container.add(lbl);
-        container.add(content, "grow");
+        container.add(lbl, BorderLayout.NORTH);
+        container.add(content, BorderLayout.CENTER);
 
         return container;
     }
