@@ -36,7 +36,7 @@ CREATE TABLE `chamcong` (
   PRIMARY KEY (`maChamCong`),
   KEY `fk_chamcong_nhanvien_idx` (`maNhanVien`),
   CONSTRAINT `fk_chamcong_nhanvien` FOREIGN KEY (`maNhanVien`) REFERENCES `nhanvien` (`maNhanVien`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,39 +45,8 @@ CREATE TABLE `chamcong` (
 
 LOCK TABLES `chamcong` WRITE;
 /*!40000 ALTER TABLE `chamcong` DISABLE KEYS */;
-INSERT INTO `chamcong` VALUES (1,1,1,10,1,NULL,9,2024),(2,2,2,12,2,NULL,9,2024),(3,3,3,13,3,NULL,9,2024),(4,4,4,14,4,NULL,9,2024),(5,5,5,15,5,NULL,9,2024),(6,6,6,26,6,NULL,9,2024),(7,7,7,17,7,NULL,9,2024),(8,8,8,18,8,NULL,9,2024),(9,9,9,16,9,NULL,9,2024),(10,10,10,13,10,NULL,9,2024),(11,1,0,0,0,'',12,2024),(12,2,0,0,0,'',12,2024),(13,3,0,0,0,'',12,2024),(14,4,0,0,0,'',12,2024),(15,5,0,0,0,'',12,2024),(16,6,0,0,0,'',12,2024),(17,7,0,0,0,'',12,2024),(18,9,0,0,0,'',12,2024),(19,10,0,0,0,'',12,2024),(20,1,0,0,0,'',2,2025),(21,2,0,0,0,'',2,2025),(22,3,0,0,0,'',2,2025),(23,4,0,0,0,'',2,2025),(24,5,0,0,0,'',2,2025),(25,6,0,0,0,'',2,2025),(26,7,0,0,0,'',2,2025),(27,9,0,0,0,'',2,2025),(28,10,0,0,0,'',2,2025),(29,1,0,0,0,'',3,2025),(30,2,0,0,0,'',3,2025),(31,3,0,0,0,'',3,2025),(32,4,0,0,0,'',3,2025),(33,5,0,0,0,'',3,2025),(34,6,0,0,0,'',3,2025),(35,7,0,0,0,'',3,2025),(36,9,0,0,0,'',3,2025),(37,10,0,0,0,'',3,2025),(40,1,0,1,0,'',1,2026),(41,2,0,0,0,'',1,2026),(42,3,0,0,0,'',1,2026),(43,4,0,0,0,'',1,2026),(44,5,0,0,0,'',1,2026),(45,6,0,0,0,'',1,2026),(46,7,0,0,0,'',1,2026),(47,9,0,0,0,'',1,2026),(48,10,0,0,0,'',1,2026);
+INSERT INTO `chamcong` VALUES (1,1,1,10,1,NULL,9,2024),(2,2,2,12,2,NULL,9,2024),(3,3,3,13,3,NULL,9,2024),(4,4,4,14,4,NULL,9,2024),(5,5,5,15,5,NULL,9,2024),(6,6,6,26,6,NULL,9,2024),(7,7,7,17,7,NULL,9,2024),(8,8,8,18,8,NULL,9,2024),(9,9,9,16,9,NULL,9,2024),(10,10,10,13,10,NULL,9,2024),(11,1,0,0,0,'',12,2024),(12,2,0,0,0,'',12,2024),(13,3,0,0,0,'',12,2024),(14,4,0,0,0,'',12,2024),(15,5,0,0,0,'',12,2024),(16,6,0,0,0,'',12,2024),(17,7,0,0,0,'',12,2024),(18,9,0,0,0,'',12,2024),(19,10,0,0,0,'',12,2024),(20,1,0,0,0,'',2,2025),(21,2,0,0,0,'',2,2025),(22,3,0,0,0,'',2,2025),(23,4,0,0,0,'',2,2025),(24,5,0,0,0,'',2,2025),(25,6,0,0,0,'',2,2025),(26,7,0,0,0,'',2,2025),(27,9,0,0,0,'',2,2025),(28,10,0,0,0,'',2,2025),(29,1,0,0,0,'',3,2025),(30,2,0,0,0,'',3,2025),(31,3,0,0,0,'',3,2025),(32,4,0,0,0,'',3,2025),(33,5,0,0,0,'',3,2025),(34,6,0,0,0,'',3,2025),(35,7,0,0,0,'',3,2025),(36,9,0,0,0,'',3,2025),(37,10,0,0,0,'',3,2025),(40,1,0,2,0,'',1,2026),(41,2,0,0,0,'',1,2026),(42,3,0,0,0,'',1,2026),(43,4,0,0,0,'',1,2026),(44,5,0,0,0,'',1,2026),(45,6,0,0,0,'',1,2026),(46,7,0,0,0,'',1,2026),(47,9,0,0,0,'',1,2026),(48,10,0,0,0,'',1,2026),(50,1,0,0,0,'',4,2026),(51,1,0,1,0,'',5,2026),(52,2,0,0,0,'',5,2026),(53,3,0,0,0,'',5,2026),(54,4,0,0,0,'',5,2026),(55,5,0,0,0,'',5,2026),(56,6,0,0,0,'',5,2026),(57,7,0,0,0,'',5,2026),(58,9,0,0,0,'',5,2026),(59,10,0,0,0,'',5,2026),(60,11,0,0,0,'',5,2026);
 /*!40000 ALTER TABLE `chamcong` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `chitietchamcong`
---
-
-DROP TABLE IF EXISTS `chitietchamcong`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `chitietchamcong` (
-  `maChiTietChamCong` int NOT NULL AUTO_INCREMENT,
-  `ngayChamCong` date DEFAULT NULL,
-  `loaiChamCong` varchar(45) DEFAULT NULL,
-  `soGioLam` int DEFAULT NULL,
-  `maChamCong` int DEFAULT NULL,
-  `gioBatDau` timestamp NULL DEFAULT NULL,
-  `gioKetThuc` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`maChiTietChamCong`),
-  KEY `fk_chamcong_idx` (`maChamCong`),
-  CONSTRAINT `fk_chamcong` FOREIGN KEY (`maChamCong`) REFERENCES `chamcong` (`maChamCong`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `chitietchamcong`
---
-
-LOCK TABLES `chitietchamcong` WRITE;
-/*!40000 ALTER TABLE `chitietchamcong` DISABLE KEYS */;
-INSERT INTO `chitietchamcong` VALUES (1,'2024-12-11','Bình thường',0,11,'2024-12-10 17:12:15',NULL),(2,'2026-01-25','Bình thường',0,40,'2026-01-25 12:53:34','2026-01-25 12:53:35');
-/*!40000 ALTER TABLE `chitietchamcong` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -98,7 +67,7 @@ CREATE TABLE `chitiethoadon` (
   KEY `maSanPham` (`maSanPham`,`maHoaDon`),
   CONSTRAINT `chitiethoadon_ibfk_1` FOREIGN KEY (`maSanPham`) REFERENCES `sanpham` (`maSanPham`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `chitiethoadon_ibfk_2` FOREIGN KEY (`maHoaDon`) REFERENCES `hoadon` (`maHoaDon`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=231 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=236 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -107,7 +76,7 @@ CREATE TABLE `chitiethoadon` (
 
 LOCK TABLES `chitiethoadon` WRITE;
 /*!40000 ALTER TABLE `chitiethoadon` DISABLE KEYS */;
-INSERT INTO `chitiethoadon` VALUES (223,108,1,5000,1),(224,108,2,5000,2),(225,113,1,22000,2),(226,109,1,31000,2),(227,108,1,5000,3),(228,118,1,29000,3),(229,108,4,5000,4),(230,108,5,5000,5);
+INSERT INTO `chitiethoadon` VALUES (223,108,1,5000,1),(224,108,2,5000,2),(225,113,1,22000,2),(226,109,1,31000,2),(227,108,1,5000,3),(228,118,1,29000,3),(229,108,4,5000,4),(230,108,5,5000,5),(231,108,1,44357,6),(232,108,1,44357,7),(233,108,1,44357,8),(234,108,1,44357,9),(235,108,5,44357,10);
 /*!40000 ALTER TABLE `chitiethoadon` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -134,7 +103,7 @@ CREATE TABLE `chitietphieunhap` (
   KEY `fk_CTPhieuNhap_sanPham` (`maSanPham`),
   CONSTRAINT `chitietphieunhap_ibfk_1` FOREIGN KEY (`maSanPham`) REFERENCES `sanpham` (`maSanPham`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `chitietphieunhap_ibfk_2` FOREIGN KEY (`maPhieuNhap`) REFERENCES `phieunhap` (`maPhieuNhap`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=98 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=102 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -143,7 +112,7 @@ CREATE TABLE `chitietphieunhap` (
 
 LOCK TABLES `chitietphieunhap` WRITE;
 /*!40000 ALTER TABLE `chitietphieunhap` DISABLE KEYS */;
-INSERT INTO `chitietphieunhap` VALUES (76,9,24000,1,109,'2024-12-24',1,'',8,31000),(77,9,4000,2,138,'2024-12-17',1,'',9,5500),(78,15,6000,3,139,'2024-12-09',1,'',15,8000),(79,5,5000,3,140,'2024-12-28',1,'',5,5500),(80,20,4000,4,108,'2027-12-21',0,'',7,5000),(81,1,25000,4,118,'2025-12-23',1,'',0,29000),(82,30,6000,4,125,'2024-12-31',1,'',30,6900),(83,1,15000,4,115,'2024-12-11',1,'',1,15600),(84,1,20000,4,104,'2024-12-09',1,'',1,22000),(85,8,55000,5,158,'2024-12-28',1,'',8,61000),(86,5,9000,6,155,'2024-12-20',1,'',5,10000),(87,10,4000,6,152,'2024-12-13',1,'',10,4500),(88,1,8000,7,131,'2025-12-17',1,'',1,10000),(89,1,6000,7,121,'2024-12-25',1,'',1,7500),(90,15,12000,7,122,'2024-12-25',1,'',15,13300),(91,1,9000,8,156,'2024-12-19',1,'',1,12000),(92,10,6000,9,142,'2024-12-27',1,'',10,7500),(93,1,5000,10,134,'2025-12-23',1,'',1,5500),(94,20,9000,10,121,'2024-12-27',1,'',20,10200),(95,9,20000,10,113,'2024-12-31',1,'',8,22000),(96,1,6000,10,128,'2025-12-24',1,'',1,8000),(97,1,9000,10,124,'2024-12-28',1,'',1,10500);
+INSERT INTO `chitietphieunhap` VALUES (76,9,24000,1,109,'2024-12-24',1,'',1000,21073),(77,9,4000,2,138,'2024-12-17',1,'',1000,18475),(78,15,6000,3,139,'2024-12-09',1,'',1000,19158),(79,5,5000,3,140,'2024-12-28',1,'',1000,30367),(80,20,4000,4,108,'2027-12-21',0,'',991,44357),(81,1,25000,4,118,'2025-12-23',1,'',1000,40688),(82,30,6000,4,125,'2024-12-31',1,'',1000,20366),(83,1,15000,4,115,'2024-12-11',1,'',1000,49768),(84,1,20000,4,104,'2024-12-09',1,'',1000,17742),(85,8,55000,5,158,'2024-12-28',1,'',1000,49404),(86,5,9000,6,155,'2024-12-20',1,'',1000,23795),(87,10,4000,6,152,'2024-12-13',1,'',1000,40762),(88,1,8000,7,131,'2025-12-17',1,'',1000,42424),(89,1,6000,7,121,'2024-12-25',1,'',1000,39837),(90,15,12000,7,122,'2024-12-25',1,'',1000,21912),(91,1,9000,8,156,'2024-12-19',1,'',1000,20049),(92,10,6000,9,142,'2024-12-27',1,'',1000,24509),(93,1,5000,10,134,'2025-12-23',1,'',1000,12398),(94,20,9000,10,121,'2024-12-27',1,'',1000,18462),(95,9,20000,10,113,'2024-12-31',1,'',1000,45116),(96,1,6000,10,128,'2025-12-24',1,'',1000,40195),(97,1,9000,10,124,'2024-12-28',1,'',1000,15627),(98,1000,12000,10,60,'2027-12-31',0,'',1000,28800),(99,1,10000,11,144,'2026-01-31',1,'',1,10100),(100,1,8000,12,137,'2027-04-22',0,'',1,10000),(101,1,8000,12,137,'2027-04-22',0,'',1,10000);
 /*!40000 ALTER TABLE `chitietphieunhap` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -162,7 +131,7 @@ CREATE TABLE `chucnang` (
   PRIMARY KEY (`maChucNang`),
   KEY `fk_group_idx` (`maDanhMuc`),
   CONSTRAINT `fk_group` FOREIGN KEY (`maDanhMuc`) REFERENCES `danhmuc` (`maDanhMuc`)
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -171,7 +140,7 @@ CREATE TABLE `chucnang` (
 
 LOCK TABLES `chucnang` WRITE;
 /*!40000 ALTER TABLE `chucnang` DISABLE KEYS */;
-INSERT INTO `chucnang` VALUES (1,'Menu',1,0),(2,'Hóa đơn',1,0),(3,'Sản phẩm',2,0),(4,'Nhà cung cấp',2,0),(5,'Phiếu nhập',2,0),(6,'Thông tin nhân viên',3,0),(7,'Tài khoản',3,0),(8,'Chức vụ',3,0),(9,'Chấm công',3,0),(10,'Lương',3,0),(11,'Hợp đồng lao động',3,0),(12,'Thông tin khách hàng',4,0),(13,'Ưu đãi & khuyến mãi',4,0),(15,'Tổng quan',5,0),(16,'Thống kê sản phẩm',5,0),(20,'Phân loại',6,0),(21,'Chấm công hàng ngày',6,0);
+INSERT INTO `chucnang` VALUES (1,'Menu',1,0),(2,'Hóa đơn',1,0),(3,'Sản phẩm',2,0),(4,'Nhà cung cấp',2,0),(5,'Phiếu nhập',2,0),(6,'Thông tin nhân viên',3,0),(7,'Tài khoản',3,0),(8,'Chức vụ',3,0),(9,'Chấm công',3,0),(10,'Lương',3,0),(11,'Hợp đồng lao động',3,0),(12,'Thông tin khách hàng',4,0),(13,'Ưu đãi & khuyến mãi',4,0),(15,'Tổng quan',5,0),(16,'Thống kê sản phẩm',5,0),(20,'Phân loại',6,0),(21,'Chấm công hàng ngày',6,0),(28,'Xuat va loi nhuan',1,0),(29,'Xuat va loi nhuan',1,0);
 /*!40000 ALTER TABLE `chucnang` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -227,6 +196,47 @@ INSERT INTO `danhmuc` VALUES (1,'Order','/source/image/icon/order.png',0),(2,'Kh
 UNLOCK TABLES;
 
 --
+-- Table structure for table `donxinnghiep`
+--
+
+DROP TABLE IF EXISTS `donxinnghiep`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `donxinnghiep` (
+  `maDonXin` int NOT NULL AUTO_INCREMENT,
+  `maNhanVien` int NOT NULL,
+  `maLoaiDon` int NOT NULL,
+  `ngayBatDau` date NOT NULL,
+  `ngayKetThuc` date NOT NULL,
+  `soNgayNghi` int NOT NULL,
+  `lyDo` varchar(500) DEFAULT NULL,
+  `giayChungMinh` varchar(255) DEFAULT NULL,
+  `trangThai` varchar(20) DEFAULT 'Chờ duyệt',
+  `nguoiDuyet` int DEFAULT NULL,
+  `ngayDuyet` date DEFAULT NULL,
+  `ghiChu` varchar(500) DEFAULT NULL,
+  `ngayTao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `ngayCapNhat` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`maDonXin`),
+  KEY `maNhanVien` (`maNhanVien`),
+  KEY `maLoaiDon` (`maLoaiDon`),
+  KEY `nguoiDuyet` (`nguoiDuyet`),
+  CONSTRAINT `donxinnghiep_ibfk_1` FOREIGN KEY (`maNhanVien`) REFERENCES `nhanvien` (`maNhanVien`),
+  CONSTRAINT `donxinnghiep_ibfk_2` FOREIGN KEY (`maLoaiDon`) REFERENCES `loaidonxinnghiep` (`maLoaiDon`),
+  CONSTRAINT `donxinnghiep_ibfk_3` FOREIGN KEY (`nguoiDuyet`) REFERENCES `nhanvien` (`maNhanVien`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `donxinnghiep`
+--
+
+LOCK TABLES `donxinnghiep` WRITE;
+/*!40000 ALTER TABLE `donxinnghiep` DISABLE KEYS */;
+/*!40000 ALTER TABLE `donxinnghiep` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `hoadon`
 --
 
@@ -261,7 +271,7 @@ CREATE TABLE `hoadon` (
 
 LOCK TABLES `hoadon` WRITE;
 /*!40000 ALTER TABLE `hoadon` DISABLE KEYS */;
-INSERT INTO `hoadon` VALUES (1,1,5000.00,NULL,NULL,'2024-12-10 23:53:28','',NULL,0),(2,1,63000.00,NULL,NULL,'2024-12-10 23:54:44','',NULL,0),(3,1,34000.00,NULL,NULL,'2025-01-07 20:41:46','',NULL,0),(4,9,20000.00,NULL,NULL,'2026-01-13 13:56:39','',NULL,0),(5,1,25000.00,NULL,NULL,'2026-01-25 19:25:47','',NULL,0);
+INSERT INTO `hoadon` VALUES (1,1,5000.00,NULL,NULL,'2024-12-10 23:53:28','',NULL,0),(2,1,63000.00,NULL,NULL,'2024-12-10 23:54:44','',NULL,0),(3,1,34000.00,NULL,NULL,'2025-01-07 20:41:46','',NULL,0),(4,9,20000.00,NULL,NULL,'2026-01-13 13:56:39','',NULL,0),(5,1,25000.00,NULL,NULL,'2026-01-25 19:25:47','',NULL,0),(6,1,44357.00,NULL,NULL,'2026-03-04 16:20:36','',NULL,0),(7,1,43026.29,13,NULL,'2026-04-08 21:13:34','ghhdfghh',1,0),(8,1,44357.00,NULL,NULL,'2026-04-08 21:37:43','',NULL,0),(9,1,0.00,NULL,NULL,'2026-04-08 22:07:16','',NULL,0),(10,1,215131.45,13,NULL,'2026-05-01 21:55:18','',13,0);
 /*!40000 ALTER TABLE `hoadon` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -291,7 +301,7 @@ CREATE TABLE `hopdonglaodong` (
 
 LOCK TABLES `hopdonglaodong` WRITE;
 /*!40000 ALTER TABLE `hopdonglaodong` DISABLE KEYS */;
-INSERT INTO `hopdonglaodong` VALUES (1,'2024-01-10','2024-01-30',10000,1,0),(2,'2024-01-09','2024-01-30',20000,2,0),(3,'2024-01-08','2024-01-30',30000,3,0),(4,'2024-01-07','2024-01-30',40000,4,0),(5,'2024-01-06','2024-01-30',50000,5,0),(6,'2024-01-05','2024-01-30',60000,6,0),(7,'2024-01-04','2024-01-30',70000,7,0),(8,'2024-01-03','2024-01-30',80000,8,0),(9,'2024-01-02','2024-01-30',90000,9,0),(10,'2024-01-01','2024-01-30',100000,10,0);
+INSERT INTO `hopdonglaodong` VALUES (1,'2024-01-10','2024-01-30',10000,1,0),(2,'2024-01-09','2024-01-30',20000,2,0),(3,'2024-01-08','2024-01-30',30000,3,0),(4,'2024-01-07','2024-01-30',40000,4,0),(5,'2024-01-06','2024-01-30',50000,5,0),(6,'2024-01-05','2024-01-30',60000,6,0),(7,'2024-01-04','2024-01-30',70000,7,0),(8,'2024-01-03','2024-01-30',80000,8,0),(9,'2024-01-02','2024-01-30',90000,9,0),(10,'2024-01-01','2024-01-30',100000,10,0),(11,'2026-01-27','2026-12-27',27000,11,0),(12,'2026-05-01','2026-06-01',25000,11,0);
 /*!40000 ALTER TABLE `hopdonglaodong` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -320,7 +330,7 @@ CREATE TABLE `khachhang` (
 
 LOCK TABLES `khachhang` WRITE;
 /*!40000 ALTER TABLE `khachhang` DISABLE KEYS */;
-INSERT INTO `khachhang` VALUES (1,'0908898765','Nguyễn Minh Thắng',0,1),(2,'0976898735','Lê Trung',0,1),(3,'0955444333','Hoàng Minh Tiến',0,1),(4,'0945663712','Lê Hoàng An',0,1),(5,'0917661222','Hà Xuân Anh',0,1),(6,'0963714255','Lê Anh Nam',0,1),(7,'0917685441','Lê Hoàng Minh',0,1),(8,'0944111517','Nguyễn Ngọc Tuấn',0,1),(13,'0843109787','Tanle1298',0,1);
+INSERT INTO `khachhang` VALUES (1,'0908898765','Nguyễn Minh Thắng',0,1),(2,'0976898735','Lê Trung',0,1),(3,'0955444333','Hoàng Minh Tiến',0,1),(4,'0945663712','Lê Hoàng An',0,1),(5,'0917661222','Hà Xuân Anh',0,1),(6,'0963714255','Lê Anh Nam',0,4),(7,'0917685441','Lê Hoàng Minh',0,1),(8,'0944111517','Nguyễn Ngọc Tuấn',0,1),(13,'0843109787','Tanle1298',4,1);
 /*!40000 ALTER TABLE `khachhang` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -355,6 +365,31 @@ INSERT INTO `khuyenmai` VALUES (11,'Ngày 13/12','2023-12-13 00:00:00','2023-12-
 UNLOCK TABLES;
 
 --
+-- Table structure for table `loaidonxinnghiep`
+--
+
+DROP TABLE IF EXISTS `loaidonxinnghiep`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `loaidonxinnghiep` (
+  `maLoaiDon` int NOT NULL AUTO_INCREMENT,
+  `tenLoaiDon` varchar(100) NOT NULL,
+  `moTa` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`maLoaiDon`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `loaidonxinnghiep`
+--
+
+LOCK TABLES `loaidonxinnghiep` WRITE;
+/*!40000 ALTER TABLE `loaidonxinnghiep` DISABLE KEYS */;
+INSERT INTO `loaidonxinnghiep` VALUES (5,'Nghỉ phép','Xin nghỉ phép hàng năm'),(6,'Nghỉ ốm đau','Xin nghỉ do bệnh'),(7,'Nghỉ thai sản','Xin nghỉ thai sản'),(8,'Nghỉ việc','Xin thôi việc');
+/*!40000 ALTER TABLE `loaidonxinnghiep` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `luong`
 --
 
@@ -363,23 +398,19 @@ DROP TABLE IF EXISTS `luong`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `luong` (
   `maLuong` int NOT NULL AUTO_INCREMENT,
-  `maChamCong` int NOT NULL,
   `phuCap` float DEFAULT NULL,
   `luongThucTe` float DEFAULT NULL,
   `luongThuong` float DEFAULT NULL,
   `KhoanBaoHiem` float DEFAULT NULL,
-  `khoanTru` float DEFAULT NULL,
   `khoanThue` float DEFAULT NULL,
   `thucLanh` float DEFAULT NULL,
   `luongLamThem` float DEFAULT NULL,
   `ngayNhanLuong` date DEFAULT NULL,
   `maNhanVien` int NOT NULL,
   PRIMARY KEY (`maLuong`),
-  KEY `fk_chamcong_idx` (`maChamCong`),
   KEY `fk_luong_nhanvien_idx` (`maNhanVien`),
-  CONSTRAINT `fk_chamcong_luong` FOREIGN KEY (`maChamCong`) REFERENCES `chamcong` (`maChamCong`),
   CONSTRAINT `fk_luong_nhanvien` FOREIGN KEY (`maNhanVien`) REFERENCES `nhanvien` (`maNhanVien`)
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -388,7 +419,7 @@ CREATE TABLE `luong` (
 
 LOCK TABLES `luong` WRITE;
 /*!40000 ALTER TABLE `luong` DISABLE KEYS */;
-INSERT INTO `luong` VALUES (11,11,0,0,0,0,NULL,0,0,0,'2024-12-10',1),(12,12,0,0,0,0,NULL,0,0,0,'2024-12-10',2),(13,13,0,0,0,0,NULL,0,0,0,'2024-12-10',3),(14,14,0,0,0,0,NULL,0,0,0,'2024-12-10',4),(15,15,0,0,0,0,NULL,0,0,0,'2024-12-10',5),(16,16,0,0,0,0,NULL,0,0,0,'2024-12-10',6),(17,17,0,0,0,0,NULL,0,0,0,'2024-12-10',7),(18,18,0,0,0,0,NULL,0,0,0,'2024-12-10',9),(19,19,0,0,0,0,NULL,0,0,0,'2024-12-10',10),(20,40,0,0,0,0,NULL,0,0,0,'2026-01-25',1),(21,41,0,0,0,0,NULL,0,0,0,'2026-01-25',2),(22,42,0,0,0,0,NULL,0,0,0,'2026-01-25',3),(23,43,0,0,0,0,NULL,0,0,0,'2026-01-25',4),(24,44,0,0,0,0,NULL,0,0,0,'2026-01-25',5),(25,45,0,0,0,0,NULL,0,0,0,'2026-01-25',6),(26,46,0,0,0,0,NULL,0,0,0,'2026-01-25',7),(27,47,0,0,0,0,NULL,0,0,0,'2026-01-25',9),(28,48,0,0,0,0,NULL,0,0,0,'2026-01-25',10);
+INSERT INTO `luong` VALUES (11,0,0,0,0,0,0,0,'2024-12-10',1),(12,0,0,0,0,0,0,0,'2024-12-10',2),(13,0,0,0,0,0,0,0,'2024-12-10',3),(14,0,0,0,0,0,0,0,'2024-12-10',4),(15,0,0,0,0,0,0,0,'2024-12-10',5),(16,0,0,0,0,0,0,0,'2024-12-10',6),(17,0,0,0,0,0,0,0,'2024-12-10',7),(18,0,0,0,0,0,0,0,'2024-12-10',9),(19,0,0,0,0,0,0,0,'2024-12-10',10),(20,0,0,0,0,0,0,0,'2026-01-25',1),(21,0,0,0,0,0,0,0,'2026-01-25',2),(22,0,0,0,0,0,0,0,'2026-01-25',3),(23,0,0,0,0,0,0,0,'2026-01-25',4),(24,0,0,0,0,0,0,0,'2026-01-25',5),(25,0,0,0,0,0,0,0,'2026-01-25',6),(26,0,0,0,0,0,0,0,'2026-01-25',7),(27,0,0,0,0,0,0,0,'2026-01-25',9),(28,0,0,0,0,0,0,0,'2026-01-25',10),(29,0,0,0,0,0,0,0,'2026-04-13',1),(30,0,12000,3000,3000,300,411700,400000,'2026-05-01',1),(31,0,0,0,0,0,0,0,'2026-05-01',2),(32,0,0,0,0,0,0,0,'2026-05-01',3),(33,0,0,0,0,0,0,0,'2026-05-01',4),(34,0,0,0,0,0,0,0,'2026-05-01',5),(35,0,0,0,0,0,0,0,'2026-05-01',6),(36,0,0,0,0,0,0,0,'2026-05-01',7),(37,0,0,0,0,0,0,0,'2026-05-01',9),(38,0,0,0,0,0,0,0,'2026-05-01',10),(39,0,30000,3000,3000,300,3029700,3000000,'2026-05-01',11);
 /*!40000 ALTER TABLE `luong` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -453,7 +484,7 @@ CREATE TABLE `nhanvien` (
 
 LOCK TABLES `nhanvien` WRITE;
 /*!40000 ALTER TABLE `nhanvien` DISABLE KEYS */;
-INSERT INTO `nhanvien` VALUES (1,'Lê Xuân Anh',1,'1','1994-12-06','Quận 7, TP Hồ Chí Minh','duytan100104@gmail.com','0993566471',0,'2023-11-10 08:33:25','nv1.png'),(2,'Hoàng Minh Huy',2,'1','1996-11-05','Quận 8, TP Hồ Chí Minh','mhuy96@gmail.com','0914523617',0,'2023-11-10 08:35:19','nv2.png'),(3,'Nguyễn Tấn Hiệu',3,'1','2003-11-04','Quận 3, TP Hồ Chí Minh','tuilahiju7@gmail.com','0913517899',0,'2023-11-10 08:37:03','nv3.png'),(4,'Lê Văn Tâm',3,'1','2002-03-05','Quận 1, TP Hồ Chí Minh','tamle22@gmail.com','0935663719',0,'2023-11-10 08:38:37','nv4.png'),(5,'Bùi Lê Bích Nhung',5,'0','2003-06-08','Quận Tân Bình, TP Hồ Chí Minh','bnhun03@gmail.com','0925663781',0,'2023-11-10 08:40:05','nv5.png'),(6,'Nguyễn Ngọc Minh An',4,'0','2000-03-08','Quận Bình Tân, TP Hồ Chí Minh','man2k@gmail.com','0912788372',0,'2023-11-10 08:42:35','nv6.png'),(7,'Nguyễn Thị Xinh',3,'0','2001-03-05','Quận 6, TP Hồ Chí Minh','txinh011@gmail.com','0995342671',0,'2023-11-10 08:47:31','nv7.png'),(8,'Lê Hoàng Minh',2,'1','2002-06-10','Quận 6, TP Hồ Chí Minh','hmin02@gmail.com','0935667112',1,'2023-11-10 08:55:22','nv8.png'),(9,'Nguyễn Ngọc Hoàng',3,'1','1992-03-12','Quận 3, TP Hồ Chí Minh','nhoang92@gmail.com','0356417284',0,'2023-11-10 08:56:45','nv9.png'),(10,'Lê Hoàng Thắng',3,'1','1994-12-02','Quận 3, TP Hồ Chí Minh','hthang7@gmail.com','0944225671',0,'2023-12-02 06:38:20','nv10.png');
+INSERT INTO `nhanvien` VALUES (1,'Lê Xuân Anh',1,'1','1994-12-06','Quận 7, TP Hồ Chí Minh','duytan100104@gmail.com','0993566471',0,'2023-11-10 08:33:25','nv1.png'),(2,'Hoàng Minh Huy',2,'1','1996-11-05','Quận 8, TP Hồ Chí Minh','mhuy96@gmail.com','0914523617',0,'2023-11-10 08:35:19','nv2.png'),(3,'Nguyễn Tấn Hiệu',3,'1','2003-11-04','Quận 3, TP Hồ Chí Minh','tuilahiju7@gmail.com','0913517899',0,'2023-11-10 08:37:03','nv3.png'),(4,'Lê Văn Tâm',3,'1','2002-03-05','Quận 1, TP Hồ Chí Minh','tamle22@gmail.com','0935663719',0,'2023-11-10 08:38:37','nv4.png'),(5,'Bùi Lê Bích Nhung',5,'0','2003-06-08','Quận Tân Bình, TP Hồ Chí Minh','bnhun03@gmail.com','0925663781',0,'2023-11-10 08:40:05','nv5.png'),(6,'Nguyễn Ngọc Minh An',4,'0','2000-03-08','Quận Bình Tân, TP Hồ Chí Minh','man2k@gmail.com','0912788372',0,'2023-11-10 08:42:35','nv6.png'),(7,'Nguyễn Thị Xinh',3,'0','2001-03-05','Quận 6, TP Hồ Chí Minh','txinh011@gmail.com','0995342671',0,'2023-11-10 08:47:31','nv7.png'),(8,'Lê Hoàng Minh',2,'1','2002-06-10','Quận 6, TP Hồ Chí Minh','hmin02@gmail.com','0935667112',1,'2023-11-10 08:55:22','nv8.png'),(9,'Nguyễn Ngọc Hoàng',3,'1','1992-03-12','Quận 3, TP Hồ Chí Minh','nhoang92@gmail.com','0356417284',0,'2023-11-10 08:56:45','nv9.png'),(10,'Lê Hoàng Thắng',3,'1','1994-12-02','Quận 3, TP Hồ Chí Minh','hthang7@gmail.com','0944225671',0,'2023-12-02 06:38:20','nv10.png'),(11,'Duy Tân',3,'1','2004-01-10','aaa','xinemdung1298@gmail.com','0845410104',0,'2026-01-27 06:29:33','cult-of-the-lamb-game-hd-wallpaper-uhdpaper.com-199@1@j.jpg');
 /*!40000 ALTER TABLE `nhanvien` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -567,7 +598,7 @@ CREATE TABLE `phieunhap` (
 
 LOCK TABLES `phieunhap` WRITE;
 /*!40000 ALTER TABLE `phieunhap` DISABLE KEYS */;
-INSERT INTO `phieunhap` VALUES (1,'2023-12-08 22:12:54',216000,1,1,'',0),(2,'2024-12-08 22:13:26',36000,11,1,'',0),(3,'2024-12-08 22:14:17',115000,12,1,'',0),(4,'2024-12-08 22:15:51',320000,1,1,'',0),(5,'2024-12-08 22:16:25',440000,21,1,'',0),(6,'2024-12-08 22:17:18',85000,7,1,'',0),(7,'2024-12-08 22:18:24',194000,1,1,'',0),(8,'2024-12-08 22:18:51',9000,20,1,'',0),(9,'2024-12-08 22:19:20',60000,17,1,'',0),(10,'2024-12-08 22:21:07',380000,1,1,'',0);
+INSERT INTO `phieunhap` VALUES (1,'2023-12-08 22:12:54',216000,1,1,'',0),(2,'2024-12-08 22:13:26',36000,11,1,'',0),(3,'2024-12-08 22:14:17',115000,12,1,'',0),(4,'2024-12-08 22:15:51',320000,1,1,'',0),(5,'2024-12-08 22:16:25',440000,21,1,'',0),(6,'2024-12-08 22:17:18',85000,7,1,'',0),(7,'2024-12-08 22:18:24',194000,1,1,'',0),(8,'2024-12-08 22:18:51',9000,20,1,'',0),(9,'2024-12-08 22:19:20',60000,17,1,'',0),(10,'2024-12-08 22:21:07',380000,1,1,'',0),(11,'2026-01-25 20:38:39',10000,4,1,'ưedfdf',0),(12,'2026-04-13 13:46:50',16000,11,1,'',0);
 /*!40000 ALTER TABLE `phieunhap` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -601,7 +632,7 @@ CREATE TABLE `sanpham` (
 
 LOCK TABLES `sanpham` WRITE;
 /*!40000 ALTER TABLE `sanpham` DISABLE KEYS */;
-INSERT INTO `sanpham` VALUES (1,'Bánh tráng bơ',100,'2023-10-08 12:34:37',0,'Abi-Banh-trang-bo-100g-01-1-400x400.jpg',5,1),(60,'a',0,'2026-01-25 13:05:13',0,'denji-hybrid-form-chainsaw-man-hd-wallpaper-uhdpaper.com-13@1@j.jpg',1,1),(103,'Bánh tráng sa tế cay',1000,'2024-10-12 15:50:34',0,'Abi-banh-trang-sa-te-cay-80g-400x400.jpg',5,1),(104,'Cơm cháy siêu vị',1000,'2024-10-12 15:50:34',0,'Abi-Com-chay-sieu-vi-70g-100.jpg',5,1),(105,'Americano nóng',1000,'2024-10-12 15:50:34',0,'Americano-nong-10oz-01-1-400x400.jpg',2,1),(106,'Aquafina 5L',1000,'2024-10-12 15:50:34',0,'Aquafina-5L.jpg',2,1),(107,'Aquafina 500ml',1000,'2024-10-12 15:50:34',0,'Aquafina-500ml-01-1-800x800.jpg',2,1),(108,'Aquafina 1500ml',1000,'2024-10-12 15:50:34',0,'Aquafina-1500ml.jpg',2,1),(109,'Bánh bao nhân thịt heo trứng muối',1000,'2024-10-12 15:50:34',0,'Banh-bao-nhan-thit-heo-trung-muoi-1-400x400.jpg',3,1),(110,'Bánh crepe tiramisu',1000,'2024-10-12 15:50:34',0,'Banh-crepe-tiramisu-SK-400x400.jpg',3,1),(111,'Bánh đậu đỏ',1000,'2024-10-12 15:50:34',0,'Banh-Dau-do-moi-Y-400x400.jpg',3,1),(112,'Bánh Dorayaki nhân kem sữa',1000,'2024-10-12 15:50:34',0,'Banh-Dorayaki-nhan-kem-sua-Hokkaido-400x400.jpg',3,1),(113,'Bánh gạo An An vị tảo biển',1000,'2024-10-12 15:50:34',0,'Banh-gao-AN-vi-tao-bien-111.3g-400x400.jpg',3,1),(114,'Bánh gio nhân gà 2 trứng cút',1000,'2024-10-12 15:50:34',0,'Banh-gio-nhan-ga-2-trung-cut-2.jpg',3,1),(115,'Bánh giò nhân thịt 2 trứng cút',1000,'2024-10-12 15:50:34',0,'Banh-gio-nhan-thit-2-trung-cut-1-400x400.jpg',3,1),(116,'Bánh Hawaii khoai tây',1000,'2024-10-12 15:50:34',0,'Banh-Hawaii-Khoai-Tay-12-O-Y-400x400.jpg',3,1),(117,'Bánh Karo phô mai hoàng kim',1000,'2024-10-12 15:50:34',0,'Banh-Karo-pho-mai-hoang-kim-26g-x-6-goi-300x300.jpg',3,1),(118,'Bánh Karo trứng tươi chà bông',1000,'2024-10-12 15:50:34',0,'Banh-Karo-trung-tuoi-cha-bong-26g-x-6-goi-402x400.jpg',3,1),(119,'Bánh mì lát mini',1000,'2024-10-12 15:50:34',0,'Banh-mi-lat-mini-nho-A-2-400x400.jpg',3,1),(120,'Bánh mì Việt Nam chả cá',1000,'2024-10-12 15:50:34',0,'Banh-mi-Viet-Nam-cha-ca-soi-01-2-400x400.jpg',3,1),(121,'Bánh ngọt nhân trứng muối Đài Loan',1000,'2024-10-12 15:50:34',0,'Banh-ngot-nhan-trung-muoi-Dai-Loan-180g-401x400.jpg',3,1),(122,'Bánh pillows nhân dừa',1000,'2024-10-12 15:50:34',0,'Banh-pillows-nhan-dua-85g-01-1-400x400.jpg',3,1),(123,'Bánh pillows nhân socola',1000,'2024-10-12 15:50:34',0,'Banh-Pillows-nhan-socola-85g-01-1-400x400.jpg',3,1),(124,'Bánh que Dorkbua thịt xong khối',1000,'2024-10-12 15:50:34',0,'Banh-que-Dorkbua-vi-thit-xong-khoi-50g-300x300.jpg',3,1),(125,'Bánh que Dorkbua vị truyền thống',1000,'2024-10-12 15:50:34',0,'Banh-que-Dorkbua-vi-truyen-thong-50g-300x300.jpg',3,1),(126,'Bánh que Poca nhân kem ổi',0,'2024-10-12 15:50:34',0,'Banh-que-Poca-nhan-kem-oi-hong-115g-300x300.jpg',3,1),(127,'Bát kool spagheltti xốt bò bầm',0,'2024-10-12 15:50:34',0,'bat-kool-spaghetti-xot-bo-bam-105g-400x400.jpg',3,1),(128,'Bento mực vị cay ngọt',0,'2024-10-12 15:50:34',0,'Bento-snack-muc-vi-cay-ngot-18g-01-1-800x800.jpg',3,1),(129,'Bento mực vị cay thái',0,'2024-10-12 15:50:34',0,'Bento-snack-muc-vi-cay-Thai-18g.jpg',3,1),(130,'Betagen SCU cam',0,'2024-10-12 15:50:34',0,'Betagen-SCU-cam-140ml-400x400.jpg',3,1),(131,'Bia 333',0,'2024-10-12 15:50:34',0,'Bia-333-01-1-400x400.jpg',1,1),(132,'Bia Heineken lon cao',0,'2024-10-12 15:50:34',0,'Bia-Heineken-lon-cao-330ml-01-1-400x400.jpg',1,1),(133,'Cafe đen đá L',0,'2024-10-12 15:50:34',0,'Ca-phe-den-da-L-size-400x400.jpg',1,1),(134,'Cafe đen đá S',0,'2024-10-12 15:50:34',0,'Ca-phe-den-da-S-size-400x400.jpg',1,1),(135,'Cafe sữa đá L',0,'2024-10-12 15:50:34',0,'Ca-phe-sua-da-L-size-400x400.jpg',1,1),(136,'Cafe sữa đá S',0,'2024-10-12 15:50:34',0,'Ca-phe-sua-da-S-size-400x400.jpg',1,1),(137,'Coca cola chai 390ml',0,'2024-10-12 15:50:34',0,'Coca-Cola-chai-390ml.jpg',2,11),(138,'Coca cola giảm đường 1.5L',0,'2024-10-12 15:50:34',0,'Coca-Cola-giam-duong-chai-1.5L-800x800.jpg',2,11),(139,'Fruzetea trà đào và hạt chia 450ml',0,'2024-10-12 15:50:34',0,'Fuzetea-tra-dao-va-hat-chia-450ml-01-1-400x400.jpg',2,12),(140,'Hồng trà C2 vị đào 455ml',0,'2024-10-12 15:50:34',0,'Hong-tra-C2-vi-Dao-455ml-1-401x400.jpg',2,12),(141,'Sữa IDP Malto Socola',0,'2024-10-12 15:50:34',0,'IDP-Malto-Socola-180ml-400x400.jpg',1,10),(142,'Kitkat Socola',0,'2024-10-12 15:50:34',0,'KitKat-socola-2F-17g-400x400.jpg',5,17),(143,'Mì Hảo Hảo tôm chua cay',0,'2024-10-12 15:50:34',0,'Mi-Hao-Hao-tom-chua-cay-01-800x800.jpg',3,4),(144,'Mì Hảo Hảo xào khô tôm chua ngọt',0,'2024-10-12 15:50:34',0,'Mi-Hao-Hao-xao-kho-tom-chua-ngot-75g.jpg',3,4),(145,'Mì ly Handy Hảo Hảo tôm chua cay',0,'2024-10-12 15:50:34',0,'Mi-ly-Handy-Hao-Hao-tom-chua-cay-67g-01-800x800.jpg',1,4),(146,'Temaki Omusubi Bacon phô mai',0,'2024-10-12 15:50:34',0,'Temaki-Omusubi-Bacon-Pho-Mai-Hokkaido-401x400.jpg',3,5),(147,'Temaki Omusubi cá hồi nướng mayo',0,'2024-10-12 15:50:34',0,'TEMAKI-OMUSUBI-CA-HOI-NUONG-MAYO-01-1-400x400.jpg',3,5),(148,'Temaki Omusubu cá hồi xốt teriyaki',0,'2024-10-12 15:50:34',0,'Temaki-Omusubi-ca-hoi-xot-teriyaki-01-01-400x400.jpg',3,5),(149,'Mỳ ly CayKay vị bò',0,'2024-10-12 15:50:34',0,'My-ly-CayKay-vi-bo-66g-01-400x400.jpg',4,4),(150,'Nước gạo buỏi sáng 1.5L',0,'2024-10-12 15:50:34',0,'Nuoc-Gao-Buoi-Sang-1.5L.jpg',2,10),(151,'Nước gạo buổi sáng 500ml',0,'2024-10-12 15:50:34',0,'Nuoc-Gao-Buoi-Sang-500ml-01-1-800x800.jpg',2,10),(152,'Oishi bánh phòng mực',0,'2024-10-12 15:50:34',0,'Oishi-banh-phong-muc-Indo-chips-110g-01-400x400.jpg',3,7),(153,'Oishi Snack bí đỏ',0,'2024-10-12 15:50:34',0,'Oishi-Snack-bi-do-110g-01-800x800.jpg',2,7),(154,'Oishi Snack tôm cay đặc biệt',0,'2024-10-12 15:50:34',0,'Oishi-Snack-tom-cay-dac-biet-68g.jpg',2,7),(155,'Oishi Snack tôm cay nóng',0,'2024-10-12 15:50:34',0,'Oishi-snack-tom-cay-nong-70g.jpg',2,7),(156,'Oreo kem vani',0,'2024-10-12 15:50:34',0,'Oreo-kem-vani-119.6g-01-400x400.jpg',13,20),(157,'Ostar Kimchi',0,'2024-10-12 15:50:34',0,'Ostar-Kimchi-108g-399x400.jpg',5,21),(158,'Ostar phô mai trứng muối',0,'2024-10-12 15:50:34',0,'Ostar-pho-mai-trung-muoi-56g-01-400x400.jpg',5,21),(159,'Sandwich cá ngừ Trung Mayonnaise',0,'2024-10-12 15:50:34',0,'SANDWICH-CA-NGU-TRUNG-MAYONNAISE-400x400.jpg',3,19),(160,'Sandwich dằm bông  phô mai',0,'2024-10-12 15:50:34',0,'SANDWICH-DAM-BONG-PHO-MAI-HOKKAIDO-01-1-400x400.jpg',3,19);
+INSERT INTO `sanpham` VALUES (1,'Bánh tráng bơ',100,'2023-10-08 12:34:37',1,'Abi-Banh-trang-bo-100g-01-1-400x400.jpg',5,1),(103,'Bánh tráng sa tế cay',1000,'2024-10-12 15:50:34',1,'Abi-banh-trang-sa-te-cay-80g-400x400.jpg',5,1),(104,'Cơm cháy siêu vị',1000,'2024-10-12 15:50:34',1,'Abi-Com-chay-sieu-vi-70g-100.jpg',5,1),(105,'Americano nóng',1000,'2024-10-12 15:50:34',1,'Americano-nong-10oz-01-1-400x400.jpg',2,1),(106,'Aquafina 5L',1000,'2024-10-12 15:50:34',1,'Aquafina-5L.jpg',2,1),(107,'Aquafina 500ml',1000,'2024-10-12 15:50:34',1,'Aquafina-500ml-01-1-800x800.jpg',2,1),(108,'Aquafina 1500ml',1000,'2024-10-12 15:50:34',1,'Aquafina-1500ml.jpg',2,1),(109,'Bánh bao nhân thịt heo trứng muối',1000,'2024-10-12 15:50:34',1,'Banh-bao-nhan-thit-heo-trung-muoi-1-400x400.jpg',3,1),(110,'Bánh crepe tiramisu',1000,'2024-10-12 15:50:34',1,'Banh-crepe-tiramisu-SK-400x400.jpg',3,1),(111,'Bánh đậu đỏ',1000,'2024-10-12 15:50:34',1,'Banh-Dau-do-moi-Y-400x400.jpg',3,1),(112,'Bánh Dorayaki nhân kem sữa',1000,'2024-10-12 15:50:34',1,'Banh-Dorayaki-nhan-kem-sua-Hokkaido-400x400.jpg',3,1),(113,'Bánh gạo An An vị tảo biển',1000,'2024-10-12 15:50:34',1,'Banh-gao-AN-vi-tao-bien-111.3g-400x400.jpg',3,1),(114,'Bánh gio nhân gà 2 trứng cút',1000,'2024-10-12 15:50:34',1,'Banh-gio-nhan-ga-2-trung-cut-2.jpg',3,1),(115,'Bánh giò nhân thịt 2 trứng cút',1000,'2024-10-12 15:50:34',1,'Banh-gio-nhan-thit-2-trung-cut-1-400x400.jpg',3,1),(116,'Bánh Hawaii khoai tây',1000,'2024-10-12 15:50:34',1,'Banh-Hawaii-Khoai-Tay-12-O-Y-400x400.jpg',3,1),(117,'Bánh Karo phô mai hoàng kim',1000,'2024-10-12 15:50:34',1,'Banh-Karo-pho-mai-hoang-kim-26g-x-6-goi-300x300.jpg',3,1),(118,'Bánh Karo trứng tươi chà bông',1000,'2024-10-12 15:50:34',1,'Banh-Karo-trung-tuoi-cha-bong-26g-x-6-goi-402x400.jpg',3,1),(119,'Bánh mì lát mini',1000,'2024-10-12 15:50:34',1,'Banh-mi-lat-mini-nho-A-2-400x400.jpg',3,1),(120,'Bánh mì Việt Nam chả cá',1000,'2024-10-12 15:50:34',1,'Banh-mi-Viet-Nam-cha-ca-soi-01-2-400x400.jpg',3,1),(121,'Bánh ngọt nhân trứng muối Đài Loan',1000,'2024-10-12 15:50:34',1,'Banh-ngot-nhan-trung-muoi-Dai-Loan-180g-401x400.jpg',3,1),(122,'Bánh pillows nhân dừa',1000,'2024-10-12 15:50:34',1,'Banh-pillows-nhan-dua-85g-01-1-400x400.jpg',3,1),(123,'Bánh pillows nhân socola',1000,'2024-10-12 15:50:34',1,'Banh-Pillows-nhan-socola-85g-01-1-400x400.jpg',3,1),(124,'Bánh que Dorkbua thịt xong khối',1000,'2024-10-12 15:50:34',1,'Banh-que-Dorkbua-vi-thit-xong-khoi-50g-300x300.jpg',3,1),(125,'Bánh que Dorkbua vị truyền thống',1000,'2024-10-12 15:50:34',1,'Banh-que-Dorkbua-vi-truyen-thong-50g-300x300.jpg',3,1),(126,'Bánh que Poca nhân kem ổi',0,'2024-10-12 15:50:34',1,'Banh-que-Poca-nhan-kem-oi-hong-115g-300x300.jpg',3,1),(127,'Bát kool spagheltti xốt bò bầm',0,'2024-10-12 15:50:34',1,'bat-kool-spaghetti-xot-bo-bam-105g-400x400.jpg',3,1),(128,'Bento mực vị cay ngọt',0,'2024-10-12 15:50:34',1,'Bento-snack-muc-vi-cay-ngot-18g-01-1-800x800.jpg',3,1),(129,'Bento mực vị cay thái',0,'2024-10-12 15:50:34',1,'Bento-snack-muc-vi-cay-Thai-18g.jpg',3,1),(130,'Betagen SCU cam',0,'2024-10-12 15:50:34',1,'Betagen-SCU-cam-140ml-400x400.jpg',3,1),(131,'Bia 333',0,'2024-10-12 15:50:34',1,'Bia-333-01-1-400x400.jpg',1,1),(132,'Bia Heineken lon cao',0,'2024-10-12 15:50:34',1,'Bia-Heineken-lon-cao-330ml-01-1-400x400.jpg',1,1),(133,'Cafe đen đá L',0,'2024-10-12 15:50:34',1,'Ca-phe-den-da-L-size-400x400.jpg',1,1),(134,'Cafe đen đá S',0,'2024-10-12 15:50:34',1,'Ca-phe-den-da-S-size-400x400.jpg',1,1),(135,'Cafe sữa đá L',0,'2024-10-12 15:50:34',1,'Ca-phe-sua-da-L-size-400x400.jpg',1,1),(136,'Cafe sữa đá S',0,'2024-10-12 15:50:34',1,'Ca-phe-sua-da-S-size-400x400.jpg',1,1),(137,'Coca cola chai 390ml',0,'2024-10-12 15:50:34',1,'Coca-Cola-chai-390ml.jpg',2,11),(138,'Coca cola giảm đường 1.5L',0,'2024-10-12 15:50:34',1,'Coca-Cola-giam-duong-chai-1.5L-800x800.jpg',2,11),(139,'Fruzetea trà đào và hạt chia 450ml',0,'2024-10-12 15:50:34',1,'Fuzetea-tra-dao-va-hat-chia-450ml-01-1-400x400.jpg',2,12),(140,'Hồng trà C2 vị đào 455ml',0,'2024-10-12 15:50:34',1,'Hong-tra-C2-vi-Dao-455ml-1-401x400.jpg',2,12),(141,'Sữa IDP Malto Socola',0,'2024-10-12 15:50:34',1,'IDP-Malto-Socola-180ml-400x400.jpg',1,10),(142,'Kitkat Socola',0,'2024-10-12 15:50:34',1,'KitKat-socola-2F-17g-400x400.jpg',5,17),(143,'Mì Hảo Hảo tôm chua cay',0,'2024-10-12 15:50:34',1,'Mi-Hao-Hao-tom-chua-cay-01-800x800.jpg',3,4),(144,'Mì Hảo Hảo xào khô tôm chua ngọt',0,'2024-10-12 15:50:34',1,'Mi-Hao-Hao-xao-kho-tom-chua-ngot-75g.jpg',3,4),(145,'Mì ly Handy Hảo Hảo tôm chua cay',0,'2024-10-12 15:50:34',1,'Mi-ly-Handy-Hao-Hao-tom-chua-cay-67g-01-800x800.jpg',1,4),(146,'Temaki Omusubi Bacon phô mai',0,'2024-10-12 15:50:34',1,'Temaki-Omusubi-Bacon-Pho-Mai-Hokkaido-401x400.jpg',3,5),(147,'Temaki Omusubi cá hồi nướng mayo',0,'2024-10-12 15:50:34',1,'TEMAKI-OMUSUBI-CA-HOI-NUONG-MAYO-01-1-400x400.jpg',3,5),(148,'Temaki Omusubu cá hồi xốt teriyaki',0,'2024-10-12 15:50:34',1,'Temaki-Omusubi-ca-hoi-xot-teriyaki-01-01-400x400.jpg',3,5),(149,'Mỳ ly CayKay vị bò',0,'2024-10-12 15:50:34',1,'My-ly-CayKay-vi-bo-66g-01-400x400.jpg',4,4),(150,'Nước gạo buỏi sáng 1.5L',0,'2024-10-12 15:50:34',1,'Nuoc-Gao-Buoi-Sang-1.5L.jpg',2,10),(151,'Nước gạo buổi sáng 500ml',0,'2024-10-12 15:50:34',1,'Nuoc-Gao-Buoi-Sang-500ml-01-1-800x800.jpg',2,10),(152,'Oishi bánh phòng mực',0,'2024-10-12 15:50:34',1,'Oishi-banh-phong-muc-Indo-chips-110g-01-400x400.jpg',3,7),(153,'Oishi Snack bí đỏ',0,'2024-10-12 15:50:34',1,'Oishi-Snack-bi-do-110g-01-800x800.jpg',2,7),(154,'Oishi Snack tôm cay đặc biệt',0,'2024-10-12 15:50:34',1,'Oishi-Snack-tom-cay-dac-biet-68g.jpg',2,7),(155,'Oishi Snack tôm cay nóng',0,'2024-10-12 15:50:34',1,'Oishi-snack-tom-cay-nong-70g.jpg',2,7),(156,'Oreo kem vani',0,'2024-10-12 15:50:34',1,'Oreo-kem-vani-119.6g-01-400x400.jpg',13,20),(157,'Ostar Kimchi',0,'2024-10-12 15:50:34',1,'Ostar-Kimchi-108g-399x400.jpg',5,21),(158,'Ostar phô mai trứng muối',0,'2024-10-12 15:50:34',1,'Ostar-pho-mai-trung-muoi-56g-01-400x400.jpg',5,21),(159,'Sandwich cá ngừ Trung Mayonnaise',0,'2024-10-12 15:50:34',1,'SANDWICH-CA-NGU-TRUNG-MAYONNAISE-400x400.jpg',3,19),(160,'Sandwich dằm bông  phô mai',0,'2024-10-12 15:50:34',1,'SANDWICH-DAM-BONG-PHO-MAI-HOKKAIDO-01-1-400x400.jpg',3,19);
 /*!40000 ALTER TABLE `sanpham` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -630,7 +661,7 @@ CREATE TABLE `taikhoan` (
 
 LOCK TABLES `taikhoan` WRITE;
 /*!40000 ALTER TABLE `taikhoan` DISABLE KEYS */;
-INSERT INTO `taikhoan` VALUES ('bnhun03','tuilathungannhung','2023-11-12 06:42:36',1,5),('hiju7','ToilaHiju7','2023-12-04 02:03:51',0,3),('mhuy345','tkhuy','2023-11-12 06:39:22',0,2),('minan2k','tuilaquanliminan','2023-11-11 09:25:22',0,6),('nhoang92','tuilanvquayhoang','2023-11-12 10:39:26',0,9),('vtam','tuilanvquaytam','2023-11-11 06:37:19',0,4),('xunanh37','adman123','2023-11-10 08:57:45',0,1);
+INSERT INTO `taikhoan` VALUES ('bnhun03','tuilathungannhung','2023-11-12 06:42:36',1,5),('hiju7890','ToilaHiju7','2023-12-04 02:03:51',0,3),('mhuy345','tkhuy','2023-11-12 06:39:22',0,2),('minan2k','tuilaquanliminan','2023-11-11 09:25:22',0,6),('nhoang92','tuilanvquayhoang','2023-11-12 10:39:26',0,9),('shu1298','Tanle1298','2026-01-27 06:29:33',0,11),('vtam','tuilanvquaytam','2023-11-11 06:37:19',0,4),('xunanh37','adman123','2023-11-10 08:57:45',0,1);
 /*!40000 ALTER TABLE `taikhoan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -695,4 +726,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-01-25 20:25:42
+-- Dump completed on 2026-05-02 15:37:18
