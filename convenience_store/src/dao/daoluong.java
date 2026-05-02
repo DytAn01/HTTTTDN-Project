@@ -26,7 +26,7 @@ public class daoluong {
             if (rs.next()) {
                 luong = new dtoluong(
                          rs.getInt("maLuong"),
-                         rs.getInt("maChamCong"),
+                           // maChamCong không còn sử dụng, luôn set = 0
                          rs.getDouble("phuCap"),
                          rs.getDouble("luongThucTe"),
                          rs.getDouble("luongThuong"),
@@ -49,6 +49,45 @@ public class daoluong {
         }
         return luong;
     }
+
+    // Get salary by ID and employee ID
+    public dtoluong getByIdAndEmployee(int maLuong, int maNhanVien) {
+        dtoluong luong = null;
+        Connection con = connect.connection();
+        String sql = "SELECT * FROM luong WHERE maLuong = ? AND maNhanVien = ?";
+
+        try {
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setInt(1, maLuong);
+            pst.setInt(2, maNhanVien);
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                luong = new dtoluong(
+                         rs.getInt("maLuong"),
+                         rs.getDouble("phuCap"),
+                         rs.getDouble("luongThucTe"),
+                         rs.getDouble("luongThuong"),
+                         rs.getDouble("khoanBaoHiem"),
+                         rs.getDouble("khoanThue"),
+                         rs.getDouble("thuclanh"),
+                         rs.getDouble("luongLamThem"),
+                         rs.getDate("ngayNhanLuong"),
+                         rs.getInt("maNhanVien")
+                );
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                con.close();
+            } catch (SQLException e) {
+                Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return luong;
+    }
+
     public String getTenNhanVienById(int maNhanVien) {
     String tenNhanVien = "";
     String sql = "SELECT tenNhanVien FROM nhanvien WHERE maNhanVien = ?";
@@ -88,7 +127,7 @@ public class daoluong {
             if (rs.next()) {
                 dtoluong luong = new dtoluong(
                          rs.getInt("maLuong"),
-                         rs.getInt("maChamCong"),
+
                          rs.getDouble("phuCap"),
                          rs.getDouble("luongThucTe"),
                          rs.getDouble("luongThuong"),
@@ -126,7 +165,6 @@ public class daoluong {
             while (rs.next()) {
                 dtoluong luong = new dtoluong(
                          rs.getInt("maLuong"),
-                         rs.getInt("maChamCong"),
                          rs.getDouble("phuCap"),
                          rs.getDouble("luongThucTe"),
                          rs.getDouble("luongThuong"),
@@ -135,8 +173,7 @@ public class daoluong {
                          rs.getDouble("thuclanh"),
                          rs.getDouble("luongLamThem"),
                          rs.getDate("ngayNhanLuong"),
-                         rs.getInt("maNhanVien")
-                );
+                         rs.getInt("maNhanVien"));
                 list.add(luong);
             }
         } catch (SQLException e) {
@@ -153,22 +190,21 @@ public class daoluong {
 
     // Thêm mới thông tin lương
     public void add(dtoluong luong) {
-        String sql = "INSERT INTO luong (maChamCong, phuCap, luongThucTe, luongThuong, khoanBaoHiem, khoanThue, thuclanh, luongLamThem, ngayNhanLuong, maNhanVien) "
-                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO luong (phuCap, luongThucTe, luongThuong, khoanBaoHiem, khoanThue, thuclanh, luongLamThem, ngayNhanLuong, maNhanVien) "
+                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         Connection con = connect.connection();
 
         try {
             PreparedStatement pst = con.prepareStatement(sql);
-            pst.setInt(1, luong.getMaChamCong());
-            pst.setDouble(2, luong.getPhuCap());
-            pst.setDouble(3, luong.getLuongThucTe());
-            pst.setDouble(4, luong.getLuongThuong());
-            pst.setDouble(5, luong.getKhoanBaoHiem());
-            pst.setDouble(6, luong.getKhoanThue());
-            pst.setDouble(7, luong.getThuclanh());
-            pst.setDouble(8, luong.getLuongLamThem());
-            pst.setDate(9, new java.sql.Date(luong.getNgayNhanLuong().getTime()));
-            pst.setInt(10, luong.getMaNhanVien());
+            pst.setDouble(1, luong.getPhuCap());
+            pst.setDouble(2, luong.getLuongThucTe());
+            pst.setDouble(3, luong.getLuongThuong());
+            pst.setDouble(4, luong.getKhoanBaoHiem());
+            pst.setDouble(5, luong.getKhoanThue());
+            pst.setDouble(6, luong.getThuclanh());
+            pst.setDouble(7, luong.getLuongLamThem());
+            pst.setDate(8, new java.sql.Date(luong.getNgayNhanLuong().getTime()));
+            pst.setInt(9, luong.getMaNhanVien());
             pst.executeUpdate();
         } catch (SQLException e) {
             Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
@@ -184,23 +220,22 @@ public class daoluong {
     // Cập nhật thông tin lương
     // Cập nhật thông tin lương dựa trên mã nhân viên và ngày nhận lương
     public void update(dtoluong luong) {
-        String sql = "UPDATE luong SET maChamCong = ?, phuCap = ?, luongThucTe = ?, luongThuong = ?, khoanBaoHiem = ?, "
+        String sql = "UPDATE luong SET phuCap = ?, luongThucTe = ?, luongThuong = ?, khoanBaoHiem = ?, "
                  + "khoanThue = ?, thuclanh = ?, luongLamThem = ? "
                  + "WHERE maNhanVien = ? AND ngayNhanLuong = ?";
         Connection con = connect.connection();
 
         try {
             PreparedStatement pst = con.prepareStatement(sql);
-            pst.setInt(1, luong.getMaChamCong());
-            pst.setDouble(2, luong.getPhuCap());
-            pst.setDouble(3, luong.getLuongThucTe());
-            pst.setDouble(4, luong.getLuongThuong());
-            pst.setDouble(5, luong.getKhoanBaoHiem());
-            pst.setDouble(6, luong.getKhoanThue());
-            pst.setDouble(7, luong.getThuclanh());
-            pst.setDouble(8, luong.getLuongLamThem());
-            pst.setInt(9, luong.getMaNhanVien());
-            pst.setDate(10, new java.sql.Date(luong.getNgayNhanLuong().getTime()));// Chú ý định dạng ngày phải khớp với cơ sở dữ liệu
+            pst.setDouble(1, luong.getPhuCap());
+            pst.setDouble(2, luong.getLuongThucTe());
+            pst.setDouble(3, luong.getLuongThuong());
+            pst.setDouble(4, luong.getKhoanBaoHiem());
+            pst.setDouble(5, luong.getKhoanThue());
+            pst.setDouble(6, luong.getThuclanh());
+            pst.setDouble(7, luong.getLuongLamThem());
+            pst.setInt(8, luong.getMaNhanVien());
+            pst.setDate(9, new java.sql.Date(luong.getNgayNhanLuong().getTime()));// Chú ý định dạng ngày phải khớp với cơ sở dữ liệu
             pst.executeUpdate();
         } catch (SQLException e) {
             Logger.getLogger(daoluong.class.getName()).log(Level.SEVERE, null, e);
@@ -242,8 +277,7 @@ public class daoluong {
         ArrayList<dtoluong> list = new ArrayList<>();
         Connection con = connect.connection();
         String sql = "SELECT l.* FROM luong l " +
-                    "JOIN chamcong cc ON l.maChamCong = cc.maChamCong " +
-                    "WHERE l.maNhanVien = ? AND cc.thangChamCong = ? AND cc.namChamCong = ?";
+                    "WHERE l.maNhanVien = ? AND MONTH(l.ngayNhanLuong) = ? AND YEAR(l.ngayNhanLuong) = ?";
 
         try {
             PreparedStatement pst = con.prepareStatement(sql);
@@ -255,7 +289,6 @@ public class daoluong {
             while (rs.next()) {
                 dtoluong luong = new dtoluong(
                          rs.getInt("maLuong"),
-                         rs.getInt("maChamCong"),
                          rs.getDouble("phuCap"),
                          rs.getDouble("luongThucTe"),
                          rs.getDouble("luongThuong"),
@@ -264,8 +297,7 @@ public class daoluong {
                          rs.getDouble("thuclanh"),
                          rs.getDouble("luongLamThem"),
                          rs.getDate("ngayNhanLuong"),
-                         rs.getInt("maNhanVien")
-                );
+                         rs.getInt("maNhanVien"));
                 list.add(luong);
             }
         } catch (SQLException e) {
@@ -285,9 +317,8 @@ public class daoluong {
         ArrayList<dtoluong> list = new ArrayList<>();
         Connection con = connect.connection();
         String sql = "SELECT l.* FROM luong l " +
-                    "JOIN chamcong cc ON l.maChamCong = cc.maChamCong " +
-                    "WHERE l.maNhanVien = ? AND cc.namChamCong = ? " +
-                    "ORDER BY cc.thangChamCong";
+                    "WHERE l.maNhanVien = ? AND YEAR(l.ngayNhanLuong) = ? " +
+                    "ORDER BY MONTH(l.ngayNhanLuong)";
 
         try {
             PreparedStatement pst = con.prepareStatement(sql);
@@ -298,7 +329,6 @@ public class daoluong {
             while (rs.next()) {
                 dtoluong luong = new dtoluong(
                          rs.getInt("maLuong"),
-                         rs.getInt("maChamCong"),
                          rs.getDouble("phuCap"),
                          rs.getDouble("luongThucTe"),
                          rs.getDouble("luongThuong"),
@@ -307,8 +337,7 @@ public class daoluong {
                          rs.getDouble("thuclanh"),
                          rs.getDouble("luongLamThem"),
                          rs.getDate("ngayNhanLuong"),
-                         rs.getInt("maNhanVien")
-                );
+                         rs.getInt("maNhanVien"));
                 list.add(luong);
             }
         } catch (SQLException e) {

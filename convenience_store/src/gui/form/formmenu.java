@@ -13,105 +13,97 @@ import dto.dtophanloai;
 import dto.dtophieunhap;
 import dto.dtosanpham;
 import gui.comp.MenuCard;
-import gui.comp.RoundedBorder;
 import gui.swing.dashboard.Form;
 import gui.swing.dashboard.SystemForm;
-import java.util.ArrayList;
+
+import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.logging.*;
 import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.*;
+import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.EventObject;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.AbstractCellEditor;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumnModel;
 
-
-@SystemForm(name = "Responsive Layout", description = "responsive layout user interface", tags = {"card"})
+@SystemForm(name = "Menu", description = "Giao diện menu bán hàng", tags = {"card", "menu"})
 public class formmenu extends Form {
 
+    // ── Data ──────────────────────────────────────────────────────────────────
     private ArrayList<dtosanpham> list_Sp;
     private List<MenuCard> cards;
+    private static ArrayList<dtodonhang> list_donhang = new ArrayList<>();
+    private ArrayList<dtosanpham> list_SP_has_money = new ArrayList<>();
+    private Map<Integer, Integer> productStockById = new HashMap<>();
+
+    // ── BUS ───────────────────────────────────────────────────────────────────
+    private bussanpham busSP;
+    private busctphieunhap busctpn = new busctphieunhap();
+
+    // ── UI ────────────────────────────────────────────────────────────────────
     private JPanel panelCard;
     private ResponsiveLayout responsiveLayout;
-    private JDialog giohangDialog;
-    private static ArrayList<dtodonhang> list_donhang = new ArrayList<>();
     private JLabel imageDisplayLabel;
-    private JPanel leftPanel;
-    private JPanel rightPanel;
-    private bussanpham busSP;
-    private DefaultTableModel model;
     private JTextField quantityField;
-    private ArrayList<dtophieunhap> list_PN;
-    private ArrayList<dtoctphieunhap> list_CTPN;
-    private int manv;
-    private ArrayList<dtosanpham> list_SP_has_money = new ArrayList<>();
-    private busctphieunhap busctpn = new busctphieunhap();
     private JTable cartTable;
     private DefaultTableModel cartModel;
-    private JTextField discountField;
     private JLabel cartTotalLabel;
     private JButton btnCheckoutCart;
-    private Map<Integer, Integer> productStockById = new HashMap<>();
+    private int manv;
+
+    // ── FlatLaf accent color ───────────────────────────────────────────────────
+    // Matches whatever accent you set in FlatLaf; we only override where needed.
+    private static final Color ACCENT   = new Color(99, 102, 241);
+    private static final Color DANGER   = new Color(239, 68, 68);
+    private static final Color SUCCESS  = new Color(34, 197, 94);
+    private static final Color BG_CARD  = UIManager.getColor("Panel.background") != null
+                                          ? UIManager.getColor("Panel.background")
+                                          : new Color(248, 250, 252);
+
+    // ─────────────────────────────────────────────────────────────────────────
     public formmenu(int ma_nv) throws SQLException {
+        manv = ma_nv;
         init();
         formInit();
-        manv = ma_nv;
     }
 
     private void init() throws SQLException {
         busSP = new bussanpham();
         cards = new ArrayList<>();
-        setLayout(new MigLayout("wrap,fill,insets 7 15 7 15", "[fill]", "[grow 0][fill]"));
+        setLayout(new MigLayout("wrap, fill, insets 10 16 10 16", "[fill]", "[grow 0][fill]"));
         add(createHeaderAction());
-        add(createExample());
-       
+        add(createMainArea());
     }
 
     @Override
     public void formInit() {
         busSP = new bussanpham();
         panelCard.removeAll();
-
         list_Sp = busSP.listHidden();
         list_SP_has_money.clear();
         productStockById.clear();
+        cards.clear();
 
-        // Preload tồn kho theo mã sản phẩm để tránh vòng lặp lồng nhau
-        Map<Integer, dtoctphieunhap> productStockMap = new HashMap<>();
+        Map<Integer, dtoctphieunhap> stockMap = new HashMap<>();
         try {
             list_Sp.stream()
-                    .map(dtosanpham::getMaNCC)
-                    .distinct()
-                    .flatMap(maNCC -> safeListPN(maNCC).stream())
-                    .flatMap(pn -> safeListCTPN(pn.getMaPhieuNhap()).stream())
-                    .forEach(ctpn -> productStockMap.putIfAbsent(ctpn.getMaSanPham(), ctpn));
+                .map(dtosanpham::getMaNCC).distinct()
+                .flatMap(maNCC -> safeListPN(maNCC).stream())
+                .flatMap(pn -> safeListCTPN(pn.getMaPhieuNhap()).stream())
+                .forEach(ctpn -> stockMap.putIfAbsent(ctpn.getMaSanPham(), ctpn));
         } catch (Exception ex) {
             Logger.getLogger(formmenu.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        // Chỉ còn 1 vòng lặp để tạo card
         for (dtosanpham sp : list_Sp) {
-            dtoctphieunhap stockInfo = productStockMap.get(sp.getMaSanPham());
-            if (stockInfo != null) {
-                sp.setGiaBan(stockInfo.getGiaBan());
-                sp.setSoLuong(stockInfo.getSoluongtonkho());
-                productStockById.put(sp.getMaSanPham(), stockInfo.getSoluongtonkho());
+            dtoctphieunhap info = stockMap.get(sp.getMaSanPham());
+            if (info != null) {
+                sp.setGiaBan(info.getGiaBan());
+                sp.setSoLuong(info.getSoluongtonkho());
+                productStockById.put(sp.getMaSanPham(), info.getSoluongtonkho());
             } else {
                 sp.setSoLuong(0);
                 productStockById.put(sp.getMaSanPham(), 0);
@@ -123,1075 +115,565 @@ public class formmenu extends Form {
         }
 
         refreshCartTable();
-
         panelCard.repaint();
         panelCard.revalidate();
     }
 
+    // ── Safe helpers ──────────────────────────────────────────────────────────
     private List<dtophieunhap> safeListPN(Integer maNCC) {
-        try {
-            return busSP.listPN(maNCC);
-        } catch (SQLException ex) {
-            Logger.getLogger(formmenu.class.getName()).log(Level.SEVERE, null, ex);
-            return new ArrayList<>();
-        }
+        try { return busSP.listPN(maNCC); }
+        catch (SQLException ex) { return new ArrayList<>(); }
     }
-
     private List<dtoctphieunhap> safeListCTPN(Integer maPN) {
-        try {
-            return busSP.listCTPN(maPN);
-        } catch (SQLException ex) {
-            Logger.getLogger(formmenu.class.getName()).log(Level.SEVERE, null, ex);
-            return new ArrayList<>();
-        }
+        try { return busSP.listCTPN(maPN); }
+        catch (SQLException ex) { return new ArrayList<>(); }
     }
 
+    // ── Header / search bar ───────────────────────────────────────────────────
+    private Component createHeaderAction() throws SQLException {
+        JPanel panel = new JPanel(new MigLayout(
+            "insets 8 4 8 4, fillx",
+            "[fill, 260][fill, 160][fill, 110][fill, 90]push",
+            "[]"
+        ));
+        // FlatLaf: transparent panel background
+        panel.putClientProperty(FlatClientProperties.STYLE, "background: null;");
 
-    
+        // Search field – FlatLaf leading icon + placeholder
+        JTextField txtSearch = new JTextField();
+        txtSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Tìm kiếm sản phẩm...");
+        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+            resizeIcon(new ImageIcon(getClass().getResource("/source/image/icon/search.png")), 16, 16));
+        // Rounded outline
+        txtSearch.putClientProperty(FlatClientProperties.STYLE,
+            "arc: 8; focusedBorderColor: #6366f1; borderWidth: 1;");
+
+        // Category combo
+        JComboBox<String> comboMaPL = new JComboBox<>();
+        comboMaPL.addItem("Tất cả danh mục");
+        comboMaPL.putClientProperty(FlatClientProperties.STYLE,
+            "arc: 8; borderWidth: 1; focusedBorderColor: #6366f1;");
+        try {
+            for (dtophanloai pl : busSP.listPhanloai()) comboMaPL.addItem(pl.getTenPhanLoai());
+        } catch (Exception ignored) {}
+
+        // Search button – accent fill
+        JButton btnSearch = new JButton("Tìm kiếm");
+        styleAccentButton(btnSearch, ACCENT);
+
+        // Reset button – outlined
+        JButton btnReset = new JButton("Làm mới");
+        styleOutlineButton(btnReset);
+
+        // Search logic
+        btnSearch.addActionListener(e -> runSearch(txtSearch.getText().trim(), (String) comboMaPL.getSelectedItem()));
+        txtSearch.addActionListener(e -> btnSearch.doClick());
+        btnReset.addActionListener(e -> { txtSearch.setText(""); comboMaPL.setSelectedIndex(0); formInit(); });
+
+        panel.add(txtSearch);
+        panel.add(comboMaPL);
+        panel.add(btnSearch);
+        panel.add(btnReset);
+        return panel;
+    }
+
+    private void runSearch(String keyword, String category) {
+        panelCard.removeAll();
+        cards.clear();
+        boolean isCategoryAll = "Tất cả danh mục".equals(category);
+
+        List<dtosanpham> pool = isCategoryAll ? list_SP_has_money : new ArrayList<>();
+        if (!isCategoryAll) {
+            int maPL = busSP.getMaPL(category);
+            for (dtosanpham sp : list_SP_has_money)
+                if (sp.getMaPhanLoai() == maPL) pool.add(sp);
+        }
+
+        if (!isCategoryAll && keyword.isEmpty()) {
+            // show filtered by category only
+        } else if (isCategoryAll && keyword.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Vui lòng nhập từ khóa tìm kiếm.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            panelCard.repaint(); panelCard.revalidate(); return;
+        } else {
+            pool.removeIf(sp -> !sp.getTenSanPham().toLowerCase().contains(keyword.toLowerCase()));
+        }
+
+        if (pool.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Không tìm thấy sản phẩm.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            for (dtosanpham sp : pool) {
+                MenuCard card = new MenuCard(sp, createEventCard(), this::addProductToCart);
+                cards.add(card); panelCard.add(card);
+            }
+        }
+        panelCard.repaint(); panelCard.revalidate();
+    }
+
+    // ── Main split area ───────────────────────────────────────────────────────
+    private Component createMainArea() {
+        // Products scroll
+        responsiveLayout = new ResponsiveLayout(ResponsiveLayout.JustifyContent.FIT_CONTENT, new Dimension(-1, -1), 10, 10, 3);
+        panelCard = new JPanel(responsiveLayout);
+        panelCard.putClientProperty(FlatClientProperties.STYLE, "border: 10, 10, 10, 10;");
+
+        JScrollPane productScroll = new JScrollPane(panelCard);
+        productScroll.setBorder(null);
+        styleScrollPane(productScroll);
+
+        // Menu container (left)
+        JPanel menuContainer = new JPanel(new BorderLayout());
+        menuContainer.putClientProperty(FlatClientProperties.STYLE, "background: null;");
+
+        JLabel menuTitle = buildSectionTitle("THỰC ĐƠN");
+        menuContainer.add(menuTitle, BorderLayout.NORTH);
+        menuContainer.add(productScroll, BorderLayout.CENTER);
+
+        // Cart panel (right)
+        JPanel cartPanel = createCartPanel();
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, menuContainer, cartPanel);
+        split.setResizeWeight(0.72);
+        split.setDividerSize(6);
+        split.setEnabled(false);
+        split.setBorder(null);
+        return split;
+    }
+
+    // ── Cart panel ────────────────────────────────────────────────────────────
+    private JPanel createCartPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.putClientProperty(FlatClientProperties.STYLE, "background: $Panel.background;");
+
+        // Title
+        panel.add(buildSectionTitle("GIỎ HÀNG"), BorderLayout.NORTH);
+
+        // Table
+        cartTable = new JTable();
+        cartTable.setRowHeight(36);
+        cartTable.setShowGrid(false);
+        cartTable.setIntercellSpacing(new Dimension(0, 0));
+        cartTable.putClientProperty(FlatClientProperties.STYLE,
+            "rowHeight: 36; showHorizontalLines: true;");
+        cartTable.setGridColor(UIManager.getColor("TableHeader.separatorColor"));
+        cartTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane scroll = new JScrollPane(cartTable);
+        scroll.setBorder(null);
+        styleScrollPane(scroll);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        // Bottom bar
+        JPanel bottom = new JPanel(new MigLayout("insets 10 12 10 12, fillx", "[fill]push[][]", "[]"));
+        bottom.putClientProperty(FlatClientProperties.STYLE, "background: null;");
+
+        cartTotalLabel = new JLabel("Tổng tiền: 0 ₫");
+        cartTotalLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD, 14f));
+        cartTotalLabel.putClientProperty(FlatClientProperties.STYLE, "foreground: #ef4444;");
+
+        btnCheckoutCart = new JButton("Thanh toán");
+        styleAccentButton(btnCheckoutCart, SUCCESS);
+        btnCheckoutCart.addActionListener(e -> checkoutFromCartPanel());
+
+        JButton btnClear = new JButton("Xóa tất cả");
+        styleOutlineButton(btnClear);
+        btnClear.addActionListener(e -> { list_donhang.clear(); refreshCartTable(); });
+
+        bottom.add(cartTotalLabel);
+        bottom.add(btnClear);
+        bottom.add(btnCheckoutCart);
+        panel.add(bottom, BorderLayout.SOUTH);
+
+        setupCartTableModel();
+        return panel;
+    }
+
+    private void setupCartTableModel() {
+        String[] cols = {"Sản phẩm", "SL", "Đơn giá", ""};
+        cartModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return c == 1 || c == 3; }
+            @Override public Class<?> getColumnClass(int c) {
+                if (c == 1) return Integer.class;
+                if (c == 2) return Double.class;
+                return Object.class;
+            }
+        };
+        cartTable.setModel(cartModel);
+
+        TableColumnModel cm = cartTable.getColumnModel();
+        cm.getColumn(0).setPreferredWidth(160);
+        cm.getColumn(1).setPreferredWidth(80);
+        cm.getColumn(2).setPreferredWidth(90);
+        cm.getColumn(3).setPreferredWidth(36);
+        cm.getColumn(3).setMaxWidth(40);
+
+        // Center renderer for all columns
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        cm.getColumn(1).setCellRenderer(center);
+        cm.getColumn(2).setCellRenderer(center);
+
+        // Qty +/- editor/renderer
+        cm.getColumn(1).setCellRenderer(new QuantityCellRenderer());
+        cm.getColumn(1).setCellEditor(new QuantityCellEditor());
+
+        // Delete button
+        cm.getColumn(3).setCellRenderer(new DeleteButtonRenderer());
+        cm.getColumn(3).setCellEditor(new DeleteButtonEditor());
+
+        refreshCartTable();
+    }
+
+    private void refreshCartTable() {
+        if (cartModel == null) return;
+        cartModel.setRowCount(0);
+        for (dtodonhang dh : list_donhang) {
+            cartModel.addRow(new Object[]{ dh.getTen(), dh.getSl(), dh.getTt(), "🗑" });
+        }
+        if (cartTotalLabel != null)
+            cartTotalLabel.setText("Tổng: " + formatMoney(calculateTotal()));
+    }
+
+    // ── Product detail dialog ─────────────────────────────────────────────────
     private Consumer<dtosanpham> createEventCard() {
-        return e -> {
+        return sp -> {
             try {
-                Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                int dialogWidth = (int) (screenSize.width * 0.7);
-                int dialogHeight = (int) (screenSize.height * 0.7);
-                
-                JDialog showDialog = new JDialog();
-                showDialog.setSize(dialogWidth, dialogHeight);
-                showDialog.setUndecorated(true);
-                showDialog.setShape(new RoundRectangle2D.Double(0, 0, dialogWidth, dialogHeight, 30, 30));
-                showDialog.setLayout(new BorderLayout());
-                showDialog.setModal(true);
-                
-                
-                Color c1 = new Color(153,204,255);
+                Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+                int w = (int)(screen.width * 0.62), h = (int)(screen.height * 0.65);
+
+                JDialog dlg = new JDialog();
+                dlg.setSize(w, h);
+                dlg.setUndecorated(true);
+                dlg.setShape(new RoundRectangle2D.Double(0, 0, w, h, 24, 24));
+                dlg.setModal(true);
+                dlg.setLayout(new BorderLayout());
+
+                // Title bar
                 JPanel titleBar = new JPanel(new BorderLayout());
-                titleBar.setBackground(c1);
-                JLabel titleLabel = new JLabel("Thông tin sản phẩm", SwingConstants.CENTER);
-                titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-                titleLabel.setPreferredSize(new Dimension(dialogWidth, 50));
-                
-                JButton closeButton = new JButton("X");
-                closeButton.setFocusPainted(false);
-                closeButton.setBorderPainted(false);
-                closeButton.setBackground(Color.RED);
-                closeButton.setForeground(Color.WHITE);
-                closeButton.setPreferredSize(new Dimension(45, 30));
-                closeButton.addActionListener(event -> showDialog.dispose());
-                
-                titleBar.add(titleLabel, BorderLayout.WEST);
-                titleBar.add(closeButton, BorderLayout.EAST);
-                
-                // Tạo panel chính có hai cột
-                JPanel mainPanel = new JPanel(new GridBagLayout());
-                mainPanel.setBackground(Color.WHITE);
-                
-                // Panel trái chứa các trường thông tin
-                leftPanel = new JPanel(new GridBagLayout());
-                leftPanel.setBackground(Color.WHITE);
-                GridBagConstraints leftGbc = new GridBagConstraints();
-                leftGbc.insets = new Insets(5, 5, 5, 5);
-                leftGbc.fill = GridBagConstraints.HORIZONTAL;
-                
-                
-                String tenpl = "";
-                ArrayList<dtophanloai> listpl = new ArrayList<>();
-                listpl = busSP.listPhanloai();
-                for(dtophanloai pl : listpl){
-                    if(pl.getMaPhanLoai() == e.getMaPhanLoai()){
-                        tenpl = pl.getTenPhanLoai();
-                    }
-                }
-                
-                String tenncc = "";
-                ArrayList<dtonhacungcap> listncc = new ArrayList<>();
-                listncc = busSP.listNCC();
-                for(dtonhacungcap ncc : listncc){
-                    if(ncc.getMaNhaCungCap()== e.getMaNCC()){
-                        tenncc = ncc.getTenNhaCungCap();
-                    }
-                }
-                
-                
-                addField(leftPanel, leftGbc, "Tên sản phẩm:", 1, String.valueOf(e.getTenSanPham()));
-                addField(leftPanel, leftGbc, "Giá bán:", 2, String.valueOf(e.getGiaBan()));
-                addField(leftPanel, leftGbc, "Tồn kho :", 3, String.valueOf(e.getSoLuong()));
-                addField(leftPanel, leftGbc, "Ngày thêm:", 4, String.valueOf(e.getNgayThem()));
-                addField(leftPanel, leftGbc, "Phân loại", 5, tenpl);
-                addField(leftPanel, leftGbc, "Nhà cung cấp", 7, tenncc);
-                
-                // Panel phải chứa ảnh và nút chọn ảnh
-                rightPanel = new JPanel(new GridBagLayout());
-                rightPanel.setBackground(Color.WHITE);
-                GridBagConstraints rightGbc = new GridBagConstraints();
-                rightGbc.insets = new Insets(4, 4, 4, 4);
-                
-                // Thêm trường ảnh vào cột phải
-                addImageField(rightPanel, rightGbc, e.getImg(), showDialog);
-                
-                // Đặt leftPanel và rightPanel vào mainPanel
-                GridBagConstraints mainGbc = new GridBagConstraints();
-                mainGbc.insets = new Insets(10, 10, 10, 10);
-                mainGbc.fill = GridBagConstraints.BOTH;
-                mainGbc.gridx = 0;
-                mainGbc.gridy = 0;
-                mainGbc.weightx = 0.6;
-                mainPanel.add(leftPanel, mainGbc);
-                
-                mainGbc.gridx = 1;
-                mainGbc.weightx = 0.4;
-                mainPanel.add(rightPanel, mainGbc);
-                
-                // Thêm các thành phần vào JDialog
-                JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-                buttonPanel.setBackground(Color.WHITE);
-                JButton saveButton = new JButton("Thêm giỏ hàng");
-                saveButton.setPreferredSize(new Dimension(150, 30));
-                saveButton.setBackground(Color.GREEN);
-                saveButton.setForeground(Color.BLACK);
-                saveButton.addActionListener( ev ->{
-                    dtodonhang dh = new dtodonhang();
-                    dh.setMa(e.getMaSanPham());
-                    dh.setTen(e.getTenSanPham());
-//                    dh.setTt(e.getGiaBan());
-                    dh.setTt(e.getGiaBan());
-                    dh.setSl(Integer.parseInt(quantityField.getText()));
-                    addListGioHang(dh,e.getSoLuong());
-                    showDialog.setVisible(false);
-                });
-                
-                
-                buttonPanel.add(saveButton);
-                showDialog.add(titleBar, BorderLayout.NORTH);
-                showDialog.add(mainPanel, BorderLayout.CENTER);
-                showDialog.add(buttonPanel, BorderLayout.SOUTH);
-                showDialog.setLocationRelativeTo(null);
-                showDialog.setVisible(true);
+                titleBar.putClientProperty(FlatClientProperties.STYLE,
+                    "background: #6366f1; arc: 0;");
+                titleBar.setBorder(BorderFactory.createEmptyBorder(0, 16, 0, 0));
+                JLabel titleLbl = new JLabel("Chi tiết sản phẩm");
+                titleLbl.setForeground(Color.WHITE);
+                titleLbl.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD, 15f));
+                titleLbl.setPreferredSize(new Dimension(w, 46));
+                JButton btnClose = flatCloseButton();
+                btnClose.addActionListener(e -> dlg.dispose());
+                titleBar.add(titleLbl, BorderLayout.CENTER);
+                titleBar.add(btnClose, BorderLayout.EAST);
+                dlg.add(titleBar, BorderLayout.NORTH);
+
+                // Content
+                JPanel content = new JPanel(new MigLayout(
+                    "insets 24 28 24 28, fillx",
+                    "[300!][32!][fill]", "[fill]"
+                ));
+                content.putClientProperty(FlatClientProperties.STYLE, "background: $Panel.background;");
+
+                // Left: image + qty
+                JPanel imgPanel = buildProductImagePanel(sp, dlg);
+                content.add(imgPanel, "growy 0, top");
+                content.add(new JLabel(), "");  // spacer
+
+                // Right: info fields
+                content.add(buildProductInfoPanel(sp), "grow");
+                dlg.add(content, BorderLayout.CENTER);
+
+                dlg.setLocationRelativeTo(null);
+                dlg.setVisible(true);
             } catch (SQLException ex) {
                 Logger.getLogger(formmenu.class.getName()).log(Level.SEVERE, null, ex);
             }
-        };   
+        };
     }
 
-    public void addListGioHang(dtodonhang dh, Integer sl){
-        if(sl == 0){
-            JOptionPane.showMessageDialog(null, "Sản phẩm này đã hết hàng");
-            return;
+    private JPanel buildProductImagePanel(dtosanpham sp, JDialog dlg) {
+        JPanel p = new JPanel(new MigLayout("insets 0, flowy, fillx, alignx center", "[center]", "[]12[]12[]"));
+        p.putClientProperty(FlatClientProperties.STYLE, "background: null;");
+
+        imageDisplayLabel = new JLabel();
+        imageDisplayLabel.setPreferredSize(new Dimension(180, 220));
+        imageDisplayLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        imageDisplayLabel.putClientProperty(FlatClientProperties.STYLE,
+            "border: 1, 1, 1, 1, $Component.borderColor, 12;");
+
+        if (sp.getImg() != null && !sp.getImg().isEmpty()) {
+            ImageIcon icon = new ImageIcon(System.getProperty("user.dir") + "/src/source/image/sanpham/" + sp.getImg());
+            imageDisplayLabel.setIcon(new ImageIcon(icon.getImage().getScaledInstance(180, 220, Image.SCALE_SMOOTH)));
         }
-        
-        if(sl < dh.getSl()){
-            JOptionPane.showMessageDialog(null, "Số lượng muốn thêm đã vượt quá số lượng trong kho");
-            return;
-        }
-        for(dtodonhang dh1 : list_donhang){
-            if(dh1.getMa() == dh.getMa()){
-                if(sl < dh1.getSl() + dh.getSl()){
-                    JOptionPane.showMessageDialog(null, "Số lượng hiện có trong giỏ hàng và số lượng muốn thêm đã vượt quá số lượng trong kho");
-                    return;
-                }
-                dh1.setSl(dh1.getSl() + dh.getSl());
-                JOptionPane.showMessageDialog(null, "Thêm vào giỏ hàng thành công");
+        p.add(imageDisplayLabel, "width 180!, height 220!");
+
+        // Qty stepper
+        JLabel qtyLabel = new JLabel("Số lượng");
+        qtyLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD, 13f));
+        p.add(qtyLabel);
+
+        JPanel stepper = new JPanel(new BorderLayout(4, 0));
+        stepper.putClientProperty(FlatClientProperties.STYLE, "background: null;");
+        quantityField = new JTextField("1");
+        quantityField.setHorizontalAlignment(JTextField.CENTER);
+        quantityField.putClientProperty(FlatClientProperties.STYLE, "arc: 6;");
+        JButton btnMinus = new JButton("−"); styleStepperButton(btnMinus);
+        JButton btnPlus  = new JButton("+"); styleStepperButton(btnPlus);
+        btnMinus.addActionListener(e -> {
+            int v = Integer.parseInt(quantityField.getText());
+            if (v > 1) quantityField.setText(String.valueOf(v - 1));
+        });
+        btnPlus.addActionListener(e -> quantityField.setText(String.valueOf(Integer.parseInt(quantityField.getText()) + 1)));
+        stepper.add(btnMinus, BorderLayout.WEST);
+        stepper.add(quantityField, BorderLayout.CENTER);
+        stepper.add(btnPlus, BorderLayout.EAST);
+        p.add(stepper, "growx");
+
+        JButton btnAdd = new JButton("Thêm vào giỏ");
+        styleAccentButton(btnAdd, ACCENT);
+        btnAdd.addActionListener(ev -> {
+            dtodonhang dh = new dtodonhang();
+            dh.setMa(sp.getMaSanPham()); dh.setTen(sp.getTenSanPham());
+            dh.setTt(sp.getGiaBan()); dh.setSl(Integer.parseInt(quantityField.getText()));
+            addListGioHang(dh, sp.getSoLuong());
+            refreshCartTable();
+            dlg.dispose();
+        });
+        p.add(btnAdd, "growx");
+        return p;
+    }
+
+    private JPanel buildProductInfoPanel(dtosanpham sp) throws SQLException {
+        JPanel p = new JPanel(new MigLayout("insets 0, fillx, wrap 2", "[130!][fill]", "[]12[]12[]12[]12[]12[]"));
+        p.putClientProperty(FlatClientProperties.STYLE, "background: null;");
+
+        String tenpl = "", tenncc = "";
+        for (dtophanloai pl : busSP.listPhanloai())
+            if (pl.getMaPhanLoai() == sp.getMaPhanLoai()) { tenpl = pl.getTenPhanLoai(); break; }
+        for (dtonhacungcap ncc : busSP.listNCC())
+            if (ncc.getMaNhaCungCap() == sp.getMaNCC()) { tenncc = ncc.getTenNhaCungCap(); break; }
+
+        addInfoRow(p, "Tên sản phẩm",  sp.getTenSanPham());
+        addInfoRow(p, "Giá bán",        formatMoney(sp.getGiaBan()));
+        addInfoRow(p, "Tồn kho",        String.valueOf(sp.getSoLuong()));
+        addInfoRow(p, "Ngày thêm",      String.valueOf(sp.getNgayThem()));
+        addInfoRow(p, "Phân loại",      tenpl);
+        addInfoRow(p, "Nhà cung cấp",   tenncc);
+        return p;
+    }
+
+    private void addInfoRow(JPanel p, String label, String value) {
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD, 13f));
+        lbl.putClientProperty(FlatClientProperties.STYLE, "foreground: $Label.disabledForeground;");
+
+        JTextField tf = new JTextField(value);
+        tf.setEditable(false);
+        tf.putClientProperty(FlatClientProperties.STYLE,
+            "arc: 6; background: $TextField.background; borderWidth: 1;");
+        p.add(lbl);
+        p.add(tf, "growx, height 34!");
+    }
+
+    // ── Cart helpers ──────────────────────────────────────────────────────────
+    public void addListGioHang(dtodonhang dh, Integer sl) {
+        if (sl == 0) { JOptionPane.showMessageDialog(null, "Sản phẩm đã hết hàng"); return; }
+        if (sl < dh.getSl()) { JOptionPane.showMessageDialog(null, "Vượt quá số lượng tồn kho"); return; }
+        for (dtodonhang e : list_donhang) {
+            if (e.getMa() == dh.getMa()) {
+                if (sl < e.getSl() + dh.getSl()) { JOptionPane.showMessageDialog(null, "Số lượng trong giỏ đã vượt tồn kho"); return; }
+                e.setSl(e.getSl() + dh.getSl());
+                JOptionPane.showMessageDialog(null, "Cập nhật giỏ hàng thành công");
                 return;
             }
         }
         list_donhang.add(dh);
         JOptionPane.showMessageDialog(null, "Thêm vào giỏ hàng thành công");
-
     }
-    
+
     public boolean addListGioHang1(dtodonhang dh, Integer sl) {
-     if (sl == 0) {
-         JOptionPane.showMessageDialog(null, "Sản phẩm này đã hết hàng");
-         return false;
-     }
-
-     if (sl < dh.getSl()) {
-         JOptionPane.showMessageDialog(null, "Số lượng muốn thêm đã vượt quá số lượng trong kho");
-         return false;
-     }
-
-     for (dtodonhang dh1 : list_donhang) {
-         if (dh1.getMa().equals(dh.getMa())) { // So sánh giá trị mã sản phẩm
-             if (sl < dh1.getSl() + dh.getSl()) {
-                 JOptionPane.showMessageDialog(null, 
-                     "Số lượng hiện có trong giỏ hàng và số lượng muốn thêm đã vượt quá số lượng trong kho");
-                 return false; // Dừng tại đây nếu vượt quá số lượng tồn kho
-             }
-             dh1.setSl(dh1.getSl() + dh.getSl()); // Cập nhật số lượng
-             return true; // Không cần thêm sản phẩm mới vào danh sách
-         }
-     }
-
-     list_donhang.add(dh); // Thêm sản phẩm mới nếu chưa tồn tại trong giỏ hàng
-     return true;
- }
-
-
-    private void addImageField(JPanel panel, GridBagConstraints gbc, String imgPath, JDialog showDialog) {
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-
-        JLabel imgLabel = new JLabel("IMG:");
-        imgLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        imgLabel.setPreferredSize(new Dimension(250, 20));
-        panel.add(imgLabel, gbc);
-
-        gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        imageDisplayLabel = new JLabel();
-        imageDisplayLabel.setPreferredSize(new Dimension(170, 210));
-        if (!imgPath.isEmpty()) {
-            ImageIcon curImg = new ImageIcon(System.getProperty("user.dir") + "/src/source/image/sanpham/" + imgPath);
-            Image scaledImg = curImg.getImage().getScaledInstance(170, 230, Image.SCALE_SMOOTH);
-            ImageIcon editImg = new ImageIcon(scaledImg);
-            imageDisplayLabel.setIcon(editImg);
-        }
-        panel.add(imageDisplayLabel, gbc);
-
-        // Thêm trường số lượng dưới ảnh
-        gbc.gridy = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        JLabel quantityLabel = new JLabel("Số lượng:");
-        quantityLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        quantityLabel.setPreferredSize(new Dimension(150, 20));
-        panel.add(quantityLabel, gbc);
-
-        gbc.gridy = 3;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        JPanel quantityPanel = new JPanel(new BorderLayout());
-        quantityPanel.setPreferredSize(new Dimension(150, 30));
-
-        quantityField = new JTextField("1");
-        quantityField.setFont(new Font("Arial", Font.PLAIN, 16));
-        quantityField.setHorizontalAlignment(JTextField.CENTER);
-
-        JButton decreaseButton = new JButton("-");
-        decreaseButton.setPreferredSize(new Dimension(45, 30));
-        decreaseButton.setFont(new Font("Arial", Font.BOLD, 14));
-
-        JButton increaseButton = new JButton("+");
-        increaseButton.setPreferredSize(new Dimension(45, 30));
-        increaseButton.setFont(new Font("Arial", Font.BOLD, 14));
-
-        decreaseButton.addActionListener(e -> {
-            int currentQuantity = Integer.parseInt(quantityField.getText());
-            if (currentQuantity > 1) {
-                quantityField.setText(String.valueOf(currentQuantity - 1));
-            }
-        });
-
-        increaseButton.addActionListener(e -> {
-            int currentQuantity = Integer.parseInt(quantityField.getText());
-            quantityField.setText(String.valueOf(currentQuantity + 1));
-        });
-
-        quantityPanel.add(decreaseButton, BorderLayout.WEST);
-        quantityPanel.add(quantityField, BorderLayout.CENTER);
-        quantityPanel.add(increaseButton, BorderLayout.EAST);
-
-        panel.add(quantityPanel, gbc);
-
-        // Tạo JLabel cho thông báo lỗi và thêm vào dưới quantityField
-        gbc.gridy = 4;
-        JLabel errorLabel = new JLabel("Vui lòng chỉ nhập số và không được để trống");
-        errorLabel.setForeground(Color.RED);
-        errorLabel.setFont(new Font("Arial", Font.ITALIC, 12));
-        errorLabel.setVisible(false);  // Ban đầu ẩn label này
-        panel.add(errorLabel, gbc);
-
-        // Thêm KeyListener cho quantityField
-        quantityField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                String text = quantityField.getText();
-
-                // Kiểm tra nếu chuỗi rỗng hoặc chứa ký tự không phải số
-                if (text.isEmpty() || !text.matches("\\d+")) {  // \\d+ yêu cầu ít nhất một ký tự số
-                    errorLabel.setVisible(true);  // Hiện thông báo lỗi nếu chuỗi trống hoặc chứa ký tự không phải số
-                } else {
-                    errorLabel.setVisible(false);  // Ẩn thông báo nếu chuỗi hợp lệ
-                }
-            }
-        });
-    }
-
-
-
-
-    
-    
-    private void addField(JPanel panel, GridBagConstraints gbc, String label, int row, String value) throws SQLException {
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        JLabel jLabel = new JLabel(label);
-        jLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        jLabel.setPreferredSize(new Dimension(150, 40));
-        panel.add(jLabel, gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        JTextField textField = new JTextField(20);
-        textField.setFont(new Font("Arial", Font.PLAIN, 16));
-        textField.setPreferredSize(new Dimension(150, 40));
-        textField.setText(value);
-        textField.setBorder(new RoundedBorder(10));
-        textField.setEditable(false);
-        panel.add(textField, gbc);
-    }
-
-    
-    
-    
-    
-    
-    
-    private Component createHeaderAction() throws SQLException {
-        JPanel panel = new JPanel(new MigLayout("insets 5 20 5 20", "[fill,230][fill,100][fill,100][fill,100]push[][]"));
-
-        JTextField txtSearch = new JTextField();
-        txtSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Tìm kiếm tên sản phẩm ...");
-        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, resizeIcon(new ImageIcon(getClass().getResource("/source/image/icon/search.png")), 20, 20));
-        
-        
-        JButton btnSearch = new JButton("Tìm kiếm");
-        
-        JComboBox comboMaPL = new JComboBox();
-        comboMaPL.addItem("Mặc định");
-        ArrayList<dtophanloai> list_pl = new ArrayList<>();
-        list_pl = busSP.listPhanloai();
-        for(dtophanloai pl : list_pl){
-            comboMaPL.addItem(pl.getTenPhanLoai());
-        }
-        JButton btnReset = new JButton("Reset");
-        
-        
-        btnSearch.addActionListener(e -> {
-            panelCard.removeAll(); // Xóa các card cũ khỏi panelCard
-            String searchText = txtSearch.getText().toLowerCase().trim(); // Lấy chuỗi tìm kiếm và loại bỏ khoảng trắng thừa
-            String tenmpl = (String) comboMaPL.getSelectedItem();
-            boolean found = false;
-
-            list_Sp = busSP.listHidden();
-            if(!tenmpl.equals("Mặc định")){
-                ArrayList<dtosanpham> list_sp_tmp = new ArrayList<>();
-                for(dtosanpham sp : list_SP_has_money){
-                    if(sp.getMaPhanLoai()== busSP.getMaPL(tenmpl)){
-                        list_sp_tmp.add(sp);
-                    }
-                }
-                if(searchText.equals("")){
-                    for (dtosanpham sp : list_sp_tmp) {
-                        MenuCard card = new MenuCard(sp, createEventCard(), this::addProductToCart);
-                        cards.add(card);
-                        panelCard.add(card);
-                        found = true;
-                    }
-                    if (!found) {
-                        JOptionPane.showMessageDialog(null, "Không tìm thấy sản phẩm tương ứng.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                    }
-                    panelCard.repaint();
-                    panelCard.revalidate();
-                }else{
-                    for (dtosanpham sp : list_sp_tmp) {
-                        String tenSanPham = sp.getTenSanPham().toLowerCase();
-                        if (tenSanPham.contains(searchText)) {
-                            MenuCard card = new MenuCard(sp, createEventCard(), this::addProductToCart);
-                            cards.add(card);
-                            panelCard.add(card);
-                            found = true;
-
-                        }
-                    }
-                    if (!found) {
-                        JOptionPane.showMessageDialog(null, "Không tìm thấy sản phẩm tương ứng.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                    }
-                    panelCard.repaint();
-                    panelCard.revalidate();
-                }
-                
-            }else{
-                if (searchText.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Vui lòng nhập từ khóa để tìm kiếm.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-
-
-                for (dtosanpham sp : list_SP_has_money) {
-                    String tenSanPham = sp.getTenSanPham().toLowerCase();
-                    if (tenSanPham.contains(searchText)) {
-                        MenuCard card = new MenuCard(sp, createEventCard(), this::addProductToCart);
-                        cards.add(card);
-                        panelCard.add(card);
-                        found = true;
-                    }
-                }
-                if (!found) {
-                    JOptionPane.showMessageDialog(null, "Không tìm thấy sản phẩm tương ứng.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                }
-                panelCard.repaint();
-                panelCard.revalidate();
-            }
-        });
-
-        txtSearch.addActionListener(e -> {
-            btnSearch.doClick(); // 
-        });
-
-        
-        btnReset.addActionListener( e -> {
-            txtSearch.setText("");
-            comboMaPL.setSelectedIndex(0);
-//            list_donhang.clear();
-            formInit();
-        });
-        
-        panel.add(txtSearch);
-        panel.add(comboMaPL);
-        panel.add(btnSearch);
-        panel.add(btnReset);
-
-        panel.putClientProperty(FlatClientProperties.STYLE, "" +
-                "background:null;");
-        return panel;
-    }
-
-     private void selectAll(boolean selected) {
-        for (MenuCard card : cards) {
-            card.setSelected(selected);
-        }
-    }
-     
-    private void addCart(){
-        List<MenuCard> selectedCards = new ArrayList<>();
-        StringBuilder addedNames = new StringBuilder("Đã thêm các sản phẩm: ");
-        for (MenuCard card : cards) {
-            if (card.isSelected()) { 
-                selectedCards.add(card);
+        if (sl == 0) { JOptionPane.showMessageDialog(null, "Sản phẩm đã hết hàng"); return false; }
+        if (sl < dh.getSl()) { JOptionPane.showMessageDialog(null, "Vượt quá số lượng tồn kho"); return false; }
+        for (dtodonhang e : list_donhang) {
+            if (e.getMa().equals(dh.getMa())) {
+                if (sl < e.getSl() + dh.getSl()) { JOptionPane.showMessageDialog(null, "Số lượng trong giỏ đã vượt tồn kho"); return false; }
+                e.setSl(e.getSl() + dh.getSl()); return true;
             }
         }
-
-        if (selectedCards.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không có sản phẩm nào được chọn để thêm vào giỏ hàng.");
-            return;
-        }
-
-        int slsp_themthanhcong = 0;
-        for (MenuCard card : selectedCards) {
-            dtodonhang dh = new dtodonhang();
-            dh.setMa(card.getMaSanPham());
-            dh.setTen(card.getSanPhamName());
-            dh.setTt(card.getGiaTien());
-            dh.setSl(1);
-            Integer soluongkho = card.getSoLuong();
-            
-            if(addListGioHang1(dh, soluongkho)){
-                addedNames.append(card.getSanPhamName()).append(", ");
-                slsp_themthanhcong++;
-            }
-
-            card.setSelected(false);
-        }
-        panelCard.revalidate();
-        panelCard.repaint();
-        
-        
-        JOptionPane.showMessageDialog(this, "Đã thêm " + slsp_themthanhcong + " sản phẩm vào giỏ hàng.");
-        if (addedNames.length() > 0) {
-            addedNames.setLength(addedNames.length() - 2); // Xóa dấu phẩy và khoảng trắng cuối cùng
-        }
-        JOptionPane.showMessageDialog(this, addedNames.toString());
-    }  
-    // Khai báo biến thành viên cho dialog
-
-
-
-    
-    public Double calculateTotal(){
-        Double tt = 0.0;
-        for(int i = 0; i < list_donhang.size() ; i++ ){
-            dtodonhang dh = list_donhang.get(i);
-            tt += dh.getSl()* dh.getTt();
-        }
-        return tt;
-    }
-    
-
-    private void viewCart() {
-            giohangDialog = new JDialog();
-            giohangDialog.setModal(true);
-            giohangDialog.setUndecorated(true);  // Ẩn tiêu đề của dialog
-            giohangDialog.setLayout(new BorderLayout());
-            giohangDialog.setUndecorated(true);
-            giohangDialog.setShape(new RoundRectangle2D.Double(0, 0, 800, 600, 30, 30));
-
-            JPanel titlePanel = new JPanel(new BorderLayout());
-            Color c2 = new Color(102,178,255);
-            titlePanel.setBackground(c2);
-            titlePanel.setPreferredSize(new Dimension(800, 40));  // Đặt chiều cao lớn hơn
-            
-            
-            JLabel titleLabel = new JLabel("Giỏ hàng hiện tại", JLabel.CENTER);
-            titleLabel.setFont(new Font("Arial", Font.BOLD, 18));  // Chữ in đậm và căn giữa
-            
-            
-            JButton closeButton = new JButton("X");
-            closeButton.setFont(new Font("Arial", Font.BOLD, 18));  // Font chữ to hơn
-            closeButton.setForeground(Color.white);  // Màu chữ đỏ
-            closeButton.setBorderPainted(false);
-            closeButton.setBackground(Color.red);
-
-            closeButton.addActionListener(e -> giohangDialog.dispose());
-
-            // Thêm tiêu đề và nút đóng vào titlePanel
-            titlePanel.add(titleLabel, BorderLayout.CENTER);
-            titlePanel.add(closeButton, BorderLayout.EAST);
-
-            giohangDialog.add(titlePanel, BorderLayout.NORTH);
-
-            String[] columnNames = {"Mã sản phẩm","Tên sản phẩm", "Số lượng", "Đơn giá", "Thành tiền"};
-            
-            Object [][] rowData1 = new Object[list_donhang.size()][columnNames.length];
-            
-            Double tongtien = 0.0;
-            for(int i = 0; i < list_donhang.size() ; i++ ){
-                dtodonhang dh = list_donhang.get(i);
-                rowData1[i][0] = dh.getMa();
-                rowData1[i][1] = dh.getTen();
-                rowData1[i][2] = dh.getSl();
-                rowData1[i][3] = dh.getTt();
-                rowData1[i][4] = dh.getSl() * dh.getTt();
-                tongtien += dh.getSl()* dh.getTt();
-            }
-            
-//          
-            model = new DefaultTableModel(rowData1 , columnNames){
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false; // Disables editing
-                }
-            };
-            JTable cartTable = new JTable();
-            cartTable.setModel(model);
-            cartTable.setAutoCreateRowSorter(true);
-            cartTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-            cartTable.setFillsViewportHeight(true);
-            cartTable.getTableHeader().setReorderingAllowed(false);
-
-
-//            cartTable.addMouseListener(new MouseAdapter() {
-//                @Override
-//                public void mouseClicked(MouseEvent e) {
-//                    int row = cartTable.getSelectedRow();
-//                }
-//            });
-
-            
-            TableColumnModel columnModel = cartTable.getColumnModel();
-            columnModel.getColumn(0).setPreferredWidth(50);  // Mã sản phẩm
-            columnModel.getColumn(1).setPreferredWidth(270);  // Tên sản phẩm
-            columnModel.getColumn(2).setPreferredWidth(40);   // Số lượng
-            columnModel.getColumn(3).setPreferredWidth(100);  // Đơn giá
-            columnModel.getColumn(4).setPreferredWidth(120);  // Thành tiền
-
-            
-            DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-            centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-
-            for (int i = 0; i < cartTable.getColumnCount(); i++) {
-                cartTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-            }
-
-            
-            JScrollPane scrollPane = new JScrollPane(cartTable);
-            giohangDialog.add(scrollPane, BorderLayout.CENTER);
-
-            // Tạo JPanel dưới cùng chứa tổng tiền và các nút, đặt kích thước lớn hơn
-            JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            bottomPanel.setPreferredSize(new Dimension(800, 40));  // Chiều cao lớn hơn
-            
-            JLabel totalLabel = new JLabel("Tổng tiền: "+ tongtien +" VND");
-            totalLabel.setFont(new Font("Arial", Font.BOLD, 14));  // In đậm và kích cỡ chữ lớn hơn
-            totalLabel.setForeground(Color.red);
-            
-            JButton btnDelete = new JButton("Xóa");
-            btnDelete.addActionListener(e -> {
-                int row = cartTable.getSelectedRow();  // Lấy hàng được chọn
-                if(row == -1){
-                    JOptionPane.showMessageDialog(scrollPane, "Chưa chọn sản phẩm cần xóa");
-                } else {
-                    model = (DefaultTableModel) cartTable.getModel();
-                    model.removeRow(row);
-
-                    list_donhang.remove(row);
-                    totalLabel.setText("Tổng tiền: " + calculateTotal() + " VND");
-                }
-            });
-
-            
-            
-            JButton btnDeleteAll = new JButton("Xóa toàn bộ");
-            btnDeleteAll.addActionListener(e -> {
-                // Xóa tất cả sản phẩm trong danh sách
-                list_donhang.clear();
-
-                // Cập nhật dữ liệu trong bảng
-                Object[][] emptyData = {{"","", "Chưa có sản phẩm nào", "", ""}};
-                model = new DefaultTableModel(emptyData, columnNames);
-                cartTable.setModel(model);
-
-                // Cập nhật lại label tổng tiền
-                totalLabel.setText("Tổng tiền: " + calculateTotal() + " VND");
-            });
-
-            
-            
-            
-            JButton btnCheckout = new JButton("Thanh toán");
-            btnCheckout.addActionListener(e -> {
-                if(!list_donhang.isEmpty()){
-                    ArrayList<dtocthoadon> list = new ArrayList<>();
-                    for(dtodonhang i : list_donhang){
-                        dtocthoadon a = new dtocthoadon();
-                        a.setMaSanPham(i.getMa());
-                        a.setSoLuong(i.getSl());
-                        a.setTensanpham(i.getTen());
-                        list.add(a);
-                    }
-                    giohangDialog.dispose();
-                    formthanhtoan formth =  new formthanhtoan(list,manv);
-                    formth.setSize(510, 750);
-                    formth.setResizable(false);
-                    formth.setLocationRelativeTo(null);
-                   list_donhang.clear();
-                    formth.setVisible(true);
-                    formth.toFront();
-                    
-                }
-                else{
-                    JOptionPane.showMessageDialog(this, "Giỏ hàng rỗng không thể thanh toán");
-                    return;
-                }
-            });
-
-            // Thêm các thành phần vào bottomPanel
-            bottomPanel.add(totalLabel);
-            bottomPanel.add(btnDelete);
-            bottomPanel.add(btnDeleteAll);
-            bottomPanel.add(btnCheckout);
-
-            giohangDialog.add(bottomPanel, BorderLayout.SOUTH);
-
-            giohangDialog.setSize(800, 600);
-            giohangDialog.setLocationRelativeTo(this);
-            giohangDialog.setVisible(true);
-    }
-
-    private JPanel createCartPanel() {
-        JPanel cartPanel = new JPanel(new BorderLayout());
-        cartPanel.setBackground(Color.WHITE);
-
-        JLabel title = new JLabel("Giỏ hàng", SwingConstants.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 16));
-        title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        cartPanel.add(title, BorderLayout.NORTH);
-
-        cartTable = new JTable();
-        cartTable.setRowHeight(28);
-        cartTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane cartScroll = new JScrollPane(cartTable);
-        cartPanel.add(cartScroll, BorderLayout.CENTER);
-
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
-        cartTotalLabel = new JLabel("Tổng tiền: 0 VND");
-        cartTotalLabel.setFont(new Font("Arial", Font.BOLD, 13));
-        cartTotalLabel.setForeground(Color.red);
-        btnCheckoutCart = new JButton("Thanh toán");
-        btnCheckoutCart.addActionListener(e -> checkoutFromCartPanel());
-        bottomPanel.add(cartTotalLabel);
-        bottomPanel.add(btnCheckoutCart);
-
-        cartPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        setupCartTableModel();
-        return cartPanel;
-    }
-
-    private void setupCartTableModel() {
-        String[] columns = {"Tên sản phẩm", "Đơn vị", "Số lượng", "Giá", "Xóa"};
-        cartModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 3 || column == 2 || column == 4; // giá, số lượng, xóa
-            }
-
-            @Override
-            public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 2) return Integer.class;
-                if (columnIndex == 3) return Double.class;
-                if (columnIndex == 4) return Object.class;
-                return String.class;
-            }
-        };
-        cartModel.addTableModelListener(new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 3) {
-                    int row = e.getFirstRow();
-                    if (row >= 0 && row < list_donhang.size()) {
-                        Object value = cartModel.getValueAt(row, 3);
-                        try {
-                            double price = Double.parseDouble(String.valueOf(value));
-                            list_donhang.get(row).setTt(price);
-                        } catch (NumberFormatException ex) {
-                            // ignore invalid input
-                        }
-                    }
-                }
-            }
-        });
-        cartTable.setModel(cartModel);
-        cartTable.getColumnModel().getColumn(2).setCellRenderer(new QuantityCellRenderer());
-        cartTable.getColumnModel().getColumn(2).setCellEditor(new QuantityCellEditor());
-        cartTable.getColumnModel().getColumn(4).setCellRenderer(new DeleteButtonRenderer());
-        cartTable.getColumnModel().getColumn(4).setCellEditor(new DeleteButtonEditor());
-        refreshCartTable();
-    }
-
-    private void refreshCartTable() {
-        if (cartModel == null) {
-            return;
-        }
-        cartModel.setRowCount(0);
-        for (dtodonhang dh : list_donhang) {
-            cartModel.addRow(new Object[]{
-                dh.getTen(),
-                "cái",
-                dh.getSl(),
-                dh.getTt(),
-                "Xóa"
-            });
-        }
-        if (cartTotalLabel != null) {
-            cartTotalLabel.setText("Tổng tiền: " + calculateTotal() + " VND");
-        }
-    }
-
-    private Integer changeQuantityAtRow(int row, int delta) {
-        if (row < 0 || row >= list_donhang.size()) {
-            return null;
-        }
-        dtodonhang dh = list_donhang.get(row);
-        int newQty = dh.getSl() + delta;
-        int stock = productStockById.getOrDefault(dh.getMa(), Integer.MAX_VALUE);
-        if (newQty < 1) {
-            return null;
-        }
-        if (newQty > stock) {
-            JOptionPane.showMessageDialog(this, "Số lượng vượt quá tồn kho");
-            return null;
-        }
-        dh.setSl(newQty);
-        if (cartModel != null && row < cartModel.getRowCount()) {
-            cartModel.setValueAt(newQty, row, 2);
-            cartModel.fireTableRowsUpdated(row, row);
-        }
-        if (cartTotalLabel != null) {
-            cartTotalLabel.setText("Tổng tiền: " + calculateTotal() + " VND");
-        }
-        if (cartTable != null && row < cartTable.getRowCount()) {
-            cartTable.setRowSelectionInterval(row, row);
-        }
-        return newQty;
-    }
-
-    private void removeCartRow(int row) {
-        if (row < 0 || row >= list_donhang.size()) {
-            return;
-        }
-        list_donhang.remove(row);
-        refreshCartTable();
-    }
-
-    private class QuantityCellRenderer extends JPanel implements TableCellRenderer {
-        private final JButton btnMinus = new JButton("-");
-        private final JLabel label = new JLabel("0", SwingConstants.CENTER);
-        private final JButton btnPlus = new JButton("+");
-
-        public QuantityCellRenderer() {
-            setLayout(new BorderLayout(4, 0));
-            btnMinus.setEnabled(false);
-            btnPlus.setEnabled(false);
-            add(btnMinus, BorderLayout.WEST);
-            add(label, BorderLayout.CENTER);
-            add(btnPlus, BorderLayout.EAST);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            label.setText(String.valueOf(value));
-            return this;
-        }
-    }
-
-    private class QuantityCellEditor extends AbstractCellEditor implements TableCellEditor {
-        private final JPanel panel = new JPanel(new BorderLayout(4, 0));
-        private final JButton btnMinus = new JButton("-");
-        private final JLabel label = new JLabel("0", SwingConstants.CENTER);
-        private final JButton btnPlus = new JButton("+");
-        private int editingRow = -1;
-        private java.awt.event.MouseEvent lastMouseEvent;
-
-        public QuantityCellEditor() {
-            panel.add(btnMinus, BorderLayout.WEST);
-            panel.add(label, BorderLayout.CENTER);
-            panel.add(btnPlus, BorderLayout.EAST);
-            btnMinus.setFocusable(false);
-            btnPlus.setFocusable(false);
-
-            btnMinus.addActionListener(e -> {
-                Integer newQty = changeQuantityAtRow(editingRow, -1);
-                if (newQty != null) {
-                    label.setText(String.valueOf(newQty));
-                }
-                stopCellEditing();
-            });
-            btnPlus.addActionListener(e -> {
-                Integer newQty = changeQuantityAtRow(editingRow, 1);
-                if (newQty != null) {
-                    label.setText(String.valueOf(newQty));
-                }
-                stopCellEditing();
-            });
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            editingRow = row;
-            label.setText(String.valueOf(value));
-            if (lastMouseEvent != null) {
-                Rectangle rect = table.getCellRect(row, column, false);
-                int x = lastMouseEvent.getX() - rect.x;
-                if (x < rect.width / 3) {
-                    SwingUtilities.invokeLater(btnMinus::doClick);
-                } else if (x > (rect.width * 2) / 3) {
-                    SwingUtilities.invokeLater(btnPlus::doClick);
-                }
-                lastMouseEvent = null;
-            }
-            return panel;
-        }
-
-        @Override
-        public boolean isCellEditable(EventObject e) {
-            if (e instanceof java.awt.event.MouseEvent) {
-                lastMouseEvent = (java.awt.event.MouseEvent) e;
-                return true;
-            }
-            return true;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return label.getText();
-        }
-    }
-
-    private class DeleteButtonRenderer extends JButton implements TableCellRenderer {
-        public DeleteButtonRenderer() {
-            setText("🗑");
-            setBorderPainted(false);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return this;
-        }
-    }
-
-    private class DeleteButtonEditor extends AbstractCellEditor implements TableCellEditor {
-        private final JButton button = new JButton("🗑");
-        private int editingRow = -1;
-        private java.awt.event.MouseEvent lastMouseEvent;
-
-        public DeleteButtonEditor() {
-            button.setBorderPainted(false);
-            button.setFocusable(false);
-            button.addActionListener(e -> {
-                removeCartRow(editingRow);
-                stopCellEditing();
-            });
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            editingRow = row;
-            if (lastMouseEvent != null) {
-                SwingUtilities.invokeLater(button::doClick);
-                lastMouseEvent = null;
-            }
-            return button;
-        }
-
-        @Override
-        public boolean isCellEditable(EventObject e) {
-            if (e instanceof java.awt.event.MouseEvent) {
-                lastMouseEvent = (java.awt.event.MouseEvent) e;
-                return true;
-            }
-            return true;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return "Xóa";
-        }
-    }
-
-    private void checkoutFromCartPanel() {
-        if (list_donhang.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Giỏ hàng rỗng không thể thanh toán");
-            return;
-        }
-        ArrayList<dtocthoadon> list = new ArrayList<>();
-        for (dtodonhang i : list_donhang) {
-            dtocthoadon a = new dtocthoadon();
-            a.setMaSanPham(i.getMa());
-            a.setSoLuong(i.getSl());
-            a.setTensanpham(i.getTen());
-            list.add(a);
-        }
-        formthanhtoan formth = new formthanhtoan(list, manv);
-        formth.setSize(510, 750);
-        formth.setResizable(false);
-        formth.setLocationRelativeTo(null);
-        list_donhang.clear();
-        refreshCartTable();
-        formth.setVisible(true);
-        formth.toFront();
+        list_donhang.add(dh); return true;
     }
 
     private void addProductToCart(dtosanpham sp) {
         Integer stock = productStockById.getOrDefault(sp.getMaSanPham(), 0);
-        if (stock <= 0) {
-            JOptionPane.showMessageDialog(this, "Sản phẩm này đã hết hàng");
-            return;
-        }
+        if (stock <= 0) { JOptionPane.showMessageDialog(this, "Sản phẩm đã hết hàng"); return; }
         for (dtodonhang dh : list_donhang) {
             if (dh.getMa() == sp.getMaSanPham()) {
-                if (dh.getSl() + 1 > stock) {
-                    JOptionPane.showMessageDialog(this, "Số lượng vượt quá tồn kho");
-                    return;
-                }
-                dh.setSl(dh.getSl() + 1);
-                refreshCartTable();
-                return;
+                if (dh.getSl() + 1 > stock) { JOptionPane.showMessageDialog(this, "Số lượng vượt tồn kho"); return; }
+                dh.setSl(dh.getSl() + 1); refreshCartTable(); return;
             }
         }
         dtodonhang dh = new dtodonhang();
-        dh.setMa(sp.getMaSanPham());
-        dh.setTen(sp.getTenSanPham());
-        dh.setTt(sp.getGiaBan());
-        dh.setSl(1);
-        list_donhang.add(dh);
-        refreshCartTable();
+        dh.setMa(sp.getMaSanPham()); dh.setTen(sp.getTenSanPham());
+        dh.setTt(sp.getGiaBan()); dh.setSl(1);
+        list_donhang.add(dh); refreshCartTable();
     }
 
-    private void changeSelectedQuantity(int delta) {
-        int row = cartTable.getSelectedRow();
-        if (row < 0 || row >= list_donhang.size()) {
-            return;
-        }
+    private Integer changeQuantityAtRow(int row, int delta) {
+        if (row < 0 || row >= list_donhang.size()) return null;
         dtodonhang dh = list_donhang.get(row);
         int newQty = dh.getSl() + delta;
-        int stock = productStockById.getOrDefault(dh.getMa(), Integer.MAX_VALUE);
-        if (newQty < 1) {
-            return;
-        }
-        if (newQty > stock) {
-            JOptionPane.showMessageDialog(this, "Số lượng vượt quá tồn kho");
-            return;
+        if (newQty < 1) return null;
+        if (newQty > productStockById.getOrDefault(dh.getMa(), Integer.MAX_VALUE)) {
+            JOptionPane.showMessageDialog(this, "Số lượng vượt quá tồn kho"); return null;
         }
         dh.setSl(newQty);
-        refreshCartTable();
-        cartTable.setRowSelectionInterval(row, row);
+        if (cartModel != null && row < cartModel.getRowCount()) cartModel.setValueAt(newQty, row, 1);
+        if (cartTotalLabel != null) cartTotalLabel.setText("Tổng: " + formatMoney(calculateTotal()));
+        if (cartTable != null && row < cartTable.getRowCount()) cartTable.setRowSelectionInterval(row, row);
+        return newQty;
     }
 
-    private void applyDiscountToSelectedRow() {
-        int row = cartTable.getSelectedRow();
-        if (row < 0 || row >= list_donhang.size()) {
-            return;
+    private void removeCartRow(int row) {
+        if (row < 0 || row >= list_donhang.size()) return;
+        list_donhang.remove(row); refreshCartTable();
+    }
+
+    public Double calculateTotal() {
+        return list_donhang.stream().mapToDouble(dh -> dh.getSl() * dh.getTt()).sum();
+    }
+
+    private void checkoutFromCartPanel() {
+        if (list_donhang.isEmpty()) { JOptionPane.showMessageDialog(this, "Giỏ hàng rỗng"); return; }
+        ArrayList<dtocthoadon> list = new ArrayList<>();
+        for (dtodonhang i : list_donhang) {
+            dtocthoadon a = new dtocthoadon();
+            a.setMaSanPham(i.getMa()); a.setSoLuong(i.getSl()); a.setTensanpham(i.getTen()); list.add(a);
         }
-        try {
-            double percent = Double.parseDouble(discountField.getText());
-            if (percent < 0 || percent > 100) {
-                JOptionPane.showMessageDialog(this, "% giảm phải từ 0 đến 100");
-                return;
-            }
-            dtodonhang dh = list_donhang.get(row);
-            double newPrice = dh.getTt() * (1 - percent / 100.0);
-            dh.setTt(Math.max(newPrice, 0));
-            refreshCartTable();
-            cartTable.setRowSelectionInterval(row, row);
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "% giảm không hợp lệ");
+        formthanhtoan formth = new formthanhtoan(list, manv);
+        formth.setSize(510, 750); formth.setResizable(false); formth.setLocationRelativeTo(null);
+        list_donhang.clear(); refreshCartTable();
+        formth.setVisible(true); formth.toFront();
+    }
+
+    // ── Cell editors / renderers ──────────────────────────────────────────────
+    private class QuantityCellRenderer extends JPanel implements TableCellRenderer {
+        private final JButton m = new JButton("−"), p = new JButton("+");
+        private final JLabel lbl = new JLabel("0", SwingConstants.CENTER);
+        public QuantityCellRenderer() {
+            setLayout(new BorderLayout(2, 0)); setOpaque(false);
+            m.setEnabled(false); p.setEnabled(false);
+            styleStepperButton(m); styleStepperButton(p);
+            add(m, BorderLayout.WEST); add(lbl, BorderLayout.CENTER); add(p, BorderLayout.EAST);
+        }
+        @Override
+        public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+            lbl.setText(String.valueOf(v)); setBackground(sel ? t.getSelectionBackground() : t.getBackground()); return this;
         }
     }
 
-
-
-
-
-    private Component createExample() {
-        responsiveLayout = new ResponsiveLayout(ResponsiveLayout.JustifyContent.FIT_CONTENT, new Dimension(-1, -1), 10, 10, 3);
-        panelCard = new JPanel(responsiveLayout);
-        panelCard.putClientProperty(FlatClientProperties.STYLE, "" +
-                "border:10,10,10,10;");
-        JScrollPane scrollPane = new JScrollPane(panelCard);
-        scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-        scrollPane.getHorizontalScrollBar().putClientProperty(FlatClientProperties.STYLE, "" +
-                "trackArc:$ScrollBar.thumbArc;" +
-                "thumbInsets:0,0,0,0;" +
-                "width:7;");
-        scrollPane.getVerticalScrollBar().putClientProperty(FlatClientProperties.STYLE, "" +
-                "trackArc:$ScrollBar.thumbArc;" +
-                "thumbInsets:0,0,0,0;" +
-                "width:7;");
-        scrollPane.setBorder(null);
-
-        // Menu (right) container with header
-        JPanel menuContainer = new JPanel(new BorderLayout());
-        menuContainer.setBackground(Color.WHITE);
-        JLabel menuTitle = new JLabel("THỰC ĐƠN", SwingConstants.CENTER);
-        menuTitle.setFont(new Font("Arial", Font.BOLD, 16));
-        menuTitle.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        menuContainer.add(menuTitle, BorderLayout.NORTH);
-        menuContainer.add(scrollPane, BorderLayout.CENTER);
-
-        // Cart (left) panel
-        JPanel cartPanel = createCartPanel();
-
-        JSplitPane splitPane = new JSplitPane();
-        splitPane.setLeftComponent(menuContainer);
-        splitPane.setRightComponent(cartPanel);
-        splitPane.setResizeWeight(0.75);
-        splitPane.setDividerSize(0);
-        splitPane.setEnabled(false);
-        splitPane.setBorder(null);
-        return splitPane;
+    private class QuantityCellEditor extends AbstractCellEditor implements TableCellEditor {
+        private final JPanel panel = new JPanel(new BorderLayout(2, 0));
+        private final JButton minus = new JButton("−"), plus = new JButton("+");
+        private final JLabel lbl = new JLabel("0", SwingConstants.CENTER);
+        private int editRow = -1;
+        public QuantityCellEditor() {
+            panel.setOpaque(false); styleStepperButton(minus); styleStepperButton(plus);
+            panel.add(minus, BorderLayout.WEST); panel.add(lbl, BorderLayout.CENTER); panel.add(plus, BorderLayout.EAST);
+            minus.setFocusable(false); plus.setFocusable(false);
+            minus.addActionListener(e -> { Integer nq = changeQuantityAtRow(editRow, -1); if (nq != null) lbl.setText(String.valueOf(nq)); stopCellEditing(); });
+            plus.addActionListener(e  -> { Integer nq = changeQuantityAtRow(editRow,  1); if (nq != null) lbl.setText(String.valueOf(nq)); stopCellEditing(); });
+        }
+        @Override public Component getTableCellEditorComponent(JTable t, Object v, boolean sel, int r, int c) { editRow = r; lbl.setText(String.valueOf(v)); return panel; }
+        @Override public Object getCellEditorValue() { return lbl.getText(); }
     }
-    private ImageIcon resizeIcon(ImageIcon icon, int width, int height) {
-    Image img = icon.getImage();
-    Image newImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-    return new ImageIcon(newImg);
+
+    private class DeleteButtonRenderer extends JButton implements TableCellRenderer {
+        public DeleteButtonRenderer() {
+            setText("✕"); setFocusPainted(false); setBorderPainted(false);
+            setForeground(DANGER); setContentAreaFilled(false); setFont(getFont().deriveFont(Font.BOLD, 13f));
+        }
+        @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) { return this; }
     }
-  
-    
-       
+
+    private class DeleteButtonEditor extends AbstractCellEditor implements TableCellEditor {
+        private final JButton btn = new JButton("✕");
+        private int editRow = -1;
+        public DeleteButtonEditor() {
+            btn.setFocusPainted(false); btn.setBorderPainted(false);
+            btn.setForeground(DANGER); btn.setContentAreaFilled(false); btn.setFont(btn.getFont().deriveFont(Font.BOLD, 13f));
+            btn.addActionListener(e -> { removeCartRow(editRow); stopCellEditing(); });
+        }
+        @Override public Component getTableCellEditorComponent(JTable t, Object v, boolean sel, int r, int c) { editRow = r; return btn; }
+        @Override public Object getCellEditorValue() { return "✕"; }
+    }
+
+    // ── UI helpers ────────────────────────────────────────────────────────────
+    private JLabel buildSectionTitle(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD, 14f));
+        lbl.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")),
+            BorderFactory.createEmptyBorder(10, 14, 10, 14)
+        ));
+        return lbl;
+    }
+
+    private void styleAccentButton(JButton btn, Color color) {
+        btn.putClientProperty(FlatClientProperties.STYLE,
+            "background: " + toHex(color) + "; " +
+            "foreground: #ffffff; " +
+            "borderWidth: 0; " +
+            "arc: 8; " +
+            "focusWidth: 0; " +
+            "innerFocusWidth: 0;");
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
+    private void styleOutlineButton(JButton btn) {
+        btn.putClientProperty(FlatClientProperties.STYLE,
+            "arc: 8; " +
+            "borderWidth: 1; " +
+            "focusWidth: 0;");
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
+    private void styleStepperButton(JButton btn) {
+        btn.putClientProperty(FlatClientProperties.STYLE,
+            "arc: 6; " +
+            "borderWidth: 1; " +
+            "focusWidth: 0; " +
+            "margin: 2, 8, 2, 8;");
+        btn.setFocusPainted(false);
+    }
+
+    private JButton flatCloseButton() {
+        JButton btn = new JButton("✕");
+        btn.putClientProperty(FlatClientProperties.STYLE,
+            "background: #ef4444; " +
+            "foreground: #ffffff; " +
+            "borderWidth: 0; " +
+            "arc: 0; " +
+            "focusWidth: 0;");
+        btn.setPreferredSize(new Dimension(48, 46));
+        btn.setFocusPainted(false);
+        btn.setFont(btn.getFont().deriveFont(Font.BOLD, 13f));
+        return btn;
+    }
+
+    private void styleScrollPane(JScrollPane sp) {
+        sp.getVerticalScrollBar().putClientProperty(FlatClientProperties.STYLE,
+            "trackArc: $ScrollBar.thumbArc; thumbInsets: 0, 0, 0, 0; width: 7;");
+        sp.getHorizontalScrollBar().putClientProperty(FlatClientProperties.STYLE,
+            "trackArc: $ScrollBar.thumbArc; thumbInsets: 0, 0, 0, 0; width: 7;");
+        sp.getVerticalScrollBar().setUnitIncrement(12);
+        sp.getHorizontalScrollBar().setUnitIncrement(12);
+    }
+
+    private String toHex(Color c) {
+        return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
+    }
+
+    private String formatMoney(double amount) {
+        return String.format("%,.0f ₫", amount);
+    }
+
+    private ImageIcon resizeIcon(ImageIcon icon, int w, int h) {
+        return new ImageIcon(icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
+    }
 }

@@ -82,8 +82,8 @@ public class Menu extends javax.swing.JPanel {
                 }
             }
             if (macv != 1 && "Nhân Viên".equalsIgnoreCase(dm.getTenDanhMuc())) {
-                if (!submenu.contains("Bảng chấm công của tôi")) {
-                    submenu.add("Bảng chấm công của tôi");
+                if (!submenu.contains("Thông tin cá nhân")) {
+                    submenu.add("Thông tin cá nhân");
                 }
                 if (!submenu.contains("Cách tính lương")) {
                     submenu.add("Cách tính lương");

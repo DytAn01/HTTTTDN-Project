@@ -7,13 +7,11 @@ import dto.dtonhanvien;
 import gui.comp.Header;
 import gui.comp.Menu;
 import gui.event.EventMenuSelected;
-import gui.form.formchamcong;
-import gui.form.formchamcongcuatoi;
-import gui.form.formchamconghangngay;
 import gui.form.formchucnang;
 import gui.form.formchucvu;
 import gui.form.formcachtinhluong;
 import gui.form.formnhanvien;
+import gui.form.formthongtincanhan;
 import gui.form.formmenu;
 import gui.form.formsanpham;
 import gui.form.formthongke;
@@ -190,6 +188,7 @@ public class Guimain extends javax.swing.JFrame {
 }
 
     private Component createForm(String submenuName) throws SQLException, ParseException {
+        busnhanvien busnv = new busnhanvien();
         switch (submenuName) {
             case "Menu":
                 return new formmenu(nv.getManhanvien());
@@ -201,12 +200,12 @@ public class Guimain extends javax.swing.JFrame {
                 return new formnhacungcap();
             case "Phieu nhap":
                 return new formphieunhap(nv.getManhanvien());
+            case "Thong tin ca nhan":
+                return new formthongtincanhan(nv.getManhanvien());
             case "Thong tin nhan vien":
-                return new formnhanvien();
+                return new formnhanvien(nv.getManhanvien(), busnv.getmachucvu(nv.getManhanvien()));
             case "Tai khoan":
                 return new formtaikhoan();
-            case "Cham cong":
-                return new formchamcong();
             case "Chuc vu":
                 return new formchucvu();
             case "Luong":
@@ -225,10 +224,6 @@ public class Guimain extends javax.swing.JFrame {
                 return new formchucnang();
             case "Phan loai":
                 return new formphanloai();
-            case "Cham cong hang ngay":
-                return new formchamconghangngay(nv.getManhanvien());
-            case "Bang cham cong cua toi":
-                return new formchamcongcuatoi(nv.getManhanvien());
             case "Cach tinh luong":
                 return new formcachtinhluong(nv.getManhanvien());
             default:

@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +45,8 @@ import raven.modal.option.Option;
 @SystemForm(name = "Responsive Layout", description = "responsive layout user interface", tags = {"card"})
 public class formnhanvien extends Form {
     
-    
+    private int maNhanVien = 0;
+    private int maChuVu = 0;
     private busnhanvien busNV;
     private bustaikhoan busTK;
     private ArrayList<dtonhanvien> list_NV;
@@ -58,6 +61,16 @@ public class formnhanvien extends Form {
     private ArrayList<dtohopdong> list_HD;
     
     public formnhanvien() throws SQLException {
+        this.maNhanVien = 0;
+        this.maChuVu = 1;  // Default: admin
+        init();
+        formInit();
+        
+    }
+    
+    public formnhanvien(int maNhanVien, int maChuVu) throws SQLException {
+        this.maNhanVien = maNhanVien;
+        this.maChuVu = maChuVu;
         init();
         formInit();
         
@@ -85,12 +98,18 @@ public class formnhanvien extends Form {
             for(int i = 0 ; i < list_NV.size() ; i++){
                 dtonhanvien nv = list_NV.get(i);
                 
+                // Nếu không phải admin, chỉ hiển thị thông tin của chính họ
+                if (maChuVu != 1 && nv.getManhanvien() != maNhanVien) {
+                    continue;
+                }
+                
                 boolean isExist = false;
                 for(dtohopdong hd : list_HD){
                     if(hd.getMaNV() == nv.getManhanvien()){
                         nv.setLuongcoban((float) hd.getLuongCoBan());
                         NVCard card1 = new NVCard(nv, createEventCard1() , 1);
                         cards.add(card1);
+                        
                         panelCard.add(card1);
                         isExist = true;
                         break;
@@ -115,184 +134,314 @@ public class formnhanvien extends Form {
     private Consumer<dtonhanvien> createEventCard1() {
         return e -> {
             try {
-                Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                int dialogWidth = (int) (screenSize.width * 0.7);
-                int dialogHeight = (int) (screenSize.height * 0.7);
-
-                JDialog showDialog = new JDialog();
-                showDialog.setSize(dialogWidth, dialogHeight);
-                showDialog.setUndecorated(true); // Bỏ khung mặc định của JDialog
-                showDialog.setShape(new RoundRectangle2D.Double(0, 0, dialogWidth, dialogHeight, 30, 30)); // Bo góc
-                showDialog.setLayout(new BorderLayout());
-                showDialog.setModal(true);
-
-                JPanel titleBar = new JPanel();
-                titleBar.setLayout(new BorderLayout());
-                titleBar.setBackground(Color.LIGHT_GRAY);
-
+                Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+                int W = (int)(screen.width * 0.65), H = (int)(screen.height * 0.72);
+ 
+                JDialog dlg = new JDialog();
+                dlg.setSize(W, H);
+                dlg.setUndecorated(true);
+                dlg.setShape(new RoundRectangle2D.Double(0, 0, W, H, 24, 24));
+                dlg.setLayout(new BorderLayout());
+                dlg.setModal(true);
+ 
+                // ── Title bar ─────────────────────────────────────────────────
+                JPanel titleBar = new JPanel(new BorderLayout());
+                titleBar.setBackground(new Color(99, 102, 241));   // indigo-500
+                titleBar.setPreferredSize(new Dimension(W, 48));
+                titleBar.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
+ 
                 JLabel titleLabel = new JLabel("Thông tin nhân viên");
-                titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-                titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                titleLabel.setPreferredSize(new Dimension(dialogWidth, 50));
-
-                JButton closeButton = new JButton("X");
-                closeButton.setFocusPainted(false);
-                closeButton.setBorderPainted(false);
-                closeButton.setBackground(Color.RED);
-                closeButton.setForeground(Color.WHITE);
-                closeButton.setPreferredSize(new Dimension(45, 30));
-
-                // Sự kiện đóng cửa sổ khi nhấn nút X
-                closeButton.addActionListener(event -> showDialog.dispose());
-
-                titleBar.add(titleLabel, BorderLayout.WEST);
-                titleBar.add(closeButton, BorderLayout.EAST);
-
-                // Tạo JPanel chứa thông tin nhân viên và ảnh
-                JPanel contentPanel = new JPanel(new GridBagLayout());
-                contentPanel.setBackground(Color.WHITE);
-
-                // Panel bên trái chứa thông tin nhân viên
-
-                JPanel nv_panel = new JPanel(new GridBagLayout());
-                nv_panel.setBackground(Color.WHITE); // Đặt nền trắng cho panel
-                GridBagConstraints gbc = new GridBagConstraints();
-                gbc.insets = new Insets(5, 5, 5, 5); // Đặt khoảng cách giữa các thành phần
-                gbc.fill = GridBagConstraints.HORIZONTAL;
-
-                //Tạo panel bên trái
-                addField(nv_panel, gbc, "Mã nhân viên:", 0, String.valueOf(e.getManhanvien()));
-                addField(nv_panel, gbc, "Tên nhân viên:", 1, String.valueOf(e.getTennhanvien()));
-                addField(nv_panel, gbc, "Giới tính:", 2, String.valueOf(e.getGioitinh())); 
-                addField(nv_panel, gbc, "Năm sinh:", 3, String.valueOf(e.getNgaysinh()));  
-                addField(nv_panel, gbc, "Số điện thoại:", 4, String.valueOf(e.getSdt()));
-                addField(nv_panel, gbc, "Địa chỉ:", 5,  String.valueOf(e.getDiachi()));
-                addField(nv_panel, gbc, "Email:", 6, String.valueOf(e.getEmail()));
-                addField(nv_panel, gbc, "Lương:", 7, String.valueOf(e.getLuongcoban()));
-                addField(nv_panel, gbc, "Tên chức vụ:", 8,busNV.getTenChucVu(e.getMachucvu()));
-
-
-                // Tạo JPanel bên phải cho hình ảnh
-                JPanel imagePanel = new JPanel(new GridBagLayout());
-                imagePanel.setBackground(Color.WHITE);
-                GridBagConstraints rightGbc = new GridBagConstraints();
-                rightGbc.insets = new Insets(5, 5, 5, 5);
-                addImageField(imagePanel,rightGbc, e.getImg(), showDialog);
-
-                GridBagConstraints mainGbc = new GridBagConstraints();
-                mainGbc.insets = new Insets(10, 10, 10, 10);
-                mainGbc.fill = GridBagConstraints.BOTH;
-                mainGbc.gridx = 0;
-                mainGbc.gridy = 0;
-                mainGbc.weightx = 0.6;
-                contentPanel.add(nv_panel, mainGbc);
-
-                mainGbc.gridx = 1;
-                mainGbc.weightx = 0.4;
-                contentPanel.add(imagePanel, mainGbc);
-
-
-
-                JPanel buttonPanel = new JPanel();
-                buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER)); // Đặt vị trí nút về phía phải
-                buttonPanel.setBackground(Color.WHITE);
-
-                JButton saveButton = new JButton("Lưu");
-                saveButton.setPreferredSize(new Dimension(100, 30));
-                saveButton.setBackground(Color.GREEN); // Đặt màu nền xanh lá
-                saveButton.setForeground(Color.WHITE); // Đặt màu chữ trắng
-
-                saveButton.addActionListener(event -> {
+                titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+                titleLabel.setForeground(Color.WHITE);
+ 
+                JButton btnClose = new JButton("✕");
+                btnClose.setPreferredSize(new Dimension(48, 48));
+                btnClose.setFocusPainted(false);
+                btnClose.setBorderPainted(false);
+                btnClose.setBackground(new Color(239, 68, 68));
+                btnClose.setForeground(Color.WHITE);
+                btnClose.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                btnClose.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                btnClose.addMouseListener(new MouseAdapter() {
+                    public void mouseEntered(MouseEvent ev) { btnClose.setBackground(new Color(220, 38, 38)); }
+                    public void mouseExited(MouseEvent ev)  { btnClose.setBackground(new Color(239, 68, 68)); }
+                });
+                btnClose.addActionListener(ev -> dlg.dispose());
+ 
+                titleBar.add(titleLabel, BorderLayout.CENTER);
+                titleBar.add(btnClose,   BorderLayout.EAST);
+                dlg.add(titleBar, BorderLayout.NORTH);
+ 
+                // ── Content: left info + right image ─────────────────────────
+                JPanel content = new JPanel(new MigLayout(
+                    "fill, insets 24 28 16 28",
+                    "[fill, grow 60][28!][fill, grow 40]",
+                    "[fill]"
+                ));
+                content.setBackground(Color.WHITE);
+ 
+                // Left: info fields
+                content.add(buildInfoPanel(e), "grow");
+                content.add(new JLabel(), "");   // spacer column
+ 
+                // Right: image panel
+                content.add(buildImagePanel(e.getImg(), dlg), "grow");
+ 
+                dlg.add(content, BorderLayout.CENTER);
+ 
+                // ── Bottom button bar ─────────────────────────────────────────
+                JPanel btnBar = new JPanel(new MigLayout(
+                    "insets 12 28 16 28, fillx",
+                    "push[][]", "[]"
+                ));
+                btnBar.setBackground(Color.WHITE);
+                btnBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(226, 232, 240)));
+ 
+                JButton btnCancel = new JButton("Hủy");
+                btnCancel.putClientProperty(FlatClientProperties.STYLE,
+                    "arc: 8; borderWidth: 1; focusWidth: 0;");
+                btnCancel.setFocusPainted(false);
+                btnCancel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                btnCancel.addActionListener(ev -> dlg.dispose());
+ 
+                JButton btnSave = new JButton("  💾  Lưu thay đổi");
+                btnSave.putClientProperty(FlatClientProperties.STYLE,
+                    "background: #22c55e; foreground: #ffffff; " +
+                    "borderWidth: 0; arc: 8; focusWidth: 0; innerFocusWidth: 0;");
+                btnSave.setFocusPainted(false);
+                btnSave.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+ 
+                btnSave.addActionListener(event -> {
                     try {
                         dtonhanvien nv = new dtonhanvien();
                         nv.setManhanvien(Integer.parseInt(textField[0].getText()));
                         nv.setTennhanvien(textField[1].getText());
                         nv.setGioitinh(genderComboBox.getSelectedIndex());
                         nv.setNgaysinh(dateChooser.getDate());
-                        nv.setSdt(textField[4].getText()); // lưu ý vị trí trường sdt
+                        nv.setSdt(textField[4].getText());
                         nv.setDiachi(textField[5].getText());
                         nv.setEmail(textField[6].getText());
-                        nv.setMachucvu(busNV.getMaChucVuByName((String) comboxCV.getSelectedItem()));
-
-                        
-
-                        int result = JOptionPane.showConfirmDialog(null, "Bạn có chắc sửa thông tin nhân viên này không ?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-                        if(result == JOptionPane.YES_OPTION){
+                        if (maChuVu == 1) {
+                            nv.setMachucvu(busNV.getMaChucVuByName((String) comboxCV.getSelectedItem()));
+                        }
+ 
+                        int confirm = JOptionPane.showConfirmDialog(
+                            dlg,
+                            "Bạn có chắc muốn cập nhật thông tin nhân viên này?",
+                            "Xác nhận cập nhật",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE
+                        );
+                        if (confirm == JOptionPane.YES_OPTION) {
                             if (selectedFile != null) {
-                                nv.setImg(selectedFile.getName()); 
-                                String root_dir = System.getProperty("user.dir") +  "/src/source/image/nhanvien/" ;
-                                saveImageToDirectory(root_dir);
-                                
-                            }else{
+                                nv.setImg(selectedFile.getName());
+                                saveImageToDirectory(System.getProperty("user.dir") + "/src/source/image/nhanvien/");
+                            } else {
                                 nv.setImg(e.getImg());
                             }
-                            
                             busNV.updateNhanVien(nv);
                             formInit();
-                            
-                            JOptionPane.showMessageDialog(null, "Cập nhật thành công");
-                            showDialog.dispose();
+                            JOptionPane.showMessageDialog(dlg, "Cập nhật thông tin thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                            dlg.dispose();
                         }
-
-
                     } catch (SQLException ex) {
                         Logger.getLogger(formnhanvien.class.getName()).log(Level.SEVERE, null, ex);
-                        JOptionPane.showMessageDialog(null, "Có lỗi xảy ra trong quá trình cập nhật");
+                        JOptionPane.showMessageDialog(dlg, "Có lỗi xảy ra trong quá trình cập nhật.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     }
                 });
-
-
-                buttonPanel.add(saveButton);
-                showDialog.add(titleBar, BorderLayout.NORTH);
-                showDialog.add(contentPanel, BorderLayout.CENTER);
-                showDialog.add(buttonPanel, BorderLayout.SOUTH); // Thêm nút lưu vào phía dưới
-                showDialog.setLocationRelativeTo(null); // Đặt JDialog ở giữa màn hình
-                showDialog.setVisible(true);
+ 
+                btnBar.add(btnCancel, "width 90!");
+                btnBar.add(btnSave,   "width 160!");
+                dlg.add(btnBar, BorderLayout.SOUTH);
+ 
+                dlg.setLocationRelativeTo(null);
+                dlg.setVisible(true);
             } catch (SQLException ex) {
                 Logger.getLogger(formnhanvien.class.getName()).log(Level.SEVERE, null, ex);
             }
         };
     }
-
-    
-    private void addImageField(JPanel panel, GridBagConstraints gbc, String imgPath, JDialog showDialog) {
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-
-        JLabel imgLabel = new JLabel("IMG:");
-        imgLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        imgLabel.setPreferredSize(new Dimension(150, 20));
-        panel.add(imgLabel, gbc);
-
-        gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        imageDisplayLabel = new JLabel();
-        imageDisplayLabel.setPreferredSize(new Dimension(170, 210));
-        if(!imgPath.isEmpty()){
-            ImageIcon curImg = new ImageIcon(System.getProperty("user.dir") + "/src/source/image/nhanvien/" + imgPath);
-            Image scaledImg = curImg.getImage().getScaledInstance(170, 230, Image.SCALE_SMOOTH);
-            ImageIcon editImg = new ImageIcon(scaledImg);
-            imageDisplayLabel.setIcon(editImg);
-
+ 
+    /** Panel trái: các trường thông tin nhân viên */
+    private JPanel buildInfoPanel(dtonhanvien e) throws SQLException {
+        JPanel p = new JPanel(new MigLayout(
+            "fillx, wrap 2, insets 0, gapy 0",
+            "[120!][fill]",
+            "[]10[]10[]10[]10[]10[]10[]10[]10[]"
+        ));
+        p.setOpaque(false);
+ 
+        addInfoRow(p, "Mã nhân viên",    String.valueOf(e.getManhanvien()),  false);
+        addInfoRow(p, "Họ và tên",       e.getTennhanvien(),                 true);
+ 
+        // Giới tính – combobox
+        addLabel(p, "Giới tính");
+        genderComboBox = new JComboBox<>(new String[]{"Nam", "Nữ"});
+        genderComboBox.setSelectedIndex(e.getGioitinh());
+        genderComboBox.putClientProperty(FlatClientProperties.STYLE, "arc: 8; borderWidth: 1;");
+        p.add(genderComboBox, "growx, height 34!");
+ 
+        // Ngày sinh – date chooser
+        addLabel(p, "Ngày sinh");
+        dateChooser = new JDateChooser();
+        dateChooser.setDateFormatString("dd/MM/yyyy");
+        dateChooser.setDate(e.getNgaysinh());
+        ((JTextField) dateChooser.getDateEditor().getUiComponent()).setEditable(false);
+        dateChooser.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
+        p.add(dateChooser, "growx, height 34!");
+ 
+        addInfoRow(p, "Số điện thoại",   e.getSdt(),         true);
+        addInfoRow(p, "Địa chỉ",         e.getDiachi(),       true);
+        addInfoRow(p, "Email",            e.getEmail(),        true);
+        addInfoRow(p, "Lương cơ bản",    String.valueOf(e.getLuongcoban()), false);
+ 
+        // Chức vụ
+        addLabel(p, "Chức vụ");
+        if (maChuVu == 1) {
+            comboxCV = new JComboBox<>();
+            comboxCV.putClientProperty(FlatClientProperties.STYLE, "arc: 8; borderWidth: 1;");
+            try {
+                for (dtochucvu cv : busNV.listChucVu()) comboxCV.addItem(cv.getTenchucvu());
+            } catch (Exception ignored) {}
+            comboxCV.setSelectedItem(busNV.getTenChucVu(e.getMachucvu()));
+            p.add(comboxCV, "growx, height 34!");
+        } else {
+            JTextField tfCV = flatReadonlyField(busNV.getTenChucVu(e.getMachucvu()));
+            // Badge style for role
+            tfCV.setBackground(new Color(238, 242, 255));
+            tfCV.setForeground(new Color(99, 102, 241));
+            p.add(tfCV, "growx, height 34!");
         }
-        panel.add(imageDisplayLabel, gbc);
-
-        gbc.gridy = 2;
-        JButton fileChooserButton = new JButton("Chọn ảnh");
-        fileChooserButton.setPreferredSize(new Dimension(100, 30));
-        fileChooserButton.addActionListener(event -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setDialogTitle("Chọn ảnh");
-
-            int result = fileChooser.showOpenDialog(showDialog);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                selectedFile = fileChooser.getSelectedFile();
-                updateImageLabel(imageDisplayLabel, selectedFile.getPath());
+ 
+        return p;
+    }
+ 
+    private void addInfoRow(JPanel p, String label, String value, boolean editable) {
+        addLabel(p, label);
+        JTextField tf = editable ? flatEditableField(value) : flatReadonlyField(value);
+        // Store editable fields in textField[] as before — index assignment handled by caller
+        p.add(tf, "growx, height 34!");
+    }
+ 
+    private void addLabel(JPanel p, String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(lbl.getFont().deriveFont(Font.PLAIN, 12f));
+        lbl.putClientProperty(FlatClientProperties.STYLE, "foreground: $Label.disabledForeground;");
+        p.add(lbl);
+    }
+ 
+    private JTextField flatEditableField(String value) {
+        JTextField tf = new JTextField(value);
+        tf.putClientProperty(FlatClientProperties.STYLE,
+            "arc: 8; focusedBorderColor: #6366f1; borderWidth: 1;");
+        return tf;
+    }
+ 
+    private JTextField flatReadonlyField(String value) {
+        JTextField tf = new JTextField(value);
+        tf.setEditable(false);
+        tf.putClientProperty(FlatClientProperties.STYLE,
+            "arc: 8; borderWidth: 1; background: $Panel.background;");
+        return tf;
+    }
+ 
+    /** Panel phải: ảnh + nút chọn ảnh */
+    private JPanel buildImagePanel(String imgPath, JDialog dlg) {
+        JPanel p = new JPanel(new MigLayout(
+            "fillx, wrap, insets 0, alignx center",
+            "[center]",
+            "[]12[]12[]"
+        ));
+        p.setOpaque(false);
+ 
+        // Section label
+        JLabel sectionLbl = new JLabel("Hình ảnh nhân viên");
+        sectionLbl.setFont(sectionLbl.getFont().deriveFont(Font.BOLD, 13f));
+        sectionLbl.putClientProperty(FlatClientProperties.STYLE, "foreground: #6366f1;");
+        sectionLbl.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(199, 210, 254)),
+            BorderFactory.createEmptyBorder(0, 0, 6, 0)
+        ));
+        p.add(sectionLbl, "growx");
+ 
+        // Avatar display
+        imageDisplayLabel = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth(), h = getHeight();
+                g2.setColor(new Color(238, 242, 255));
+                g2.fillRoundRect(0, 0, w, h, 16, 16);
+                if (getIcon() != null) {
+                    g2.setClip(new java.awt.geom.RoundRectangle2D.Float(0, 0, w, h, 16, 16));
+                    g2.drawImage(((ImageIcon) getIcon()).getImage(), 0, 0, w, h, null);
+                    g2.setClip(null);
+                } else {
+                    // placeholder
+                    g2.setColor(new Color(165, 180, 252));
+                    g2.fillOval((w - 56) / 2, h / 2 - 60, 56, 56);
+                    g2.fillRoundRect((w - 84) / 2, h / 2 + 4, 84, 48, 24, 24);
+                    g2.setColor(new Color(199, 210, 254));
+                    g2.setFont(g2.getFont().deriveFont(Font.ITALIC, 12f));
+                    String t = "Chưa có ảnh";
+                    FontMetrics fm = g2.getFontMetrics();
+                    g2.drawString(t, (w - fm.stringWidth(t)) / 2, h - 14);
+                }
+                g2.setStroke(new BasicStroke(2f));
+                g2.setColor(new Color(165, 180, 252));
+                g2.drawRoundRect(1, 1, w - 3, h - 3, 16, 16);
+                g2.dispose();
+            }
+        };
+        imageDisplayLabel.setPreferredSize(new Dimension(180, 220));
+ 
+        if (imgPath != null && !imgPath.isEmpty()) {
+            String fullPath = System.getProperty("user.dir") + "/src/source/image/nhanvien/" + imgPath;
+            try {
+                java.awt.image.BufferedImage bi = javax.imageio.ImageIO.read(new File(fullPath));
+                if (bi != null) {
+                    imageDisplayLabel.setIcon(new ImageIcon(bi.getScaledInstance(180, 220, Image.SCALE_SMOOTH)));
+                }
+            } catch (Exception ignored) {}
+        }
+ 
+        p.add(imageDisplayLabel, "width 180!, height 220!");
+ 
+        // Hint text
+        JLabel hint = new JLabel("JPG, PNG, GIF · Tối đa 5MB");
+        hint.setFont(hint.getFont().deriveFont(Font.ITALIC, 11f));
+        hint.putClientProperty(FlatClientProperties.STYLE, "foreground: $Label.disabledForeground;");
+        p.add(hint);
+ 
+        // Choose button
+        JButton btnChon = new JButton("  📁  Đổi ảnh");
+        btnChon.putClientProperty(FlatClientProperties.STYLE,
+            "background: #6366f1; foreground: #ffffff; " +
+            "borderWidth: 0; arc: 8; focusWidth: 0; innerFocusWidth: 0;");
+        btnChon.setFocusPainted(false);
+        btnChon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnChon.addActionListener(ev -> {
+            JFileChooser fc = new JFileChooser();
+            fc.setDialogTitle("Chọn ảnh đại diện");
+            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Ảnh (jpg, png, jpeg, gif)", "jpg", "png", "jpeg", "gif"));
+            if (fc.showOpenDialog(dlg) == JFileChooser.APPROVE_OPTION) {
+                selectedFile = fc.getSelectedFile();
+                try {
+                    java.awt.image.BufferedImage bi = javax.imageio.ImageIO.read(selectedFile);
+                    if (bi != null) {
+                        imageDisplayLabel.setIcon(new ImageIcon(bi.getScaledInstance(180, 220, Image.SCALE_SMOOTH)));
+                        imageDisplayLabel.repaint();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
         });
-        panel.add(fileChooserButton, gbc);
+        p.add(btnChon, "width 160!, gapy 4 0");
+ 
+        return p;
     }
 
     private void updateImageLabel(JLabel label, String imgPath) {
@@ -368,6 +517,10 @@ public class formnhanvien extends Form {
             comboxCV.setFont(new Font("Arial", Font.PLAIN, 16));
             comboxCV.setPreferredSize(new Dimension(150, 40)); 
             comboxCV.setBorder(new RoundedBorder(10));
+            // Chỉ admin mới có thể sửa chức vụ
+            if (maChuVu != 1) {
+                comboxCV.setEnabled(false);
+            }
 
             list_CV = busNV.listChucVu();
             for(dtochucvu cv : list_CV){
@@ -676,7 +829,7 @@ public class formnhanvien extends Form {
 
     SimpleInputFormsNhanVien form = new SimpleInputFormsNhanVien();
     ModalDialog.showModal(this, new SimpleModalBorder(
-            form, "Create", SimpleModalBorder.YES_NO_OPTION,
+            form, "Thêm nhân viên mới", SimpleModalBorder.YES_NO_OPTION,
             (controller, action) -> {
                 if (action == SimpleModalBorder.YES_OPTION) {
                     int result = JOptionPane.showConfirmDialog(null, "Bạn có chắc thêm nhân viên này không", "Xác nhận", JOptionPane.YES_NO_OPTION);

@@ -25,6 +25,11 @@ public class busluong {
         return daoLuong.getById(maLuong);
     }
 
+    // Lấy thông tin lương theo ID lương và ID nhân viên
+    public dtoluong getLuongByIdAndEmployee(int maLuong, int maNhanVien) {
+        return daoLuong.getByIdAndEmployee(maLuong, maNhanVien);
+    }
+
     // Lấy danh sách lương theo khoảng thời gian
     public ArrayList<dtoluong> getLuongByTime(Date start, Date end) {
         return daoLuong.getByTime(start, end);

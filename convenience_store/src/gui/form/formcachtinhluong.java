@@ -1,14 +1,15 @@
 package gui.form;
 
-import bus.buschamcong;
 import bus.busluong;
 import bus.bushopdong;
 import com.formdev.flatlaf.FlatClientProperties;
-import dto.dtochamcong;
+import dao.daoluong;
 import dto.dtohopdong;
+import dto.dtoluong;
 import java.awt.Component;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -24,7 +25,6 @@ import net.miginfocom.swing.MigLayout;
 public class formcachtinhluong extends JPanel {
 
     private final int maNhanVien;
-    private final buschamcong buscc = new buschamcong();
     private final busluong busLuong = new busluong();
     private final bushopdong bushd = new bushopdong();
 
@@ -50,7 +50,7 @@ public class formcachtinhluong extends JPanel {
 
     private void init() {
         setLayout(new MigLayout("fillx,wrap,insets 7 15 7 15", "[fill]", "[][fill,grow]"));
-        add(createInfo("Cách tính lương", "Xem cách tính lương theo dữ liệu chấm công của bạn.", 1));
+        add(createInfo("Cách tính lương", "Xem cách tính lương dựa trên dữ liệu lương của bạn.", 1));
         add(createBody(), "gapx 7 7");
     }
 
@@ -138,27 +138,26 @@ public class formcachtinhluong extends JPanel {
     private void refreshCalculation() {
         Integer month = parseMonth((String) cboMonth.getSelectedItem());
         Integer year = parseYear((String) cboYear.getSelectedItem());
-        dtochamcong cc = findChamCong(month, year);
+        dtoluong luong = findLuong(month, year);
         dtohopdong hd = bushd.gethdnhanvien(maNhanVien);
         double luongCoBan = hd != null ? hd.getLuongCoBan() : 0;
 
-        if (cc == null) {
-            setAllValues(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        if (luong == null) {
+            setAllValues(luongCoBan, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
             return;
         }
 
-        double gioLam = cc.getSogiolamviec();
-        double gioLamThem = cc.getSogiolamthem();
-        double luongThucTe = gioLam * luongCoBan;
-        double luongLamThem = gioLamThem * luongCoBan;
-        double phuCap = 0;
-        double luongThuong = 0;
-        double khoanBaoHiem = 0;
-        double khoanTru = 0;
-        double thue = busLuong.calculateThue(luongThucTe, phuCap, luongThuong, khoanBaoHiem, luongLamThem, khoanTru);
-        double thucLanh = busLuong.calculateLuong(luongThucTe, phuCap, luongThuong, khoanBaoHiem, luongLamThem, khoanTru) - thue;
+        double luongThucTe = luong.getLuongThucTe();
+        double gioLam = (luongCoBan > 0) ? (luongThucTe / luongCoBan) : 0;
+        double luongLamThem = luong.getLuongLamThem();
+        double phuCap = luong.getPhuCap();
+        double luongThuong = luong.getLuongThuong();
+        double khoanBaoHiem = luong.getKhoanBaoHiem();
+        double khoanTru = luong.getKhoanThue();
+        double thue = luong.getKhoanThue();
+        double thucLanh = luong.getThuclanh();
 
-        setAllValues(luongCoBan, gioLam, gioLamThem, luongThucTe, luongLamThem, phuCap, luongThuong, khoanBaoHiem, khoanTru, thue, thucLanh);
+        setAllValues(luongCoBan, gioLam, luongLamThem / (luongCoBan > 0 ? luongCoBan : 1), luongThucTe, luongLamThem, phuCap, luongThuong, khoanBaoHiem, khoanTru, thue, thucLanh);
     }
 
     private void setAllValues(double luongCoBan, double gioLam, double gioLamThem, double luongThucTe,
@@ -178,23 +177,31 @@ public class formcachtinhluong extends JPanel {
         txtThucLanh.setText(nf.format(thucLanh));
     }
 
-    private dtochamcong findChamCong(Integer month, Integer year) {
-        buscc.getlist();
-        dtochamcong selected = null;
-        for (dtochamcong cc : buscc.dscc) {
-            if (cc.getManhanvien() != maNhanVien) {
+    private dtoluong findLuong(Integer month, Integer year) {
+        daoluong daoL = new daoluong();
+        ArrayList<dtoluong> listLuong = daoL.getList();
+        dtoluong selected = null;
+        
+        for (dtoluong luong : listLuong) {
+            if (luong.getMaNhanVien() != maNhanVien) {
                 continue;
             }
-            if (month != null && cc.getThangchamcong() != month) {
+            
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(luong.getNgayNhanLuong());
+            int luongMonth = cal.get(Calendar.MONTH) + 1;
+            int luongYear = cal.get(Calendar.YEAR);
+            
+            if (month != null && luongMonth != month) {
                 continue;
             }
-            if (year != null && cc.getNamchamcong() != year) {
+            if (year != null && luongYear != year) {
                 continue;
             }
             if (selected == null
-                     || cc.getNamchamcong() > selected.getNamchamcong()
-                     || (cc.getNamchamcong() == selected.getNamchamcong() && cc.getThangchamcong() > selected.getThangchamcong())) {
-                selected = cc;
+                     || luongYear > cal.get(Calendar.YEAR)
+                     || (luongYear == cal.get(Calendar.YEAR) && luongMonth > cal.get(Calendar.MONTH) + 1)) {
+                selected = luong;
             }
         }
         return selected;
@@ -216,10 +223,14 @@ public class formcachtinhluong extends JPanel {
 
     private ArrayList<Integer> getAvailableYears() {
         Set<Integer> years = new LinkedHashSet<>();
-        buscc.getlist();
-        for (dtochamcong cc : buscc.dscc) {
-            if (cc.getManhanvien() == maNhanVien) {
-                years.add(cc.getNamchamcong());
+        daoluong daoL = new daoluong();
+        ArrayList<dtoluong> listLuong = daoL.getList();
+        
+        for (dtoluong luong : listLuong) {
+            if (luong.getMaNhanVien() == maNhanVien) {
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(luong.getNgayNhanLuong());
+                years.add(cal.get(Calendar.YEAR));
             }
         }
         return new ArrayList<>(years);

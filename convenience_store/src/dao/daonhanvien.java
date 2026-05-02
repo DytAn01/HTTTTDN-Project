@@ -97,6 +97,44 @@ public class daonhanvien {
         }
         return nv;
     }
+
+    public dtonhanvien getNhanVienById(int maNhanVien) {
+        Connection con = connect.connection();
+        String sql = "SELECT * FROM nhanvien WHERE maNhanVien = ?";
+        dtonhanvien nv = null;
+
+        try {
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setInt(1, maNhanVien);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                nv = new dtonhanvien();
+                nv.setManhanvien(rs.getInt("maNhanVien"));
+                nv.setTennhanvien(rs.getString("tenNhanVien"));
+                nv.setNgaysinh(rs.getDate("ngaySinh"));
+                nv.setEmail(rs.getString("Email"));
+                nv.setSdt(rs.getString("soDienThoai"));
+                nv.setDiachi(rs.getString("diaChi"));
+                nv.setGioitinh(rs.getInt("gioiTinh"));
+                nv.setMachucvu(rs.getInt("maChucVu"));
+                nv.setIsdelete(rs.getInt("isDelete"));
+                nv.setImg(rs.getString("img"));
+                nv.setMahopdong(rs.getInt("maHopDong"));
+                nv.setLuongcoban(rs.getFloat("luongCoBan"));
+                nv.setNgaylamviec(rs.getDate("ngayLamViec"));
+                nv.setNgayketthuc(rs.getDate("ngayKetThuc"));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(daonhanvien.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                con.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(daonhanvien.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return nv;
+    }
     
     // add
     public void AddNhanVien(dtonhanvien nv) throws SQLException {

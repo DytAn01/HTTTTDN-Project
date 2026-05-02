@@ -17,11 +17,9 @@ public class dtoluong {
     private int maNhanVien;
 
     // Constructor đầy đủ
-    public dtoluong(int maLuong, int maChamCong, double phuCap, double luongThucTe, double luongThuong,
-                    double khoanBaoHiem, double khoanThue, double thuclanh, double luongLamThem, 
-                    Date ngayNhanLuong, int maNhanVien) {
+    public dtoluong(int maLuong, double phuCap, double luongThucTe, double luongThuong, double khoanBaoHiem, double khoanThue, double thuclanh, double luongLamThem, Date ngayNhanLuong, int maNhanVien) {
         this.maLuong = maLuong;
-        this.maChamCong = maChamCong;
+        this.maChamCong = 0; // maChamCong không còn sử dụng, luôn = 0
         this.phuCap = phuCap;
         this.luongThucTe = luongThucTe;
         this.luongThuong = luongThuong;

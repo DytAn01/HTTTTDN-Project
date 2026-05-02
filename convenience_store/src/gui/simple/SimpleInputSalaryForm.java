@@ -1,96 +1,191 @@
 package gui.simple;
 
 import bus.busluong;
-import dao.daoluong; // Thay thế busluong bằng daoluong
-import dao.daochamcong;
+import bus.bushopdong;
+import dao.daoluong;
 import dao.daonhanvien;
 import dto.dtoluong;
-import dto.dtochamcong;
 import dto.dtonhanvien;
+import dto.dtohopdong;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.toedter.calendar.JDateChooser;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class SimpleInputSalaryForm extends JPanel {
-    private JComboBox<Integer> cboMaChamCong;
     private JComboBox<dtonhanvien> cboTenNhanVien;
+    private JTextField txtGioLam;
+    private JTextField txtLuongCoBan;
     private JTextField txtPhuCap;
     private JTextField txtLuongThucTe;
     private JTextField txtLuongThuong;
     private JTextField txtKhoanBaoHiem;
     private JTextField txtKhoanThue;
     private JTextField txtLuongLamThem;
+    private JTextField txtThucLanh;  // Thực lãnh
     private JDateChooser dateChooserNgayNhanLuong;
     private daoluong daoLuong;
-    private daochamcong daoChamCong;
     private daonhanvien daoNhanVien;
-    private JLabel lblLoadingChamCong;
+    private bushopdong busHD;
     private JLabel lblLoadingNhanVien;
+    private dtoluong pendingLuongData;  // Dữ liệu lương đang chờ set
 
     public SimpleInputSalaryForm() throws SQLException {
         daoLuong = new daoluong(); 
-        daoChamCong = new daochamcong();
         daoNhanVien = new daonhanvien();
+        busHD = new bushopdong();
         init();
     }
 
     private void init() throws SQLException {
         setLayout(new MigLayout("fillx,wrap,insets 5 35 5 35,width 400", "[fill]", ""));
 
-        cboMaChamCong = new JComboBox<>();
         cboTenNhanVien = new JComboBox<>();
+        txtGioLam = new JTextField();
+        txtLuongCoBan = new JTextField();
+        txtLuongCoBan.setEnabled(false);
         txtPhuCap = new JTextField();
         txtLuongThucTe = new JTextField();
+        txtLuongThucTe.setEnabled(false);  // Auto-calculate từ giờ làm
         txtLuongThuong = new JTextField();
         txtKhoanBaoHiem = new JTextField();
         txtKhoanThue = new JTextField();
         txtLuongLamThem = new JTextField();
+        txtThucLanh = new JTextField();
+        txtThucLanh.setEnabled(false);  // Read-only, tính tự động
         dateChooserNgayNhanLuong = new JDateChooser();
         dateChooserNgayNhanLuong.setDateFormatString("dd/MM/yyyy");
 
-        cboMaChamCong.setEnabled(false);
         cboTenNhanVien.setEnabled(false);
-        lblLoadingChamCong = new JLabel("Đang tải chấm công...");
         lblLoadingNhanVien = new JLabel("Đang tải nhân viên...");
 
         createTitle("Thông tin lương");
 
-        add(new JLabel("Mã chấm công"), "gapy 5 0");
-        add(cboMaChamCong);
-        add(lblLoadingChamCong, "gapy 3 0");
-
         add(new JLabel("Tên nhân viên"), "gapy 5 0");
         add(cboTenNhanVien);
         add(lblLoadingNhanVien, "gapy 3 0");
+        
+        add(new JLabel("Lương cơ bản"), "gapy 5 0");
+        add(txtLuongCoBan);
+        
+        add(new JLabel("Giờ làm việc"), "gapy 5 0");
+        add(txtGioLam);
+        // Thêm listener để tính lương thực tế
+        txtGioLam.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { calculateLuongThucTe(); calculateThucLanh(); }
+            @Override public void removeUpdate(DocumentEvent e) { calculateLuongThucTe(); calculateThucLanh(); }
+            @Override public void changedUpdate(DocumentEvent e) { calculateLuongThucTe(); calculateThucLanh(); }
+        });
 
         add(new JLabel("Phụ cấp"), "gapy 5 0");
         add(txtPhuCap);
+        txtPhuCap.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void removeUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void changedUpdate(DocumentEvent e) { calculateThucLanh(); }
+        });
 
         add(new JLabel("Lương thực tế"), "gapy 5 0");
         add(txtLuongThucTe);
 
         add(new JLabel("Lương thưởng"), "gapy 5 0");
         add(txtLuongThuong);
+        txtLuongThuong.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void removeUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void changedUpdate(DocumentEvent e) { calculateThucLanh(); }
+        });
 
         add(new JLabel("Khoản bảo hiểm"), "gapy 5 0");
         add(txtKhoanBaoHiem);
+        txtKhoanBaoHiem.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void removeUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void changedUpdate(DocumentEvent e) { calculateThucLanh(); }
+        });
 
         add(new JLabel("Khoản thuế"), "gapy 5 0");
         add(txtKhoanThue);
+        txtKhoanThue.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void removeUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void changedUpdate(DocumentEvent e) { calculateThucLanh(); }
+        });
 
         add(new JLabel("Lương làm thêm"), "gapy 5 0");
         add(txtLuongLamThem);
+        txtLuongLamThem.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void removeUpdate(DocumentEvent e) { calculateThucLanh(); }
+            @Override public void changedUpdate(DocumentEvent e) { calculateThucLanh(); }
+        });
+        
+        add(new JLabel("Thực lãnh"), "gapy 5 0");
+        add(txtThucLanh);
 
         add(new JLabel("Ngày nhận lương"), "gapy 5 0");
         add(dateChooserNgayNhanLuong);
 
         loadComboDataAsync();
+    }
+    
+    private void calculateLuongThucTe() {
+        try {
+            String luongCoBasText = txtLuongCoBan.getText().trim();
+            String gioLamText = txtGioLam.getText().trim();
+            
+            if (luongCoBasText.isEmpty() || gioLamText.isEmpty()) {
+                txtLuongThucTe.setText("");
+                return;
+            }
+            
+            double luongCoBan = Double.parseDouble(luongCoBasText);
+            double gioLam = Double.parseDouble(gioLamText);
+            double luongThucTe = luongCoBan * gioLam;
+            
+            txtLuongThucTe.setText(String.valueOf(luongThucTe));
+        } catch (NumberFormatException ex) {
+            txtLuongThucTe.setText("");
+        }
+    }
+    private void loadLuongCoBan(){
+        try {
+            dtonhanvien selectedNhanVien = (dtonhanvien) cboTenNhanVien.getSelectedItem();
+            if (selectedNhanVien != null) {
+                dtohopdong hopDong = busHD.gethdnhanvien(selectedNhanVien.getManhanvien());
+                if (hopDong != null) {
+                    txtLuongCoBan.setText(String.valueOf(hopDong.getLuongCoBan()));
+                    calculateLuongThucTe();
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    private void calculateThucLanh() {
+        try {
+            double luongThucTe = Double.parseDouble(txtLuongThucTe.getText().isEmpty() ? "0" : txtLuongThucTe.getText());
+            double phuCap = Double.parseDouble(txtPhuCap.getText().isEmpty() ? "0" : txtPhuCap.getText());
+            double luongThuong = Double.parseDouble(txtLuongThuong.getText().isEmpty() ? "0" : txtLuongThuong.getText());
+            double khoanBaoHiem = Double.parseDouble(txtKhoanBaoHiem.getText().isEmpty() ? "0" : txtKhoanBaoHiem.getText());
+            double khoanThue = Double.parseDouble(txtKhoanThue.getText().isEmpty() ? "0" : txtKhoanThue.getText());
+            double luongLamThem = Double.parseDouble(txtLuongLamThem.getText().isEmpty() ? "0" : txtLuongLamThem.getText());
+            
+            // Thực lãnh = Lương thực tế + Phụ cấp + Lương thưởng + Lương làm thêm - Bảo hiểm - Thuế
+            double thucLanh = luongThucTe + phuCap + luongThuong + luongLamThem - khoanBaoHiem - khoanThue;
+            txtThucLanh.setText(String.valueOf(thucLanh));
+        } catch (NumberFormatException ex) {
+            txtThucLanh.setText("");
+        }
     }
 
     private void loadComboDataAsync() {
@@ -98,8 +193,16 @@ public class SimpleInputSalaryForm extends JPanel {
             @Override
             protected SalaryData doInBackground() throws Exception {
                 SalaryData data = new SalaryData();
-                data.chamCongList = daoChamCong.getAllChamCong();
-                data.nhanVienList = daoNhanVien.getNhanVienList();
+                List<dtonhanvien> allNhanVien = daoNhanVien.getNhanVienList();
+                
+                // Lọc chỉ nhân viên còn hoạt động (isdelete = 0 và ngayketthuc = null hoặc >= ngày hôm nay)
+                Date today = new Date();
+                for (dtonhanvien nhanVien : allNhanVien) {
+                    // Nhân viên còn hoạt động nếu: chưa bị xóa (isdelete=0) và ngày kết thúc là null hoặc sau hôm nay
+                    if (nhanVien.getIsdelete() == 0 && (nhanVien.getNgayketthuc() == null || nhanVien.getNgayketthuc().after(today))) {
+                        data.nhanVienList.add(nhanVien);
+                    }
+                }
                 return data;
             }
 
@@ -107,12 +210,8 @@ public class SimpleInputSalaryForm extends JPanel {
             protected void done() {
                 try {
                     SalaryData data = get();
-                    applyChamCongList(data.chamCongList);
                     applyNhanVienList(data.nhanVienList);
                 } catch (Exception ex) {
-                    if (lblLoadingChamCong != null) {
-                        lblLoadingChamCong.setText("Không tải được chấm công");
-                    }
                     if (lblLoadingNhanVien != null) {
                         lblLoadingNhanVien.setText("Không tải được nhân viên");
                     }
@@ -122,24 +221,15 @@ public class SimpleInputSalaryForm extends JPanel {
         worker.execute();
     }
 
-    private void applyChamCongList(List<dtochamcong> chamCongList) {
-        cboMaChamCong.removeAllItems();
-        for (dtochamcong chamCong : chamCongList) {
-            cboMaChamCong.addItem(chamCong.getMachamcong());
-        }
-        cboMaChamCong.setEnabled(true);
-        if (lblLoadingChamCong != null) {
-            remove(lblLoadingChamCong);
-            lblLoadingChamCong = null;
-            revalidate();
-            repaint();
-        }
-    }
+
 
     private void applyNhanVienList(List<dtonhanvien> nhanVienList) {
         cboTenNhanVien.removeAllItems();
         for (dtonhanvien nhanVien : nhanVienList) {
             cboTenNhanVien.addItem(nhanVien);
+        }
+        if (pendingLuongData != null) {
+            ensureNhanVienInCombo(pendingLuongData.getMaNhanVien());
         }
         cboTenNhanVien.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
             JLabel label = new JLabel();
@@ -148,6 +238,8 @@ public class SimpleInputSalaryForm extends JPanel {
             }
             return label;
         });
+        // Thêm listener để load lương cơ bản khi chọn nhân viên
+        cboTenNhanVien.addActionListener(e -> loadLuongCoBan());
         cboTenNhanVien.setEnabled(true);
         if (lblLoadingNhanVien != null) {
             remove(lblLoadingNhanVien);
@@ -155,11 +247,32 @@ public class SimpleInputSalaryForm extends JPanel {
             revalidate();
             repaint();
         }
+        
+        // Nếu có dữ liệu lương đang chờ, set nó bây giờ
+        if (pendingLuongData != null) {
+            setDefaultValuesInternal(pendingLuongData);
+            pendingLuongData = null;
+        }
+    }
+
+    private void ensureNhanVienInCombo(int maNhanVien) {
+        if (maNhanVien <= 0) {
+            return;
+        }
+        for (int i = 0; i < cboTenNhanVien.getItemCount(); i++) {
+            dtonhanvien nhanVien = cboTenNhanVien.getItemAt(i);
+            if (nhanVien != null && nhanVien.getManhanvien() == maNhanVien) {
+                return;
+            }
+        }
+        dtonhanvien nhanVien = daoNhanVien.getNhanVienById(maNhanVien);
+        if (nhanVien != null && nhanVien.getManhanvien() == maNhanVien) {
+            cboTenNhanVien.addItem(nhanVien);
+        }
     }
 
     private static class SalaryData {
-        private List<dtochamcong> chamCongList;
-        private List<dtonhanvien> nhanVienList;
+        private List<dtonhanvien> nhanVienList = new ArrayList<>();
     }
 
     public void addLuong() {
@@ -170,67 +283,102 @@ public class SimpleInputSalaryForm extends JPanel {
 
             // Kiểm tra giá trị phụ cấp
             String phuCapText = txtPhuCap.getText().trim();
-            if (!phuCapText.isEmpty() && !phuCapText.matches(numberPattern)) {
-                JOptionPane.showMessageDialog(this, "Phụ cấp phải là số hợp lệ!");
+            if (phuCapText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Phụ cấp không được bỏ trống!");
+                txtPhuCap.requestFocusInWindow();
                 return;
             }
-            double phuCap = Double.parseDouble(phuCapText.isEmpty() ? "0" : phuCapText);
+            if (!phuCapText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Phụ cấp phải là số hợp lệ!");
+                txtPhuCap.requestFocusInWindow();
+                return;
+            }
+            double phuCap = Double.parseDouble(phuCapText);
 
             // Kiểm tra giá trị lương thực tế
             String luongThucTeText = txtLuongThucTe.getText().trim();
-            if (!luongThucTeText.isEmpty() && !luongThucTeText.matches(numberPattern)) {
-                JOptionPane.showMessageDialog(this, "Lương thực tế phải là số hợp lệ!");
+            if (luongThucTeText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Lương thực tế không được bỏ trống!");
+                txtLuongThucTe.requestFocusInWindow();
                 return;
             }
-            double luongThucTe = Double.parseDouble(luongThucTeText.isEmpty() ? "0" : luongThucTeText);
+            if (!luongThucTeText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Lương thực tế phải là số hợp lệ!");
+                txtLuongThucTe.requestFocusInWindow();
+                return;
+            }
+            double luongThucTe = Double.parseDouble(luongThucTeText);
 
             // Kiểm tra giá trị lương thưởng
             String luongThuongText = txtLuongThuong.getText().trim();
-            if (!luongThuongText.isEmpty() && !luongThuongText.matches(numberPattern)) {
-                JOptionPane.showMessageDialog(this, "Lương thưởng phải là số hợp lệ!");
+            if (luongThuongText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Lương thưởng không được bỏ trống!");
+                txtLuongThuong.requestFocusInWindow();
                 return;
             }
-            double luongThuong = Double.parseDouble(luongThuongText.isEmpty() ? "0" : luongThuongText);
+            if (!luongThuongText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Lương thưởng phải là số hợp lệ!");
+                txtLuongThuong.requestFocusInWindow();
+                return;
+            }
+            double luongThuong = Double.parseDouble(luongThuongText);
 
             // Kiểm tra các khoản bảo hiểm
             String khoanBaoHiemText = txtKhoanBaoHiem.getText().trim();
-            if (!khoanBaoHiemText.isEmpty() && !khoanBaoHiemText.matches(numberPattern)) {
-                JOptionPane.showMessageDialog(this, "Khoản bảo hiểm phải là số hợp lệ!");
+            if (khoanBaoHiemText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Khoản bảo hiểm không được bỏ trống!");
+                txtKhoanBaoHiem.requestFocusInWindow();
                 return;
             }
-            double khoanBaoHiem = Double.parseDouble(khoanBaoHiemText.isEmpty() ? "0" : khoanBaoHiemText);
+            if (!khoanBaoHiemText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Khoản bảo hiểm phải là số hợp lệ!");
+                txtKhoanBaoHiem.requestFocusInWindow();
+                return;
+            }
+            double khoanBaoHiem = Double.parseDouble(khoanBaoHiemText);
 
             // Kiểm tra khoản thuế
             String khoanThueText = txtKhoanThue.getText().trim();
-            if (!khoanThueText.isEmpty() && !khoanThueText.matches(numberPattern)) {
-                JOptionPane.showMessageDialog(this, "Khoản thuế phải là số hợp lệ!");
+            if (khoanThueText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Khoản thuế không được bỏ trống!");
+                txtKhoanThue.requestFocusInWindow();
                 return;
             }
-            double khoanThue = Double.parseDouble(khoanThueText.isEmpty() ? "0" : khoanThueText);
+            if (!khoanThueText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Khoản thuế phải là số hợp lệ!");
+                txtKhoanThue.requestFocusInWindow();
+                return;
+            }
+            double khoanThue = Double.parseDouble(khoanThueText);
 
             // Kiểm tra lương làm thêm
             String luongLamThemText = txtLuongLamThem.getText().trim();
-            if (!luongLamThemText.isEmpty() && !luongLamThemText.matches(integerPattern)) {
-                JOptionPane.showMessageDialog(this, "Lương làm thêm phải là số nguyên hợp lệ!");
+            if (luongLamThemText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Lương làm thêm không được bỏ trống!");
+                txtLuongLamThem.requestFocusInWindow();
                 return;
             }
-            int luongLamThem = Integer.parseInt(luongLamThemText.isEmpty() ? "0" : luongLamThemText);
+            if (!luongLamThemText.matches(integerPattern)) {
+                JOptionPane.showMessageDialog(this, "Lương làm thêm phải là số nguyên hợp lệ!");
+                txtLuongLamThem.requestFocusInWindow();
+                return;
+            }
+            int luongLamThem = Integer.parseInt(luongLamThemText);
 
             // Kiểm tra ngày nhận lương
             Date ngayNhanLuongDate = dateChooserNgayNhanLuong.getDate();
             if (ngayNhanLuongDate == null) {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày nhận lương!");
+                dateChooserNgayNhanLuong.requestFocusInWindow();
                 return;
             }
             // Lấy thông tin nhân viên
             dtonhanvien selectedNhanVien = (dtonhanvien) cboTenNhanVien.getSelectedItem();
             int maNhanVien = selectedNhanVien != null ? selectedNhanVien.getManhanvien() : 0;
 
-            // Lấy mã chấm công
-            int maChamCong = (int) cboMaChamCong.getSelectedItem();
-
-            // Tạo DTO và lưu vào cơ sở dữ liệu
-            dtoluong luong = new dtoluong(0, maChamCong, phuCap, luongThucTe, luongThuong, khoanBaoHiem, khoanThue, 0, luongLamThem, ngayNhanLuongDate, maNhanVien);
+            // Tạo DTO và lưu vào cơ sở dữ liệu (maChamCong = 0 vì không sử dụng)
+            double thucLanh = luongThucTe + phuCap + luongThuong + luongLamThem - khoanBaoHiem - khoanThue;
+            dtoluong luong = new dtoluong(0, phuCap, luongThucTe, luongThuong, khoanBaoHiem, khoanThue, thucLanh, luongLamThem, ngayNhanLuongDate, maNhanVien);
             daoLuong.add(luong);
 
             JOptionPane.showMessageDialog(this, "Thông tin lương đã được thêm thành công!");
@@ -243,16 +391,164 @@ public class SimpleInputSalaryForm extends JPanel {
         }
     }
 
-    public void setDefaultValues(dtoluong luong) {
-        cboMaChamCong.setSelectedItem(luong.getMaChamCong());
+    public void updateLuong(int maLuong) {
+        try {
+            // Regex patterns
+            String numberPattern = "^\\d+(\\.\\d+)?$"; // Số thực
+            String integerPattern = "^\\d+$"; // Số nguyên
 
-        // Tìm nhân viên từ danh sách
+            // Kiểm tra giá trị phụ cấp
+            String phuCapText = txtPhuCap.getText().trim();
+            if (phuCapText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Phụ cấp không được bỏ trống!");
+                txtPhuCap.requestFocusInWindow();
+                return;
+            }
+            if (!phuCapText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Phụ cấp phải là số hợp lệ!");
+                txtPhuCap.requestFocusInWindow();
+                return;
+            }
+            double phuCap = Double.parseDouble(phuCapText);
+
+            // Kiểm tra giá trị lương thực tế
+            String luongThucTeText = txtLuongThucTe.getText().trim();
+            if (luongThucTeText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Lương thực tế không được bỏ trống!");
+                txtLuongThucTe.requestFocusInWindow();
+                return;
+            }
+            if (!luongThucTeText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Lương thực tế phải là số hợp lệ!");
+                txtLuongThucTe.requestFocusInWindow();
+                return;
+            }
+            double luongThucTe = Double.parseDouble(luongThucTeText);
+
+            // Kiểm tra giá trị lương thưởng
+            String luongThuongText = txtLuongThuong.getText().trim();
+            if (luongThuongText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Lương thưởng không được bỏ trống!");
+                txtLuongThuong.requestFocusInWindow();
+                return;
+            }
+            if (!luongThuongText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Lương thưởng phải là số hợp lệ!");
+                txtLuongThuong.requestFocusInWindow();
+                return;
+            }
+            double luongThuong = Double.parseDouble(luongThuongText);
+
+            // Kiểm tra các khoản bảo hiểm
+            String khoanBaoHiemText = txtKhoanBaoHiem.getText().trim();
+            if (khoanBaoHiemText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Khoản bảo hiểm không được bỏ trống!");
+                txtKhoanBaoHiem.requestFocusInWindow();
+                return;
+            }
+            if (!khoanBaoHiemText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Khoản bảo hiểm phải là số hợp lệ!");
+                txtKhoanBaoHiem.requestFocusInWindow();
+                return;
+            }
+            double khoanBaoHiem = Double.parseDouble(khoanBaoHiemText);
+
+            // Kiểm tra khoản thuế
+            String khoanThueText = txtKhoanThue.getText().trim();
+            if (khoanThueText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Khoản thuế không được bỏ trống!");
+                txtKhoanThue.requestFocusInWindow();
+                return;
+            }
+            if (!khoanThueText.matches(numberPattern)) {
+                JOptionPane.showMessageDialog(this, "Khoản thuế phải là số hợp lệ!");
+                txtKhoanThue.requestFocusInWindow();
+                return;
+            }
+            double khoanThue = Double.parseDouble(khoanThueText);
+
+            // Kiểm tra lương làm thêm
+            String luongLamThemText = txtLuongLamThem.getText().trim();
+            if (luongLamThemText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Lương làm thêm không được bỏ trống!");
+                txtLuongLamThem.requestFocusInWindow();
+                return;
+            }
+            if (!luongLamThemText.matches(integerPattern)) {
+                JOptionPane.showMessageDialog(this, "Lương làm thêm phải là số nguyên hợp lệ!");
+                txtLuongLamThem.requestFocusInWindow();
+                return;
+            }
+            double luongLamThem = Double.parseDouble(luongLamThemText);
+
+            // Kiểm tra ngày nhận lương
+            Date ngayNhanLuongDate = dateChooserNgayNhanLuong.getDate();
+            if (ngayNhanLuongDate == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày nhận lương!");
+                dateChooserNgayNhanLuong.requestFocusInWindow();
+                return;
+            }
+            
+            // Lấy thông tin nhân viên
+            dtonhanvien selectedNhanVien = (dtonhanvien) cboTenNhanVien.getSelectedItem();
+            int maNhanVien = selectedNhanVien != null ? selectedNhanVien.getManhanvien() : 0;
+
+            // Tạo DTO và cập nhật cơ sở dữ liệu (maChamCong = 0 vì không sử dụng)
+            dtoluong luong = new dtoluong(maLuong, phuCap, luongThucTe, luongThuong, khoanBaoHiem, khoanThue, calculateThucLanhValue(luongThucTe, phuCap, luongThuong, khoanBaoHiem, khoanThue, luongLamThem), luongLamThem, ngayNhanLuongDate, maNhanVien);
+            daoLuong.update(luong);
+
+            JOptionPane.showMessageDialog(this, "Thông tin lương đã được cập nhật thành công!");
+            resetFields();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Dữ liệu nhập không hợp lệ!");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    
+    private double calculateThucLanhValue(double luongThucTe, double phuCap, double luongThuong, 
+                                         double khoanBaoHiem, double khoanThue, double luongLamThem) {
+        return luongThucTe + phuCap + luongThuong + luongLamThem - khoanBaoHiem - khoanThue;
+    }
+
+    public void setDefaultValues(dtoluong luong) {
+        // Lưu dữ liệu để set sau khi combo được tải
+        pendingLuongData = luong;
+        
+        // Nếu combo đã được tải (enabled), set ngay
+        if (cboTenNhanVien.isEnabled()) {
+            setDefaultValuesInternal(luong);
+            pendingLuongData = null;
+        } else {
+            // Combo chưa được tải, sẽ set trong applyNhanVienList()
+            loadComboDataAsync();
+        }
+    }
+
+    private void setDefaultValuesInternal(dtoluong luong) {
+        ensureNhanVienInCombo(luong.getMaNhanVien());
+        // Tìm và chọn nhân viên từ combo
         for (int i = 0; i < cboTenNhanVien.getItemCount(); i++) {
             dtonhanvien nhanVien = cboTenNhanVien.getItemAt(i);
             if (nhanVien.getManhanvien() == luong.getMaNhanVien()) {
                 cboTenNhanVien.setSelectedItem(nhanVien);
                 break;
             }
+        }
+        
+        // Load lương cơ bản
+        loadLuongCoBan();
+        
+        // Tính ngược lại giờ làm từ lương thực tế và lương cơ bản
+        try {
+            double luongCoBan = Double.parseDouble(txtLuongCoBan.getText().isEmpty() ? "0" : txtLuongCoBan.getText());
+            if (luongCoBan > 0) {
+                double gioLam = luong.getLuongThucTe() / luongCoBan;
+                txtGioLam.setText(String.valueOf(gioLam));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
         txtPhuCap.setText(String.valueOf(luong.getPhuCap()));
@@ -267,55 +563,22 @@ public class SimpleInputSalaryForm extends JPanel {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        
+        // Tính thực lãnh
+        calculateThucLanh();
     }
-
-    public void updateLuong(int maLuong) {
-    try {
-        // Lấy giá trị từ các trường nhập liệu
-        int maChamCong = (int) cboMaChamCong.getSelectedItem();
-        dtonhanvien selectedNhanVien = (dtonhanvien) cboTenNhanVien.getSelectedItem();
-        int maNhanVien = selectedNhanVien != null ? selectedNhanVien.getManhanvien() : 0;
-        double phuCap = Double.parseDouble(txtPhuCap.getText().isEmpty() ? "0" : txtPhuCap.getText());
-        double luongThucTe = Double.parseDouble(txtLuongThucTe.getText().isEmpty() ? "0" : txtLuongThucTe.getText());
-        double luongThuong = Double.parseDouble(txtLuongThuong.getText().isEmpty() ? "0" : txtLuongThuong.getText());
-        double khoanBaoHiem = Double.parseDouble(txtKhoanBaoHiem.getText().isEmpty() ? "0" : txtKhoanBaoHiem.getText());
-        double khoanThue = Double.parseDouble(txtKhoanThue.getText().isEmpty() ? "0" : txtKhoanThue.getText());
-        int luongLamThem = Integer.parseInt(txtLuongLamThem.getText().isEmpty() ? "0" : txtLuongLamThem.getText());
-
-        // Lấy ngày từ JDateChooser
-        Date ngayNhanLuongDate = dateChooserNgayNhanLuong.getDate();
-        if (ngayNhanLuongDate == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày nhận lương!");
-            return;
-        }
-
-        // Tạo đối tượng lương
-        dtoluong luong = new dtoluong(maLuong, maChamCong, phuCap, luongThucTe, luongThuong, khoanBaoHiem, khoanThue, 0, luongLamThem, ngayNhanLuongDate, maNhanVien);
-
-        // Cập nhật lương qua bus
-        busluong bus = new busluong();
-        bus.updateLuong(luong); // Giả sử busLuong có hàm này
-
-        JOptionPane.showMessageDialog(this, "Thông tin lương đã được cập nhật thành công!");
-        resetFields(); // Xóa các trường nhập liệu
-    } catch (NumberFormatException ex) {
-        JOptionPane.showMessageDialog(this, "Dữ liệu nhập vào không hợp lệ! Vui lòng kiểm tra lại.");
-    } catch (Exception ex) {
-        JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi không xác định: " + ex.getMessage());
-        ex.printStackTrace();
-    }
-}
-
 
     private void resetFields() {
-        cboMaChamCong.setSelectedIndex(0);
         cboTenNhanVien.setSelectedIndex(0);
+        txtGioLam.setText("");
+        txtLuongCoBan.setText("");
         txtPhuCap.setText("");
         txtLuongThucTe.setText("");
         txtLuongThuong.setText("");
         txtKhoanBaoHiem.setText("");
         txtKhoanThue.setText("");
         txtLuongLamThem.setText("");
+        txtThucLanh.setText("");
         dateChooserNgayNhanLuong.setDate(null);
     }
 
