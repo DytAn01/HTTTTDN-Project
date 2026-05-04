@@ -4,10 +4,26 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.text.DecimalFormat;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.FileOutputStream;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,18 +47,18 @@ import gui.table.TableHeaderAlignment;
 public class formphieunhap extends JPanel {
 
     // ── Palette ───────────────────────────────────────────────────
-    private static final Color ACCENT      = new Color( 99, 102, 241);
+    private static final Color ACCENT = new Color(99, 102, 241);
     private static final Color ACCENT_SOFT = new Color(238, 242, 255);
-    private static final Color SUCCESS     = new Color( 34, 197,  94);
-    private static final Color DANGER      = new Color(239,  68,  68);
-    private static final Color WARNING     = new Color(234, 179,   8);
-    private static final Color TEXT_MUTED  = new Color(100, 116, 139);
+    private static final Color SUCCESS = new Color(34, 197, 94);
+    private static final Color DANGER = new Color(239, 68, 68);
+    private static final Color WARNING = new Color(234, 179, 8);
+    private static final Color TEXT_MUTED = new Color(100, 116, 139);
 
     // ── BUS ───────────────────────────────────────────────────────
-    private final busphieunhap   buspn    = new busphieunhap();
-    private final busctphieunhap busctpn  = new busctphieunhap();
-    private final bussanpham     bussp    = new bussanpham();
-    private final busnhacungcap  busncc   = new busnhacungcap();
+    private final busphieunhap buspn = new busphieunhap();
+    private final busctphieunhap busctpn = new busctphieunhap();
+    private final bussanpham bussp = new bussanpham();
+    private final busnhacungcap busncc = new busnhacungcap();
 
     // ── State ─────────────────────────────────────────────────────
     private final int manv;
@@ -51,16 +67,18 @@ public class formphieunhap extends JPanel {
     private AtomicBoolean dialogShown = new AtomicBoolean(false);
 
     // ── Nhập hàng tab fields ──────────────────────────────────────
-    private JTextField   txtNCCid, txtSL, txtGiaNhap, txtGiaBan;
-    private JTextField   txtSPid, txtTotal, txtLoiNhuan;
-    private JTextArea    txtNote;
+    private JTextField txtNCCid, txtSL, txtGiaNhap, txtGiaBan;
+    private JTextField txtSPid, txtTotal, txtLoiNhuan;
+    private JTextArea txtNote;
     private JComboBox<String> cbNCCname;
     private JDateChooser dateChooser;
 
     // ── Tables & models ───────────────────────────────────────────
-    private JTable            generalTable;
+    private JTable generalTable;
     private DefaultTableModel modelNhapHang, additionalModel;
-    private JButton           btnDetail;
+    private JButton btnDetail;
+    private JLabel lblStatReceipts, lblStatProducts, lblStatMoney;
+    private JButton btnPrintReceipt;
 
     // ─────────────────────────────────────────────────────────────
     public formphieunhap(int manv) {
@@ -75,7 +93,7 @@ public class formphieunhap extends JPanel {
     private void buildUI() {
         setLayout(new MigLayout("fill, insets 16 20 16 20, wrap", "[fill]", "[shrink 0][fill,grow]"));
         add(buildHeader(), "growx");
-        add(buildTabs(),   "grow");
+        add(buildTabs(), "grow");
     }
 
     // ── Page header ───────────────────────────────────────────────
@@ -88,15 +106,6 @@ public class formphieunhap extends JPanel {
         p.add(title);
 
         buspn.getlist();
-        JLabel badge = new JLabel(buspn.dspn.size() + " phiếu nhập");
-        badge.setFont(badge.getFont().deriveFont(Font.BOLD, 12f));
-        badge.setForeground(ACCENT);
-        badge.setBackground(ACCENT_SOFT);
-        badge.setOpaque(true);
-        badge.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(199, 210, 254), 1, true),
-                BorderFactory.createEmptyBorder(4, 12, 4, 12)));
-        p.add(badge);
         return p;
     }
 
@@ -104,7 +113,7 @@ public class formphieunhap extends JPanel {
     private JTabbedPane buildTabs() {
         JTabbedPane tabs = new JTabbedPane();
         tabs.putClientProperty(FlatClientProperties.STYLE, "tabType: card;");
-        tabs.addTab("📦  Nhập hàng",         wrapTab(buildNhapHangTab()));
+        tabs.addTab("📦  Nhập hàng", wrapTab(buildNhapHangTab()));
         tabs.addTab("📋  Danh sách phiếu nhập", wrapTab(buildGeneralTableTab()));
         return tabs;
     }
@@ -121,42 +130,67 @@ public class formphieunhap extends JPanel {
     // ─────────────────────────────────────────────────────────────
     private JPanel buildNhapHangTab() {
         JPanel p = new JPanel(new MigLayout(
-                "fill, wrap, insets 0", "[fill]", "[shrink 0][fill,grow][shrink 0]"));
+                "fill, wrap, insets 0", "[fill]", "[shrink 0][fill,grow]"));
         p.putClientProperty(FlatClientProperties.STYLE, "background: null;");
 
         p.add(buildNhapHangActionBar(), "growx");
-        p.add(buildNhapHangMiddle(),    "grow");
-        p.add(buildNhapHangTableCard(), "growx");
+        p.add(buildNhapHangMain(), "grow");
         return p;
     }
 
     // Action bar: title + confirm + clear
     private JPanel buildNhapHangActionBar() {
-        JPanel p = new JPanel(new MigLayout("fillx, insets 0 0 8 0", "[fill]push[][]", "[]"));
+        JPanel p = new JPanel(new MigLayout("fillx, insets 0 0 8 0", "[fill]", "[]"));
         p.putClientProperty(FlatClientProperties.STYLE, "background: null;");
 
         JLabel lbl = new JLabel("Tạo phiếu nhập hàng");
         lbl.putClientProperty(FlatClientProperties.STYLE, "font: bold +2;");
         p.add(lbl);
 
-        JButton btnClear = outlineBtn("✕  Xóa tất cả");
-        btnClear.addActionListener(e -> {
-            if (confirm("Xác nhận xóa toàn bộ thông tin phiếu nhập?")) reset();
-        });
-        p.add(btnClear, "height 32!");
-
-        JButton btnConfirm = accentBtn("✔  Xác nhận nhập hàng", SUCCESS);
-        btnConfirm.addActionListener(e -> confirmNhapHang());
-        p.add(btnConfirm, "height 32!");
         return p;
     }
 
     // Middle: NCC info (left) + product suggestion table (right)
-    private JPanel buildNhapHangMiddle() {
-        JPanel p = new JPanel(new MigLayout("fill, gap 16, insets 0", "[320!][fill,grow]", "[fill]"));
+    private JPanel buildNhapHangMain() {
+        JPanel p = new JPanel(new MigLayout(
+                "fill, gap 18, insets 0",
+                "[35%][fill,grow]",
+                "[fill]"
+        ));
         p.putClientProperty(FlatClientProperties.STYLE, "background: null;");
-        p.add(buildNCCCard(),      "grow");
-        p.add(buildSuggestionCard(),"grow");
+
+        p.add(buildSuggestionCard(), "grow");
+
+        JPanel rightPanel = new JPanel(new MigLayout(
+                "fill, wrap, insets 0, gap 16",
+                "[fill]",
+                "[shrink 0][fill,grow][shrink 0]" // ← thêm row thứ 3 cho buttons
+        ));
+        rightPanel.putClientProperty(FlatClientProperties.STYLE, "background: null;");
+        rightPanel.add(buildNCCCard(), "growx");
+        rightPanel.add(buildNhapHangTableCard(), "grow");
+        rightPanel.add(buildActionFooter(), "growx");  // ← footer buttons ở đây
+
+        p.add(rightPanel, "grow");
+        return p;
+    }
+
+    private JPanel buildActionFooter() {
+        JPanel p = new JPanel(new MigLayout("insets 0", "[][]push", "[]"));
+        p.putClientProperty(FlatClientProperties.STYLE, "background: null;");
+
+        JButton btnClear = outlineBtn("✕  Xóa tất cả");
+        btnClear.addActionListener(e -> {
+            if (confirm("Xác nhận xóa toàn bộ thông tin phiếu nhập?")) {
+                reset();
+            }
+        });
+
+        JButton btnConfirm = accentBtn("✔  Xác nhận nhập hàng", SUCCESS);
+        btnConfirm.addActionListener(e -> confirmNhapHang());
+
+        p.add(btnClear, "height 36!");
+        p.add(btnConfirm, "height 36!");
         return p;
     }
 
@@ -167,14 +201,20 @@ public class formphieunhap extends JPanel {
 
         txtNCCid = styledField("Nhập mã NCC...");
         txtNCCid.addKeyListener(new KeyAdapter() {
-            public void keyTyped(KeyEvent e) { if (!Character.isDigit(e.getKeyChar())) e.consume(); }
+            public void keyTyped(KeyEvent e) {
+                if (!Character.isDigit(e.getKeyChar())) {
+                    e.consume();
+                }
+            }
         });
         txtNCCid.addActionListener(e -> onNCCidEnter());
 
         cbNCCname = new JComboBox<>();
         cbNCCname.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
         cbNCCname.addItem("");
-        for (dtonhacungcap ncc : busncc.list()) cbNCCname.addItem(ncc.getTenNhaCungCap());
+        for (dtonhacungcap ncc : busncc.list()) {
+            cbNCCname.addItem(ncc.getTenNhaCungCap());
+        }
         cbNCCname.addActionListener(e -> onNCCnameChanged());
 
         txtTotal = new JTextField("0");
@@ -201,79 +241,106 @@ public class formphieunhap extends JPanel {
     }
 
     // Suggestion table card
+    // Suggestion table card - Sản phẩm cần nhập (bên trái)
     private JPanel buildSuggestionCard() {
-        JPanel card = card("Sản phẩm cần nhập");
-        card.setLayout(new MigLayout("fill, insets 0", "[fill]", "[shrink 0][1!][fill,grow]"));
+        JPanel card = card("📦 Sản phẩm cần nhập");
+
+        JPanel body = (JPanel) card.getClientProperty("BODY"); // lấy body panel
+
+        body.setLayout(new MigLayout(
+                "fill, gap 0, insets 0",
+                "[grow]",
+                "[1!][grow]"
+        ));
 
         additionalModel = new DefaultTableModel(
-                new Object[]{"Mã NCC", "Mã SP", "Tên", "Ngày hết hạn", "SL tồn kho"}, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+                new Object[]{"Mã NCC", "Mã SP", "Tên sản phẩm", "HSD", "SL tồn"}, 0) {
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
+
         JTable tbl = styledTable(additionalModel);
         JScrollPane scroll = scrollOf(tbl);
-
         JSeparator sep = new JSeparator();
-        sep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
 
-        card.add(new JLabel(), "height 0!");
-        card.add(sep, "growx, height 1!");
-        card.add(scroll, "grow");
+        body.add(sep, "growx, height 1!, wrap");
+        body.add(scroll, "grow, push");  // ← đảm bảo scroll expand đúng
 
-        reloadAdditionalTable(null);
         return card;
     }
 
     // Bottom: nhap hang item list
     private JPanel buildNhapHangTableCard() {
-        JPanel card = card("Danh sách sản phẩm nhập");
-        card.setLayout(new MigLayout("fill, insets 0", "[fill]", "[shrink 0][1!][fill,grow]"));
+        // ── Tự build card thay vì dùng helper card() ──
+        JPanel card = new JPanel(new MigLayout(
+                "fill, insets 0, wrap, gap 0",
+                "[fill]",
+                "[shrink 0][1!][fill,grow]"
+        ));
+        card.putClientProperty(FlatClientProperties.STYLE,
+                "background: $Panel.background; border: 1,1,1,1,$Component.borderColor,,10;");
 
-        // Toolbar
-        JPanel toolbar = new JPanel(new MigLayout("insets 8 14 8 14", "push[][][]", "[center]"));
-        toolbar.putClientProperty(FlatClientProperties.STYLE, "background: null;");
+        // ── Header row: title bên trái, buttons bên phải ──
+        JPanel header = new JPanel(new MigLayout(
+                "fillx, insets 10 14 10 14", "[fill,grow]push[][][]", "[center]"));
+        header.putClientProperty(FlatClientProperties.STYLE, "background: null;");
 
-        JButton btnAdd    = accentBtn("+ Thêm SP", ACCENT);
-        JButton btnEdit   = outlineBtn("✎ Sửa");
+        JLabel title = new JLabel("Danh sách sản phẩm nhập");
+        title.putClientProperty(FlatClientProperties.STYLE, "font: bold +1;");
+
+        JButton btnAdd = accentBtn("+ Thêm SP", ACCENT);
+        JButton btnEdit = outlineBtn("✎ Sửa");
         JButton btnDelete = new JButton("✕ Xóa");
         btnDelete.putClientProperty(FlatClientProperties.STYLE,
                 "background: " + hex(DANGER) + "; foreground:#ffffff; arc:8; borderWidth:0;");
         btnDelete.setFocusPainted(false);
+        btnDelete.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         btnAdd.addActionListener(e -> {
             if (txtNCCid.getText().trim().isEmpty()) {
-                warn("Vui lòng chọn nhà cung cấp trước!"); return;
+                warn("Vui lòng chọn nhà cung cấp trước!");
+                return;
             }
             showAddModal();
         });
         btnEdit.addActionListener(e -> {
-            if (selectedIndex < 0) { warn("Vui lòng chọn sản phẩm để sửa!"); return; }
+            if (selectedIndex < 0) {
+                warn("Vui lòng chọn sản phẩm để sửa!");
+                return;
+            }
             showEditModal(nhapHangList.get(selectedIndex));
         });
         btnDelete.addActionListener(e -> deleteNhapHangRow());
 
-        toolbar.add(btnAdd,    "height 32!");
-        toolbar.add(btnEdit,   "height 32!");
-        toolbar.add(btnDelete, "height 32!");
+        header.add(title);
+        header.add(btnAdd, "height 30!");
+        header.add(btnEdit, "height 30!");
+        header.add(btnDelete, "height 30!");
 
+        // ── Separator ──
+        JSeparator sep = new JSeparator();
+        sep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
+
+        // ── Table ──
         modelNhapHang = new DefaultTableModel(
                 new Object[]{"#", "Mã SP", "Tên sản phẩm", "Giá nhập", "Số lượng", "Ngày HH", "Giá bán"}, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         JTable tbl = styledTable(modelNhapHang);
-        tbl.getTableHeader().putClientProperty(FlatClientProperties.STYLE,
-                "height:34; font:bold +1;");
         tbl.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 selectedIndex = tbl.getSelectedRow();
             }
         });
 
-        JSeparator sep = new JSeparator();
-        sep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
-
-        card.add(toolbar, "growx");
+        card.add(header, "growx");
         card.add(sep, "growx, height 1!");
-        card.add(scrollOf(tbl), "grow, height 180!");
+        card.add(scrollOf(tbl), "grow, push");
         return card;
     }
 
@@ -282,22 +349,25 @@ public class formphieunhap extends JPanel {
     // ─────────────────────────────────────────────────────────────
     private JPanel buildGeneralTableTab() {
         JPanel card = new JPanel(new MigLayout(
-                "fill, insets 0, wrap", "[fill]", "[shrink 0][1!][fill,grow]"));
+                "fill, insets 0, wrap", "[fill]", "[shrink 0][shrink 0][1!][fill,grow]"));  // ← thêm 1 row
+
         card.putClientProperty(FlatClientProperties.STYLE,
                 "background: $Panel.background; border: 1,1,1,1,$Component.borderColor,,12;");
 
-        card.add(buildGeneralToolbar(), "growx, gapx 16 16, gapy 12 10");
-
+        card.add(buildStatCards(), "growx, gapx 16 16, gapy 8 8");     // Stat Cards
+        card.add(buildGeneralToolbar(), "growx, gapx 16 16, gapy 8 10"); // Toolbar
+        // ... phần còn lại giữ nguyên
         JSeparator sep = new JSeparator();
         sep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
         card.add(sep, "growx, height 1!");
         card.add(buildGeneralTable(), "grow");
+
         return card;
     }
 
     private JPanel buildGeneralToolbar() {
         JPanel p = new JPanel(new MigLayout(
-                "insets 0", "[][8!][][8!][][8!][]", "[center]"));
+                "fillx, insets 0", "[][8!][][8!]push[]", "[center]"));
         p.putClientProperty(FlatClientProperties.STYLE, "background: null;");
 
         JTextField txtSearch = new JTextField(22);
@@ -314,50 +384,73 @@ public class formphieunhap extends JPanel {
         p.add(btnSearch, "height 32!");
 
         JButton btnReload = outlineBtn("↺ Tải lại");
-        btnReload.addActionListener(e -> { txtSearch.setText(""); reloadGeneralTable(); });
+        btnReload.addActionListener(e -> {
+            txtSearch.setText("");
+            reloadGeneralTable();
+        });
         p.add(btnReload, "height 32!");
 
         p.add(new JSeparator(JSeparator.VERTICAL), "growy, width 1!");
 
+        btnPrintReceipt = accentBtn("⬇ Xuất Excel", new Color(79, 70, 229));
+        btnPrintReceipt.setEnabled(false);
+        btnPrintReceipt.addActionListener(e -> {
+            int row = generalTable.getSelectedRow();
+            if (row < 0) {
+                warn("Vui lòng chọn 1 phiếu nhập để xuất Excel.");
+                return;
+            }
+            int id = (int) generalTable.getValueAt(row, 0);
+            exportToExcel(id);
+        });
+        p.add(btnPrintReceipt, "height 32!");
+
         btnDetail = accentBtn("📋  Xem chi tiết", new Color(79, 70, 229));
         btnDetail.setEnabled(false);
-        btnDetail.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Hãy chọn một phiếu nhập để xem chi tiết"));
+        btnDetail.addActionListener(e -> showDetailDialog(
+                (int) generalTable.getValueAt(generalTable.getSelectedRow(), 0)));
         p.add(btnDetail, "height 32!");
 
-        txtSearch.addKeyListener(new KeyAdapter() {
-            @Override public void keyReleased(KeyEvent e) {
-                searching(txtSearch.getText().trim());
-            }
-        });
-
-        return p;
+        return p;   // ← KHÔNG add StatCards ở đây nữa
     }
 
     private JScrollPane buildGeneralTable() {
         Object[] cols = {"Mã phiếu", "Ngày nhập", "Nhà cung cấp", "Tổng tiền", "Tên NV", "Ghi chú"};
         DefaultTableModel model = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
 
         generalTable = styledTable(model);
         generalTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         int[] widths = {70, 140, 180, 120, 160, 180};
-        for (int i = 0; i < widths.length; i++)
+        for (int i = 0; i < widths.length; i++) {
             generalTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
 
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
-        for (int i : new int[]{0, 1, 3})
+        for (int i : new int[]{0, 1, 3}) {
             generalTable.getColumnModel().getColumn(i).setCellRenderer(center);
+        }
 
         buspn.getlist();
-        for (dtophieunhap pn : buspn.dspn) model.addRow(pn.toTableRow());
+        for (dtophieunhap pn : buspn.dspn) {
+            model.addRow(pn.toTableRow());
+        }
 
         generalTable.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { onGeneralTableClick(); }
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                onGeneralTableClick();
+            }
         });
+
+        // initial stats
+        computeImportStats();
 
         return scrollOf(generalTable);
     }
@@ -367,18 +460,27 @@ public class formphieunhap extends JPanel {
     // ─────────────────────────────────────────────────────────────
     private void onNCCidEnter() {
         String id = txtNCCid.getText().trim();
-        if (id.isEmpty()) return;
+        if (id.isEmpty()) {
+            return;
+        }
         dtonhacungcap ncc = busncc.getById(Integer.parseInt(id));
-        if (ncc == null) { warn("Không tìm thấy mã Nhà cung cấp!"); return; }
+        if (ncc == null) {
+            warn("Không tìm thấy mã Nhà cung cấp!");
+            return;
+        }
         cbNCCname.setSelectedItem(ncc.getTenNhaCungCap());
         reloadAdditionalTable(id);
     }
 
     private void onNCCnameChanged() {
         Object sel = cbNCCname.getSelectedItem();
-        if (sel == null || sel.toString().isEmpty()) return;
+        if (sel == null || sel.toString().isEmpty()) {
+            return;
+        }
         dtonhacungcap ncc = busncc.getByName(sel.toString());
-        if (ncc == null) return;
+        if (ncc == null) {
+            return;
+        }
         txtNCCid.setText(String.valueOf(ncc.getMaNhaCungCap()));
         reloadAdditionalTable(String.valueOf(ncc.getMaNhaCungCap()));
     }
@@ -386,7 +488,8 @@ public class formphieunhap extends JPanel {
     // ── Nhập hàng confirm / delete / reset ───────────────────────
     private void confirmNhapHang() {
         if (nhapHangList.isEmpty() || txtNCCid.getText().trim().isEmpty()) {
-            warn("Vui lòng chọn nhà cung cấp và thêm sản phẩm!"); return;
+            warn("Vui lòng chọn nhà cung cấp và thêm sản phẩm!");
+            return;
         }
         dtophieunhap pn = new dtophieunhap(
                 buspn.maxID() + 1,
@@ -394,33 +497,47 @@ public class formphieunhap extends JPanel {
                         (LocalDateTime.now().getNano() / 1_000_000) * 1_000_000)),
                 doubleVal(txtTotal), intVal(txtNCCid), manv, txtNote.getText());
         buspn.create(pn);
-        for (dtoctphieunhap ct : nhapHangList) busctpn.create(ct);
+        for (dtoctphieunhap ct : nhapHangList) {
+            busctpn.create(ct);
+        }
         info("Nhập hàng thành công!");
         reset();
         reloadGeneralTable();
     }
 
     private void deleteNhapHangRow() {
-        if (selectedIndex < 0) { warn("Vui lòng chọn sản phẩm để xóa!"); return; }
-        if (!confirm("Xác nhận xóa sản phẩm này?")) return;
+        if (selectedIndex < 0) {
+            warn("Vui lòng chọn sản phẩm để xóa!");
+            return;
+        }
+        if (!confirm("Xác nhận xóa sản phẩm này?")) {
+            return;
+        }
         nhapHangList.remove(selectedIndex);
         reloadNhapHangTable();
-        if (nhapHangList.isEmpty()) { txtNCCid.setEditable(true); cbNCCname.setEnabled(true); }
+        if (nhapHangList.isEmpty()) {
+            txtNCCid.setEditable(true);
+            cbNCCname.setEnabled(true);
+        }
     }
 
     private void reset() {
-        txtNCCid.setText(""); cbNCCname.setSelectedItem("");
-        txtNote.setText(""); txtTotal.setText("0");
+        txtNCCid.setText("");
+        cbNCCname.setSelectedItem("");
+        txtNote.setText("");
+        txtTotal.setText("0");
         nhapHangList = new ArrayList<>();
         reloadNhapHangTable();
-        txtNCCid.setEditable(true); cbNCCname.setEnabled(true);
+        txtNCCid.setEditable(true);
+        cbNCCname.setEnabled(true);
         reloadAdditionalTable(null);
         selectedIndex = -1;
     }
 
     private void reloadNhapHangTable() {
         modelNhapHang.setRowCount(0);
-        int i = 1; double total = 0;
+        int i = 1;
+        double total = 0;
         for (dtoctphieunhap ct : nhapHangList) {
             modelNhapHang.addRow(ct.toTableRow(i++));
             total += ct.getGiaNhap() * ct.getSoLuong();
@@ -432,17 +549,21 @@ public class formphieunhap extends JPanel {
     private void reloadAdditionalTable(String maNCC) {
         additionalModel.setRowCount(0);
         if (maNCC == null) {
-            for (dtosanpham sp : bussp.needToFillList())
+            for (dtosanpham sp : bussp.needToFillList()) {
                 additionalModel.addRow(sp.toAdditionalTableRow());
+            }
             busctpn.needToFillList();
-            for (dtoctphieunhap ct : busctpn.dsctpn)
+            for (dtoctphieunhap ct : busctpn.dsctpn) {
                 additionalModel.addRow(ct.toAdditionalTableRow());
+            }
         } else {
-            for (dtosanpham sp : bussp.needToFillList(Integer.valueOf(maNCC)))
+            for (dtosanpham sp : bussp.needToFillList(Integer.valueOf(maNCC))) {
                 additionalModel.addRow(sp.toAdditionalTableRow());
+            }
             busctpn.needToFillList(Integer.valueOf(maNCC));
-            for (dtoctphieunhap ct : busctpn.dsctpn)
+            for (dtoctphieunhap ct : busctpn.dsctpn) {
                 additionalModel.addRow(ct.toAdditionalTableRow());
+            }
         }
     }
 
@@ -452,25 +573,39 @@ public class formphieunhap extends JPanel {
         DefaultTableModel m = (DefaultTableModel) generalTable.getModel();
         m.setRowCount(0);
         buspn.getlist();
-        for (dtophieunhap pn : buspn.dspn) m.addRow(pn.toTableRow());
+        for (dtophieunhap pn : buspn.dspn) {
+            m.addRow(pn.toTableRow());
+        }
+        computeImportStats();
     }
 
     private void searching(String kw) {
-        if (kw.isEmpty()) { reloadGeneralTable(); return; }
+        if (kw.isEmpty()) {
+            reloadGeneralTable();
+            return;
+        }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(generalTable.getModel());
         generalTable.setRowSorter(sorter);
         int[] cols = kw.chars().allMatch(Character::isDigit) ? new int[]{0, 2} : new int[]{2, 4};
         sorter.setRowFilter(RowFilter.regexFilter("(?i)" + kw, cols));
-        if (generalTable.getRowCount() == 0)
+        if (generalTable.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "Không có kết quả phù hợp.");
+        }
     }
 
     private void onGeneralTableClick() {
         int row = generalTable.getSelectedRow();
-        if (row < 0) return;
+        if (row < 0) {
+            return;
+        }
         int id = (int) generalTable.getValueAt(row, 0);
-        for (ActionListener al : btnDetail.getActionListeners()) btnDetail.removeActionListener(al);
+        for (ActionListener al : btnDetail.getActionListeners()) {
+            btnDetail.removeActionListener(al);
+        }
         btnDetail.setEnabled(true);
+        if (btnPrintReceipt != null) {
+            btnPrintReceipt.setEnabled(true);
+        }
         btnDetail.addActionListener(e -> showDetailDialog(id));
     }
 
@@ -484,17 +619,21 @@ public class formphieunhap extends JPanel {
         ModalDialog.showModal(this,
                 new SimpleModalBorder(buildProductInputForm(null), "Nhập thông tin sản phẩm",
                         SimpleModalBorder.YES_NO_OPTION, (ctrl, action) -> {
-                    if (action == SimpleModalBorder.YES_OPTION) {
-                        if (checkInputEmpty()) return;
-                        dtoctphieunhap ct = buildCT();
-                        if (ct == null) return;
-                        nhapHangList.add(ct);
-                        reloadNhapHangTable();
-                        txtNCCid.setEditable(false);
-                        cbNCCname.setEnabled(false);
-                    }
-                    ctrl.close();
-                }), opt);
+                            if (action == SimpleModalBorder.YES_OPTION) {
+                                if (checkInputEmpty()) {
+                                    return;
+                                }
+                                dtoctphieunhap ct = buildCT();
+                                if (ct == null) {
+                                    return;
+                                }
+                                nhapHangList.add(ct);
+                                reloadNhapHangTable();
+                                txtNCCid.setEditable(false);
+                                cbNCCname.setEnabled(false);
+                            }
+                            ctrl.close();
+                        }), opt);
     }
 
     private void showEditModal(dtoctphieunhap existing) {
@@ -504,14 +643,236 @@ public class formphieunhap extends JPanel {
         ModalDialog.showModal(this,
                 new SimpleModalBorder(buildProductInputForm(existing), "Chỉnh sửa sản phẩm",
                         SimpleModalBorder.YES_NO_OPTION, (ctrl, action) -> {
-                    if (action == SimpleModalBorder.YES_OPTION) {
-                        dtoctphieunhap ct = buildCT();
-                        if (ct == null) return;
-                        nhapHangList.set(selectedIndex, ct);
-                        reloadNhapHangTable();
+                            if (action == SimpleModalBorder.YES_OPTION) {
+                                dtoctphieunhap ct = buildCT();
+                                if (ct == null) {
+                                    return;
+                                }
+                                nhapHangList.set(selectedIndex, ct);
+                                reloadNhapHangTable();
+                            }
+                            ctrl.close();
+                        }), opt);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  Printing & Statistics
+    // ─────────────────────────────────────────────────────────────
+    private void computeImportStats() {
+        try {
+            buspn.getlist();
+            int receipts = buspn.dspn == null ? 0 : buspn.dspn.size();
+            int totalProducts = 0;
+            double totalMoney = 0.0;
+            if (buspn.dspn != null) {
+                for (dtophieunhap pn : buspn.dspn) {
+                    busctpn.getlist(pn.getMaPhieuNhap());
+                    if (busctpn.dsctpn != null) {
+                        for (dtoctphieunhap ct : busctpn.dsctpn) {
+                            totalProducts += ct.getSoLuong();
+                            totalMoney += ct.getGiaNhap() * ct.getSoLuong();
+                        }
                     }
-                    ctrl.close();
-                }), opt);
+                }
+            }
+            DecimalFormat df = new DecimalFormat("#,###.##");
+            if (lblStatReceipts != null) {
+                lblStatReceipts.setText("Phiếu: " + receipts);
+            }
+            if (lblStatProducts != null) {
+                lblStatProducts.setText("SP nhập: " + totalProducts);
+            }
+            if (lblStatMoney != null) {
+                lblStatMoney.setText("Tổng tiền: " + df.format(totalMoney));
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(formphieunhap.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void printReceipt(int id) {
+        try {
+            JPanel panel = buildDetailPanel(id);
+            printComponent(panel, "Phiếu nhập #" + id);
+        } catch (Exception ex) {
+            warn("Lỗi khi in phiếu: " + ex.getMessage());
+        }
+    }
+
+    private void printComponent(final Component comp, String jobName) {
+        PrinterJob pj = PrinterJob.getPrinterJob();
+        pj.setJobName(jobName);
+        pj.setPrintable(new Printable() {
+            @Override
+            public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
+                if (pageIndex > 0) {
+                    return NO_SUCH_PAGE;
+                }
+                Graphics2D g2 = (Graphics2D) graphics;
+                g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+                // scale to fit width
+                double scale = pageFormat.getImageableWidth() / comp.getWidth();
+                if (scale < 1.0) {
+                    g2.scale(scale, scale);
+                }
+                comp.printAll(g2);
+                return PAGE_EXISTS;
+            }
+        });
+        if (pj.printDialog()) {
+            try {
+                pj.print();
+            } catch (PrinterException ex) {
+                warn("Lỗi in: " + ex.getMessage());
+            }
+        }
+    }
+
+    private JPanel buildStatCards() {
+        JPanel p = new JPanel(new MigLayout("fillx, insets 0", "[fill,33%][fill,33%][fill,33%]", "[]"));
+        p.putClientProperty(FlatClientProperties.STYLE, "background:null;");
+
+        lblStatReceipts = new JLabel("0");
+        lblStatProducts = new JLabel("0");
+        lblStatMoney = new JLabel("0 ₫");
+
+        p.add(buildCardStat("Số phiếu nhập", lblStatReceipts, "📄", ACCENT), "gapright 12");
+        p.add(buildCardStat("Tổng sản phẩm", lblStatProducts, "📦", SUCCESS), "gapright 12");
+        p.add(buildCardStat("Tổng tiền nhập", lblStatMoney, "💰", DANGER));
+
+        return p;
+    }
+
+    private JPanel buildCardStat(String title, JLabel valueLabel, String icon, Color accent) {
+        JPanel card = new JPanel(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]6[]6[]"));
+        card.putClientProperty(FlatClientProperties.STYLE,
+                "background:$Table.background; arc:10; border:1,1,1,1,$Table.gridColor;");
+
+        JLabel iconLabel = new JLabel(icon + "  " + title);
+        iconLabel.putClientProperty(FlatClientProperties.STYLE,
+                "font:-1; foreground:$Label.disabledForeground;");   // ← SỬA Ở ĐÂY
+
+        valueLabel.putClientProperty(FlatClientProperties.STYLE,
+                "font:bold +4; foreground:" + hex(accent) + ";");
+
+        JPanel accentBar = new JPanel();
+        accentBar.setBackground(accent);
+        accentBar.setPreferredSize(new Dimension(0, 3));
+        accentBar.putClientProperty(FlatClientProperties.STYLE, "arc:6;");
+
+        card.add(accentBar, "height 3!, gapbottom 8");
+        card.add(iconLabel);
+        card.add(valueLabel);
+
+        return card;
+    }
+
+    private void exportToExcel(int id) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Lưu Excel");
+        chooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        String path = chooser.getSelectedFile().getAbsolutePath();
+        if (!path.toLowerCase().endsWith(".xlsx")) {
+            path += ".xlsx";
+        }
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("PhieuNhap");
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font font = workbook.createFont();
+            font.setBold(true);
+            headerStyle.setFont(font);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle moneyStyle = workbook.createCellStyle();
+            moneyStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+
+            dtophieunhap pn = buspn.get(id);
+
+            int rowIndex = 0;
+            Row titleRow = sheet.createRow(rowIndex++);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("Phiếu nhập #" + id);
+            titleCell.setCellStyle(headerStyle);
+
+            rowIndex = addLabelValue(sheet, rowIndex, "Mã NCC", String.valueOf(pn.getMaNhaCungCap()));
+            rowIndex = addLabelValue(sheet, rowIndex, "Tên NCC", pn.getTenNCC(pn.getMaNhaCungCap()));
+            rowIndex = addLabelValue(sheet, rowIndex, "Mã NV", String.valueOf(pn.getMaNhanVien()));
+            rowIndex = addLabelValue(sheet, rowIndex, "Tên NV", pn.getTenNV(pn.getMaNhanVien()));
+            rowIndex = addLabelValue(sheet, rowIndex, "Ngày nhập", String.valueOf(pn.getNgayNhap()));
+            rowIndex = addLabelValue(sheet, rowIndex, "Ghi chú", pn.getGhiChu());
+            rowIndex = addLabelValue(sheet, rowIndex, "Tổng tiền", pn.getTongTien(), moneyStyle);
+
+            rowIndex++; // blank row
+
+            // Items header
+            Row header = sheet.createRow(rowIndex++);
+            String[] cols = new String[]{"#", "Mã SP", "Tên SP", "Giá nhập", "SL", "HSD", "Giá bán", "SL tồn"};
+            for (int i = 0; i < cols.length; i++) {
+                Cell c = header.createCell(i);
+                c.setCellValue(cols[i]);
+                c.setCellStyle(headerStyle);
+            }
+
+            busctpn.getlist(id);
+            int i = 1;
+            for (dtoctphieunhap ct : busctpn.dsctpn) {
+                Row r = sheet.createRow(rowIndex++);
+                r.createCell(0).setCellValue(i++);
+                r.createCell(1).setCellValue(ct.getMaSanPham());
+                r.createCell(2).setCellValue(ct.getTenSP(ct.getMaSanPham()));
+                Cell cellGiaNhap = r.createCell(3);
+                cellGiaNhap.setCellValue(ct.getGiaNhap());
+                cellGiaNhap.setCellStyle(moneyStyle);
+                r.createCell(4).setCellValue(ct.getSoLuong());
+                r.createCell(5).setCellValue(ct.getNgayhethan() == null ? "" : String.valueOf(ct.getNgayhethan()));
+                Cell cellGiaBan = r.createCell(6);
+                cellGiaBan.setCellValue(ct.getGiaBan());
+                cellGiaBan.setCellStyle(moneyStyle);
+                r.createCell(7).setCellValue(ct.getSoluongtonkho());
+            }
+
+            for (int col = 0; col < cols.length; col++) {
+                sheet.autoSizeColumn(col);
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(path)) {
+                workbook.write(fos);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi xuất Excel: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private int addLabelValue(Sheet sheet, int rowIndex, String label, String value) {
+        Row row = sheet.createRow(rowIndex);
+        row.createCell(0).setCellValue(label);
+        row.createCell(1).setCellValue(value == null ? "" : value);
+        return rowIndex + 1;
+    }
+
+    private int addLabelValue(Sheet sheet, int rowIndex, String label, double value, CellStyle style) {
+        Row row = sheet.createRow(rowIndex);
+        row.createCell(0).setCellValue(label);
+        Cell cell = row.createCell(1);
+        cell.setCellValue(value);
+        if (style != null) {
+            cell.setCellStyle(style);
+        }
+        return rowIndex + 1;
+    }
+
+    private int addLabelValue(Sheet sheet, int rowIndex, String label, double value) {
+        Row row = sheet.createRow(rowIndex);
+        row.createCell(0).setCellValue(label);
+        row.createCell(1).setCellValue(value);
+        return rowIndex + 1;
     }
 
     private dtoctphieunhap buildCT() {
@@ -539,10 +900,26 @@ public class formphieunhap extends JPanel {
                 Integer.parseInt(txtNCCid.getText().trim().isEmpty() ? "0" : txtNCCid.getText().trim()));
 
         txtSPid = styledField("Mã SP");
-        JComboBox<String> cboSPname = new JComboBox<>();
+        JComboBox<dtosanpham> cboSPname = new JComboBox<>();
         cboSPname.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
-        cboSPname.addItem("");
-        for (dtosanpham sp : products) cboSPname.addItem(sp.getTenSanPham());
+        cboSPname.addItem(null);
+        for (dtosanpham sp : products) {
+            cboSPname.addItem(sp);
+        }
+        cboSPname.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel();
+            if (value == null) {
+                label.setText("");
+            } else {
+                label.setText(value.getTenSanPham());
+            }
+            if (isSelected) {
+                label.setBackground(list.getSelectionBackground());
+                label.setForeground(list.getSelectionForeground());
+                label.setOpaque(true);
+            }
+            return label;
+        });
 
         JLabel imgLabel = new JLabel();
         imgLabel.setPreferredSize(new Dimension(200, 180));
@@ -551,42 +928,52 @@ public class formphieunhap extends JPanel {
 
         // Sync
         txtSPid.addKeyListener(new KeyAdapter() {
-            @Override public void keyReleased(KeyEvent e) {
+            @Override
+            public void keyReleased(KeyEvent e) {
                 String id = txtSPid.getText().trim();
                 for (dtosanpham sp : products) {
                     if (String.valueOf(sp.getMaSanPham()).equals(id)) {
-                        cboSPname.setSelectedItem(sp.getTenSanPham());
-                        loadImg(imgLabel, sp.getImg()); return;
+                        cboSPname.setSelectedItem(sp);
+                        loadImg(imgLabel, sp.getImg());
+                        return;
                     }
                 }
+                cboSPname.setSelectedItem(null);
+                loadImg(imgLabel, null);
             }
-            @Override public void keyTyped(KeyEvent e) {
-                if (!Character.isDigit(e.getKeyChar())) e.consume();
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (!Character.isDigit(e.getKeyChar())) {
+                    e.consume();
+                }
             }
         });
         cboSPname.addActionListener(e -> {
-            String sel = (String) cboSPname.getSelectedItem();
-            if (sel == null || sel.isEmpty()) return;
-            dtosanpham sp = bussp.getByName(sel);
-            if (sp == null) return;
-            txtSPid.setText(String.valueOf(sp.getMaSanPham()));
-            loadImg(imgLabel, sp.getImg());
+            dtosanpham sel = (dtosanpham) cboSPname.getSelectedItem();
+            if (sel == null) {
+                txtSPid.setText("");
+                loadImg(imgLabel, null);
+                return;
+            }
+            txtSPid.setText(String.valueOf(sel.getMaSanPham()));
+            loadImg(imgLabel, sel.getImg());
         });
 
         // Quantity spinner
         txtSL = new JTextField("1");
         txtSL.setHorizontalAlignment(SwingConstants.CENTER);
-        JButton btnPlus  = new JButton("+");
+        JButton btnPlus = new JButton("+");
         JButton btnMinus = new JButton("−");
         btnPlus.putClientProperty(FlatClientProperties.STYLE, "arc:6; borderWidth:1;");
         btnMinus.putClientProperty(FlatClientProperties.STYLE, "arc:6; borderWidth:1;");
-        btnPlus.addActionListener(e  -> adjSL(1));
+        btnPlus.addActionListener(e -> adjSL(1));
         btnMinus.addActionListener(e -> adjSL(-1));
         JPanel slPanel = new JPanel(new MigLayout("insets 0", "[30!][fill,grow][30!]", "[]"));
         slPanel.putClientProperty(FlatClientProperties.STYLE, "background: null;");
         slPanel.add(btnMinus, "height 34!");
-        slPanel.add(txtSL,    "height 34!");
-        slPanel.add(btnPlus,  "height 34!");
+        slPanel.add(txtSL, "height 34!");
+        slPanel.add(btnPlus, "height 34!");
 
         dateChooser = new JDateChooser();
         dateChooser.setDateFormatString("dd/MM/yyyy");
@@ -613,7 +1000,10 @@ public class formphieunhap extends JPanel {
         cboUnit.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
 
         KeyAdapter recalc = new KeyAdapter() {
-            @Override public void keyReleased(KeyEvent e) { calcGiaBan(cboUnit); }
+            @Override
+            public void keyReleased(KeyEvent e) {
+                calcGiaBan(cboUnit);
+            }
         };
         txtGiaNhap.addKeyListener(recalc);
         txtLoiNhuan.addKeyListener(recalc);
@@ -627,28 +1017,40 @@ public class formphieunhap extends JPanel {
             txtGiaBan.setText(String.valueOf(pn.getGiaBan()));
             txtLoiNhuan.setText(String.valueOf(pn.getGiaBan() - pn.getGiaNhap()));
             dateChooser.setDate(pn.getNgayhethan());
-            dtosanpham sp = bussp.getById(pn.getMaSanPham());
-            if (sp != null) { cboSPname.setSelectedItem(sp.getTenSanPham()); loadImg(imgLabel, sp.getImg()); }
+            for (dtosanpham sp : products) {
+                if (sp.getMaSanPham() == pn.getMaSanPham()) {
+                    cboSPname.setSelectedItem(sp);
+                    loadImg(imgLabel, sp.getImg());
+                    break;
+                }
+            }
         }
 
-        p.add(fieldLbl("Mã SP"));    p.add(txtSPid,   "height 34!");
-        p.add(fieldLbl("Tên SP"));   p.add(cboSPname, "height 34!");
-        p.add(fieldLbl("Số lượng")); p.add(slPanel,   "growx");
+        p.add(fieldLbl("Mã SP"));
+        p.add(txtSPid, "height 34!");
+        p.add(fieldLbl("Tên SP"));
+        p.add(cboSPname, "height 34!");
+        p.add(fieldLbl("Số lượng"));
+        p.add(slPanel, "growx");
 
         JPanel dateRow = new JPanel(new MigLayout("insets 0", "[fill,grow]", "[]"));
         dateRow.putClientProperty(FlatClientProperties.STYLE, "background: null;");
         dateRow.add(dateChooser, "height 34!, growx");
-        p.add(fieldLbl("Ngày hết hạn")); p.add(dateRow, "growx");
+        p.add(fieldLbl("Ngày hết hạn"));
+        p.add(dateRow, "growx");
 
-        p.add(fieldLbl("Giá nhập"));    p.add(txtGiaNhap,  "height 34!");
+        p.add(fieldLbl("Giá nhập"));
+        p.add(txtGiaNhap, "height 34!");
 
         JPanel profitRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][80!]", "[]"));
         profitRow.putClientProperty(FlatClientProperties.STYLE, "background: null;");
         profitRow.add(txtLoiNhuan, "height 34!");
-        profitRow.add(cboUnit,     "height 34!");
-        p.add(fieldLbl("Lợi nhuận")); p.add(profitRow, "growx");
+        profitRow.add(cboUnit, "height 34!");
+        p.add(fieldLbl("Lợi nhuận"));
+        p.add(profitRow, "growx");
 
-        p.add(fieldLbl("Giá bán")); p.add(txtGiaBan, "height 34!");
+        p.add(fieldLbl("Giá bán"));
+        p.add(txtGiaBan, "height 34!");
 
         p.add(fieldLbl("Hình ảnh"));
         p.add(imgLabel, "height 180!, growx");
@@ -662,27 +1064,76 @@ public class formphieunhap extends JPanel {
             double ln = txtLoiNhuan.getText().isEmpty() ? 0 : Double.parseDouble(txtLoiNhuan.getText());
             String u = (String) unit.getSelectedItem();
             txtGiaBan.setText(String.valueOf("Đồng".equals(u) ? gn + ln : gn * (1 + ln / 100)));
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
     }
 
     private void adjSL(int delta) {
         try {
             int v = Integer.parseInt(txtSL.getText()) + delta;
-            if (v >= 1) txtSL.setText(String.valueOf(v));
-        } catch (NumberFormatException e) { txtSL.setText("1"); }
+            if (v >= 1) {
+                txtSL.setText(String.valueOf(v));
+            }
+        } catch (NumberFormatException e) {
+            txtSL.setText("1");
+        }
     }
 
     private void loadImg(JLabel lbl, String path) {
-        if (path == null || path.isEmpty()) { lbl.setIcon(null); return; }
-        ImageIcon icon = new ImageIcon(System.getProperty("user.dir") + "/src/source/image/sanpham/" + path);
+        if (path == null || path.isEmpty()) {
+            lbl.setIcon(null);
+            lbl.setText("Không có ảnh");
+            return;
+        }
+
+        File imgFile;
+        File direct = new File(path);
+        if (direct.isAbsolute() && direct.exists()) {
+            imgFile = direct;
+        } else {
+            String cwd = System.getProperty("user.dir");
+            File c1 = new File(cwd + "/src/source/image/sanpham/" + path);
+            File c2 = new File(cwd + "/convenience_store/src/source/image/sanpham/" + path);
+            File c3 = new File(cwd + "/source/image/sanpham/" + path);
+            if (c1.exists()) {
+                imgFile = c1;
+            } else if (c2.exists()) {
+                imgFile = c2;
+            } else if (c3.exists()) {
+                imgFile = c3;
+            } else {
+                imgFile = null;
+            }
+        }
+
+        if (imgFile == null || !imgFile.exists()) {
+            lbl.setIcon(null);
+            lbl.setText("Không tìm thấy ảnh");
+            return;
+        }
+
+        ImageIcon icon = new ImageIcon(imgFile.getAbsolutePath());
         lbl.setIcon(new ImageIcon(icon.getImage().getScaledInstance(200, 180, Image.SCALE_SMOOTH)));
+        lbl.setText("");
     }
 
     private boolean checkInputEmpty() {
-        if (txtSPid.getText().trim().isEmpty()) { warn("ID sản phẩm không hợp lệ!"); return true; }
-        if (txtSL.getText().trim().isEmpty() || txtSL.getText().equals("0")) { warn("Số lượng không hợp lệ!"); return true; }
-        if (txtGiaBan.getText().trim().isEmpty() || txtGiaBan.getText().equals("0.0")) { warn("Giá bán không hợp lệ!"); return true; }
-        if (dateChooser.getDate() == null) { warn("Vui lòng chọn ngày hết hạn!"); return true; }
+        if (txtSPid.getText().trim().isEmpty()) {
+            warn("ID sản phẩm không hợp lệ!");
+            return true;
+        }
+        if (txtSL.getText().trim().isEmpty() || txtSL.getText().equals("0")) {
+            warn("Số lượng không hợp lệ!");
+            return true;
+        }
+        if (txtGiaBan.getText().trim().isEmpty() || txtGiaBan.getText().equals("0.0")) {
+            warn("Giá bán không hợp lệ!");
+            return true;
+        }
+        if (dateChooser.getDate() == null) {
+            warn("Vui lòng chọn ngày hết hạn!");
+            return true;
+        }
         return false;
     }
 
@@ -707,9 +1158,9 @@ public class formphieunhap extends JPanel {
         dtophieunhap pn = buspn.get(id);
 
         p.add(infoRow2("Mã phiếu", String.valueOf(id), "Ngày nhập", String.valueOf(pn.getNgayNhap())));
-        p.add(infoRow2("Mã NCC",   String.valueOf(pn.getMaNhaCungCap()), "Tên NCC", pn.getTenNCC(pn.getMaNhaCungCap())));
-        p.add(infoRow2("Mã NV",    String.valueOf(pn.getMaNhanVien()),   "Tên NV",  pn.getTenNV(pn.getMaNhanVien())));
-        p.add(infoRow2("Tổng tiền", String.valueOf(pn.getTongTien()),    "Ghi chú", pn.getGhiChu()));
+        p.add(infoRow2("Mã NCC", String.valueOf(pn.getMaNhaCungCap()), "Tên NCC", pn.getTenNCC(pn.getMaNhaCungCap())));
+        p.add(infoRow2("Mã NV", String.valueOf(pn.getMaNhanVien()), "Tên NV", pn.getTenNV(pn.getMaNhanVien())));
+        p.add(infoRow2("Tổng tiền", String.valueOf(pn.getTongTien()), "Ghi chú", pn.getGhiChu()));
 
         JSeparator sep = new JSeparator();
         sep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
@@ -718,17 +1169,23 @@ public class formphieunhap extends JPanel {
         // Detail items table
         Object[] cols = {"#", "Mã SP", "Tên SP", "Giá nhập", "SL", "HSD", "Giá bán", "SL tồn"};
         DefaultTableModel dm = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         JTable tbl = styledTable(dm);
         tbl.setRowHeight(32);
         int[] ws = {30, 60, 140, 90, 50, 100, 90, 70};
-        for (int i = 0; i < ws.length; i++)
+        for (int i = 0; i < ws.length; i++) {
             tbl.getColumnModel().getColumn(i).setPreferredWidth(ws[i]);
+        }
 
         busctpn.getlist(id);
         int i = 1;
-        for (dtoctphieunhap ct : busctpn.dsctpn) dm.addRow(ct.toTableRow(i++));
+        for (dtoctphieunhap ct : busctpn.dsctpn) {
+            dm.addRow(ct.toTableRow(i++));
+        }
 
         JScrollPane scroll = scrollOf(tbl);
         scroll.setPreferredSize(new Dimension(600, 200));
@@ -751,10 +1208,22 @@ public class formphieunhap extends JPanel {
         JPanel p = new JPanel(new BorderLayout());
         p.putClientProperty(FlatClientProperties.STYLE,
                 "background: $Panel.background; border: 1,1,1,1,$Component.borderColor,,10;");
+
         JLabel lbl = new JLabel(title);
         lbl.putClientProperty(FlatClientProperties.STYLE, "font: bold +1;");
-        lbl.setBorder(BorderFactory.createEmptyBorder(10, 14, 8, 14));
+        lbl.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14)); // 👈 tăng padding
+
+        // 👇 Wrapper cho content để tạo khoảng cách
+        JPanel body = new JPanel(new BorderLayout());
+        body.setBorder(BorderFactory.createEmptyBorder(8, 14, 14, 14));
+        body.setOpaque(false);
+
         p.add(lbl, BorderLayout.NORTH);
+        p.add(body, BorderLayout.CENTER);
+
+        // 👇 trick: lưu body để dùng sau
+        p.putClientProperty("BODY", body);
+
         return p;
     }
 
@@ -779,17 +1248,19 @@ public class formphieunhap extends JPanel {
         tbl.setFillsViewportHeight(true);
         tbl.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         tbl.putClientProperty(FlatClientProperties.STYLE,
-                "rowHeight:34; showHorizontalLines:true; intercellSpacing:0,1;" +
-                "cellFocusColor:$TableHeader.hoverBackground;" +
-                "selectionBackground:$TableHeader.hoverBackground;" +
-                "selectionInactiveBackground:$TableHeader.hoverBackground;" +
-                "selectionForeground:$Table.foreground;");
+                "rowHeight:34; showHorizontalLines:true; intercellSpacing:0,1;"
+                + "cellFocusColor:$TableHeader.hoverBackground;"
+                + "selectionBackground:$TableHeader.hoverBackground;"
+                + "selectionInactiveBackground:$TableHeader.hoverBackground;"
+                + "selectionForeground:$Table.foreground;");
         tbl.getTableHeader().setDefaultRenderer(new TableHeaderAlignment(tbl) {
-            protected int getAlignment() { return SwingConstants.CENTER; }
+            protected int getAlignment() {
+                return SwingConstants.CENTER;
+            }
         });
         tbl.getTableHeader().putClientProperty(FlatClientProperties.STYLE,
-                "height:34; hoverBackground:null; pressedBackground:null;" +
-                "separatorColor:$TableHeader.background; font:bold;");
+                "height:34; hoverBackground:null; pressedBackground:null;"
+                + "separatorColor:$TableHeader.background; font:bold;");
         tbl.getTableHeader().setReorderingAllowed(false);
         return tbl;
     }
@@ -843,6 +1314,7 @@ public class formphieunhap extends JPanel {
     private int intVal(JTextField tf) {
         return Integer.parseInt(tf.getText().trim());
     }
+
     private double doubleVal(JTextField tf) {
         return Double.parseDouble(tf.getText().trim().isEmpty() ? "0" : tf.getText().trim());
     }
@@ -850,9 +1322,11 @@ public class formphieunhap extends JPanel {
     private void info(String msg) {
         JOptionPane.showMessageDialog(this, msg, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
     }
+
     private void warn(String msg) {
         JOptionPane.showMessageDialog(this, msg, "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
+
     private boolean confirm(String msg) {
         return JOptionPane.showConfirmDialog(this, msg, "Xác nhận",
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;

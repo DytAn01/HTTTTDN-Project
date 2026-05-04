@@ -21,7 +21,8 @@ import java.util.Date;
 import java.util.List;
 
 public class SimpleInputSalaryForm extends JPanel {
-    private JComboBox<dtonhanvien> cboTenNhanVien;
+    private int selectedMaNhanVien = 0;
+    private JLabel lblTenNhanVien;
     private JTextField txtGioLam;
     private JTextField txtLuongCoBan;
     private JTextField txtPhuCap;
@@ -35,8 +36,6 @@ public class SimpleInputSalaryForm extends JPanel {
     private daoluong daoLuong;
     private daonhanvien daoNhanVien;
     private bushopdong busHD;
-    private JLabel lblLoadingNhanVien;
-    private dtoluong pendingLuongData;  // Dữ liệu lương đang chờ set
 
     public SimpleInputSalaryForm() throws SQLException {
         daoLuong = new daoluong(); 
@@ -48,7 +47,7 @@ public class SimpleInputSalaryForm extends JPanel {
     private void init() throws SQLException {
         setLayout(new MigLayout("fillx,wrap,insets 5 35 5 35,width 400", "[fill]", ""));
 
-        cboTenNhanVien = new JComboBox<>();
+        lblTenNhanVien = new JLabel(" ");
         txtGioLam = new JTextField();
         txtLuongCoBan = new JTextField();
         txtLuongCoBan.setEnabled(false);
@@ -64,14 +63,10 @@ public class SimpleInputSalaryForm extends JPanel {
         dateChooserNgayNhanLuong = new JDateChooser();
         dateChooserNgayNhanLuong.setDateFormatString("dd/MM/yyyy");
 
-        cboTenNhanVien.setEnabled(false);
-        lblLoadingNhanVien = new JLabel("Đang tải nhân viên...");
-
         createTitle("Thông tin lương");
 
         add(new JLabel("Tên nhân viên"), "gapy 5 0");
-        add(cboTenNhanVien);
-        add(lblLoadingNhanVien, "gapy 3 0");
+        add(lblTenNhanVien, "wrap");
         
         add(new JLabel("Lương cơ bản"), "gapy 5 0");
         add(txtLuongCoBan);
@@ -134,7 +129,7 @@ public class SimpleInputSalaryForm extends JPanel {
         add(new JLabel("Ngày nhận lương"), "gapy 5 0");
         add(dateChooserNgayNhanLuong);
 
-        loadComboDataAsync();
+        // Employee is set via `setDefaultValues`; name will be displayed in `lblTenNhanVien`.
     }
     
     private void calculateLuongThucTe() {
@@ -158,17 +153,29 @@ public class SimpleInputSalaryForm extends JPanel {
     }
     private void loadLuongCoBan(){
         try {
-            dtonhanvien selectedNhanVien = (dtonhanvien) cboTenNhanVien.getSelectedItem();
-            if (selectedNhanVien != null) {
-                dtohopdong hopDong = busHD.gethdnhanvien(selectedNhanVien.getManhanvien());
-                if (hopDong != null) {
-                    txtLuongCoBan.setText(String.valueOf(hopDong.getLuongCoBan()));
-                    calculateLuongThucTe();
-                }
+            int ma = selectedMaNhanVien;
+            if (ma <= 0) return;
+            dtohopdong hopDong = busHD.gethdnhanvien(ma);
+            dtonhanvien nv = daoNhanVien.getNhanVienById(ma);
+            if (nv != null) {
+                lblTenNhanVien.setText(nv.getDropdownDisplay());
+            } else {
+                lblTenNhanVien.setText("Không tìm thấy");
             }
+            if (hopDong != null) {
+                txtLuongCoBan.setText(String.valueOf(hopDong.getLuongCoBan()));
+                calculateLuongThucTe();
+            }
+        } catch (NumberFormatException ex) {
+            // ignore invalid id while typing
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    private void onMaNhanVienChanged() {
+        // kept for compatibility but not used (employee id is set via setDefaultValues)
+        loadLuongCoBan();
     }
     
     private void calculateThucLanh() {
@@ -188,92 +195,7 @@ public class SimpleInputSalaryForm extends JPanel {
         }
     }
 
-    private void loadComboDataAsync() {
-        SwingWorker<SalaryData, Void> worker = new SwingWorker<SalaryData, Void>() {
-            @Override
-            protected SalaryData doInBackground() throws Exception {
-                SalaryData data = new SalaryData();
-                List<dtonhanvien> allNhanVien = daoNhanVien.getNhanVienList();
-                
-                // Lọc chỉ nhân viên còn hoạt động (isdelete = 0 và ngayketthuc = null hoặc >= ngày hôm nay)
-                Date today = new Date();
-                for (dtonhanvien nhanVien : allNhanVien) {
-                    // Nhân viên còn hoạt động nếu: chưa bị xóa (isdelete=0) và ngày kết thúc là null hoặc sau hôm nay
-                    if (nhanVien.getIsdelete() == 0 && (nhanVien.getNgayketthuc() == null || nhanVien.getNgayketthuc().after(today))) {
-                        data.nhanVienList.add(nhanVien);
-                    }
-                }
-                return data;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    SalaryData data = get();
-                    applyNhanVienList(data.nhanVienList);
-                } catch (Exception ex) {
-                    if (lblLoadingNhanVien != null) {
-                        lblLoadingNhanVien.setText("Không tải được nhân viên");
-                    }
-                }
-            }
-        };
-        worker.execute();
-    }
-
-
-
-    private void applyNhanVienList(List<dtonhanvien> nhanVienList) {
-        cboTenNhanVien.removeAllItems();
-        for (dtonhanvien nhanVien : nhanVienList) {
-            cboTenNhanVien.addItem(nhanVien);
-        }
-        if (pendingLuongData != null) {
-            ensureNhanVienInCombo(pendingLuongData.getMaNhanVien());
-        }
-        cboTenNhanVien.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel();
-            if (value != null) {
-                label.setText(value.getDropdownDisplay());
-            }
-            return label;
-        });
-        // Thêm listener để load lương cơ bản khi chọn nhân viên
-        cboTenNhanVien.addActionListener(e -> loadLuongCoBan());
-        cboTenNhanVien.setEnabled(true);
-        if (lblLoadingNhanVien != null) {
-            remove(lblLoadingNhanVien);
-            lblLoadingNhanVien = null;
-            revalidate();
-            repaint();
-        }
-        
-        // Nếu có dữ liệu lương đang chờ, set nó bây giờ
-        if (pendingLuongData != null) {
-            setDefaultValuesInternal(pendingLuongData);
-            pendingLuongData = null;
-        }
-    }
-
-    private void ensureNhanVienInCombo(int maNhanVien) {
-        if (maNhanVien <= 0) {
-            return;
-        }
-        for (int i = 0; i < cboTenNhanVien.getItemCount(); i++) {
-            dtonhanvien nhanVien = cboTenNhanVien.getItemAt(i);
-            if (nhanVien != null && nhanVien.getManhanvien() == maNhanVien) {
-                return;
-            }
-        }
-        dtonhanvien nhanVien = daoNhanVien.getNhanVienById(maNhanVien);
-        if (nhanVien != null && nhanVien.getManhanvien() == maNhanVien) {
-            cboTenNhanVien.addItem(nhanVien);
-        }
-    }
-
-    private static class SalaryData {
-        private List<dtonhanvien> nhanVienList = new ArrayList<>();
-    }
+    
 
     public void addLuong() {
         try {
@@ -372,9 +294,12 @@ public class SimpleInputSalaryForm extends JPanel {
                 dateChooserNgayNhanLuong.requestFocusInWindow();
                 return;
             }
-            // Lấy thông tin nhân viên
-            dtonhanvien selectedNhanVien = (dtonhanvien) cboTenNhanVien.getSelectedItem();
-            int maNhanVien = selectedNhanVien != null ? selectedNhanVien.getManhanvien() : 0;
+            // Lấy thông tin nhân viên từ internal state
+            int maNhanVien = selectedMaNhanVien;
+            if (maNhanVien <= 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên trước khi thêm lương!");
+                return;
+            }
 
             // Tạo DTO và lưu vào cơ sở dữ liệu (maChamCong = 0 vì không sử dụng)
             double thucLanh = luongThucTe + phuCap + luongThuong + luongLamThem - khoanBaoHiem - khoanThue;
@@ -489,9 +414,12 @@ public class SimpleInputSalaryForm extends JPanel {
                 return;
             }
             
-            // Lấy thông tin nhân viên
-            dtonhanvien selectedNhanVien = (dtonhanvien) cboTenNhanVien.getSelectedItem();
-            int maNhanVien = selectedNhanVien != null ? selectedNhanVien.getManhanvien() : 0;
+            // Lấy thông tin nhân viên từ internal state
+            int maNhanVien = selectedMaNhanVien;
+            if (maNhanVien <= 0) {
+                JOptionPane.showMessageDialog(this, "Mã nhân viên không hợp lệ!");
+                return;
+            }
 
             // Tạo DTO và cập nhật cơ sở dữ liệu (maChamCong = 0 vì không sử dụng)
             dtoluong luong = new dtoluong(maLuong, phuCap, luongThucTe, luongThuong, khoanBaoHiem, khoanThue, calculateThucLanhValue(luongThucTe, phuCap, luongThuong, khoanBaoHiem, khoanThue, luongLamThem), luongLamThem, ngayNhanLuongDate, maNhanVien);
@@ -513,31 +441,16 @@ public class SimpleInputSalaryForm extends JPanel {
     }
 
     public void setDefaultValues(dtoluong luong) {
-        // Lưu dữ liệu để set sau khi combo được tải
-        pendingLuongData = luong;
-        
-        // Nếu combo đã được tải (enabled), set ngay
-        if (cboTenNhanVien.isEnabled()) {
-            setDefaultValuesInternal(luong);
-            pendingLuongData = null;
-        } else {
-            // Combo chưa được tải, sẽ set trong applyNhanVienList()
-            loadComboDataAsync();
-        }
+        // Set default values directly (no combo async)
+        setDefaultValuesInternal(luong);
     }
 
     private void setDefaultValuesInternal(dtoluong luong) {
-        ensureNhanVienInCombo(luong.getMaNhanVien());
-        // Tìm và chọn nhân viên từ combo
-        for (int i = 0; i < cboTenNhanVien.getItemCount(); i++) {
-            dtonhanvien nhanVien = cboTenNhanVien.getItemAt(i);
-            if (nhanVien.getManhanvien() == luong.getMaNhanVien()) {
-                cboTenNhanVien.setSelectedItem(nhanVien);
-                break;
-            }
-        }
-        
-        // Load lương cơ bản
+        // Set employee ID internally and load related info
+        selectedMaNhanVien = luong.getMaNhanVien();
+        dtonhanvien nv = daoNhanVien.getNhanVienById(selectedMaNhanVien);
+        if (nv != null) lblTenNhanVien.setText(nv.getDropdownDisplay());
+        else lblTenNhanVien.setText("Không tìm thấy");
         loadLuongCoBan();
         
         // Tính ngược lại giờ làm từ lương thực tế và lương cơ bản
@@ -569,7 +482,8 @@ public class SimpleInputSalaryForm extends JPanel {
     }
 
     private void resetFields() {
-        cboTenNhanVien.setSelectedIndex(0);
+        selectedMaNhanVien = 0;
+        lblTenNhanVien.setText(" ");
         txtGioLam.setText("");
         txtLuongCoBan.setText("");
         txtPhuCap.setText("");

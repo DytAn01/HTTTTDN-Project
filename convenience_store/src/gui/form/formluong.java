@@ -182,8 +182,8 @@ public class formluong extends JPanel {
         // Search
         JTextField txtSearch = new JTextField();
         txtSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Tìm theo mã hoặc tên nhân viên...");
-        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
-                new FlatSVGIcon("source/image/icon/search.svg", 0.4f));
+//        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+//                new FlatSVGIcon("source/image/icon/search.svg", 0.4f));
         txtSearch.putClientProperty(FlatClientProperties.STYLE, "arc:8;");
 
         // Month combo

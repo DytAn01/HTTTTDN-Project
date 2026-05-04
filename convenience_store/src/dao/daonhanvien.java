@@ -3,16 +3,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package dao;
-import dto.dtonhanvien;
-import dao.connect;
 import dto.dtochucvu;
 import dto.dtohopdong;
-
+import dto.dtonhanvien;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Connection;
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -119,10 +116,8 @@ public class daonhanvien {
                 nv.setMachucvu(rs.getInt("maChucVu"));
                 nv.setIsdelete(rs.getInt("isDelete"));
                 nv.setImg(rs.getString("img"));
-                nv.setMahopdong(rs.getInt("maHopDong"));
-                nv.setLuongcoban(rs.getFloat("luongCoBan"));
-                nv.setNgaylamviec(rs.getDate("ngayLamViec"));
-                nv.setNgayketthuc(rs.getDate("ngayKetThuc"));
+                // Note: contract fields (maHopDong, luongCoBan, ngayLamViec, ngayKetThuc)
+                // are stored in the `hopdong` table. Fetch them via bushopdong when needed.
             }
         } catch (SQLException ex) {
             Logger.getLogger(daonhanvien.class.getName()).log(Level.SEVERE, null, ex);

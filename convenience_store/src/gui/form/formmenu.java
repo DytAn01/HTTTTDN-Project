@@ -541,7 +541,12 @@ public class formmenu extends Form {
         ArrayList<dtocthoadon> list = new ArrayList<>();
         for (dtodonhang i : list_donhang) {
             dtocthoadon a = new dtocthoadon();
-            a.setMaSanPham(i.getMa()); a.setSoLuong(i.getSl()); a.setTensanpham(i.getTen()); list.add(a);
+            Double unitPrice = i.getTt();
+            a.setMaSanPham(i.getMa());
+            a.setSoLuong(i.getSl());
+            a.setTensanpham(i.getTen());
+            a.setDonGia(unitPrice != null ? unitPrice.doubleValue() : 0d);
+            list.add(a);
         }
         formthanhtoan formth = new formthanhtoan(list, manv);
         formth.setSize(510, 750); formth.setResizable(false); formth.setLocationRelativeTo(null);
