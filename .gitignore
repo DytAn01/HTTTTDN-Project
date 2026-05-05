@@ -11,12 +11,8 @@
 *.ear
 hs_err_pid*
 
-# NetBeans
-/convenience_store/nbproject/private/
-/convenience_store/nbproject/cache/
-/convenience_store/nbproject/genfiles.properties
-/convenience_store/nbproject/project.properties
-/convenience_store/nbproject/project.xml
+
+
 
 # Build output
 /build/

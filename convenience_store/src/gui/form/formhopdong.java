@@ -19,6 +19,7 @@ import net.miginfocom.swing.MigLayout;
 
 import bus.bushopdong;
 import bus.busnhanvien;
+import dto.dtochucvu;
 import dto.dtohopdong;
 import dto.dtonhanvien;
 import gui.table.TableHeaderAlignment;
@@ -50,6 +51,7 @@ public class formhopdong extends JPanel {
     private JTextField   txtMaHD, txtLuongCoBan;
     private JDateChooser dateTuNgay, dateDenNgay;
     private JComboBox<String> comboMaNV, comboTenNV;
+    private JComboBox<String> comboChucVu;
 
     // ─────────────────────────────────────────────────────────────
     public formhopdong() throws SQLException {
@@ -290,13 +292,17 @@ public class formhopdong extends JPanel {
         // ComboBox NV
         comboMaNV  = new JComboBox<>();
         comboTenNV = new JComboBox<>();
+        comboChucVu = new JComboBox<>();
         comboMaNV.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
         comboTenNV.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
+        comboChucVu.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
 
         comboMaNV.addItem("");
         comboTenNV.addItem("");
+        comboChucVu.addItem("");
         for (String ma : bushd.getListMaNV()) comboMaNV.addItem(ma);
         for (dtonhanvien nv : busnv.list_nv) comboTenNV.addItem(nv.getTennhanvien());
+        for (dtochucvu cv : busnv.listChucVu()) comboChucVu.addItem(cv.getTenchucvu());
 
         // Sync combos
         comboTenNV.addActionListener(e -> {
@@ -312,14 +318,21 @@ public class formhopdong extends JPanel {
             String ma = comboMaNV.getSelectedItem() + "";
             if (ma.isEmpty()) { comboTenNV.setSelectedItem(""); return; }
             try {
-                String ten = busnv.gettennvbymanv(Integer.parseInt(ma));
+                int maNV = Integer.parseInt(ma);
+                String ten = busnv.gettennvbymanv(maNV);
                 comboTenNV.setSelectedItem(ten != null ? ten : "");
+                String chucVu = busnv.getTenChucVu(busnv.getmachucvu(maNV));
+                comboChucVu.setSelectedItem(chucVu != null ? chucVu : "");
             } catch (NumberFormatException ignored) {}
+            catch (SQLException ex) {
+                Logger.getLogger(formhopdong.class.getName()).log(Level.SEVERE, null, ex);
+            }
         });
 
         p.add(fieldLbl("Mã hợp đồng")); p.add(txtMaHD,       "height 34!");
         p.add(fieldLbl("Tên nhân viên")); p.add(comboTenNV,   "height 34!");
         p.add(fieldLbl("Mã nhân viên")); p.add(comboMaNV,     "height 34!");
+        p.add(fieldLbl("Chức vụ"));      p.add(comboChucVu,   "height 34!");
         p.add(fieldLbl("Từ ngày"));      p.add(dateTuNgay,    "height 34!");
         p.add(fieldLbl("Đến ngày"));     p.add(dateDenNgay,   "height 34!");
         p.add(fieldLbl("Lương cơ bản")); p.add(txtLuongCoBan, "height 34!");
@@ -377,15 +390,31 @@ public class formhopdong extends JPanel {
         int maHD = Integer.parseInt(txtMaHD.getText());
         float luong = Float.parseFloat(txtLuongCoBan.getText().trim());
         int maNV = Integer.parseInt(maNVStr);
+        String chucVuMoi = comboChucVu.getSelectedItem() + "";
         dtohopdong hd = new dtohopdong(maHD, tuNgay, denNgay, luong, maNV, 0);
+
+        dtohopdong hdCu = bushd.gethdnhanvien(maNV);
 
         if ("Thêm hợp đồng".equals(mode)) {
             if (bushd.addHopDong(hd)) {
+                try {
+                    String chucVuCu = busnv.getTenChucVu(busnv.getmachucvu(maNV));
+                    if (hdCu != null && hdCu.getDenNgay() != null && hdCu.getDenNgay().equals(tuNgay)
+                            && "quầy".equalsIgnoreCase(chucVuCu) && chucVuMoi != null && !chucVuMoi.trim().isEmpty()) {
+                        Integer maChucVuMoi = busnv.getMaChucVuByName(chucVuMoi);
+                        if (maChucVuMoi != null) {
+                            busnv.updateChucVuByMaNhanVien(maNV, maChucVuMoi);
+                        }
+                    }
+                } catch (SQLException ex) {
+                    Logger.getLogger(formhopdong.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 info("Thêm hợp đồng thành công!");
                 txtMaHD.setText((bushd.getMaxMaHopDong() + 1) + "");
                 txtLuongCoBan.setText("");
                 dateTuNgay.setDate(null); dateDenNgay.setDate(null);
                 comboMaNV.setSelectedIndex(0); comboTenNV.setSelectedIndex(0);
+                comboChucVu.setSelectedIndex(0);
                 loadTable();
             }
         } else {
