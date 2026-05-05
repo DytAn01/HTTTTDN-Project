@@ -26,6 +26,22 @@ public class busthongke {
        return daotk.getDoanhThuChiPhiTheoNam(tenPhanLoai, nam);
    }
 
+   public ArrayList<thongkedoanhthuDTO> getTongDoanhThuChiPhiTheoThang(int nam) throws SQLException {
+       return daotk.getTongDoanhThuChiPhiTheoThang(nam);
+   }
+
+   public ArrayList<ThongKeSoLuongDTO> getTongSoLuongBanTheoThang(int nam) throws SQLException {
+       return daotk.getTongSoLuongBanTheoThang(nam);
+   }
+
+   public ArrayList<thongkedoanhthuDTO> getTongDoanhThuChiPhiTheoQuy(int nam) throws SQLException {
+       return daotk.getTongDoanhThuChiPhiTheoQuy(nam);
+   }
+
+   public ArrayList<ThongKeSoLuongDTO> getTongSoLuongBanTheoQuy(int nam) throws SQLException {
+       return daotk.getTongSoLuongBanTheoQuy(nam);
+   }
+
    public ArrayList<ThongKeSanPhamDTO> getThongKeSanPham(java.sql.Date fromDate, java.sql.Date toDate) throws SQLException {
        return daotk.getThongKeSanPham(fromDate, toDate);
    }

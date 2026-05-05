@@ -115,7 +115,7 @@ public class formluong extends JPanel {
                 now.get(Calendar.MONTH) + 1, now.get(Calendar.YEAR)));
         badge.putClientProperty(FlatClientProperties.STYLE,
                 "font:bold -1; background:" + colorHex(COLOR_PRIMARY)
-                + "; foreground:#FFFFFF; arc:20;");
+            + "; foreground:#FFFFFF;");
         badge.setOpaque(true);
         badge.setBorder(new EmptyBorder(4, 12, 4, 12));
 

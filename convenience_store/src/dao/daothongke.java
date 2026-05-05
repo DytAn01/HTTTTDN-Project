@@ -11,6 +11,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 public class daothongke {
+    private static final String MONTHS_SQL = "(SELECT 1 AS thang UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12) AS thang";
+
     public static daothongke getInstance() {
         return new daothongke();
     }
@@ -113,7 +115,9 @@ public class daothongke {
             }
 
             return resultList;
-        }}
+        }
+    }
+
      public int getOldestYear() {
         // Câu lệnh SQL để tìm năm cũ nhất từ bảng hoadon và phieunhap
         String sql = "SELECT MIN(year) AS min_nam " +
@@ -184,6 +188,110 @@ public class daothongke {
         return resultList;
     }
 }
+
+    public ArrayList<thongkedoanhthuDTO> getTongDoanhThuChiPhiTheoThang(int nam) throws SQLException {
+        String sql = "SELECT thang.thang, "
+                + "IFNULL(doanh_thu.doanh_thu, 0) AS doanh_thu, "
+                + "IFNULL(chi_phi.chi_phi, 0) AS chi_phi, "
+                + "(IFNULL(doanh_thu.doanh_thu, 0) - IFNULL(chi_phi.chi_phi, 0)) AS loi_nhuan "
+                + "FROM " + MONTHS_SQL + " "
+                + "LEFT JOIN (SELECT MONTH(h.ngayMua) AS thang, SUM(cth.soLuong * cth.donGia) AS doanh_thu "
+                + "           FROM hoadon h JOIN chitiethoadon cth ON h.maHoaDon = cth.maHoaDon "
+                + "           WHERE YEAR(h.ngayMua) = ? AND h.isDelete = 0 "
+                + "           GROUP BY MONTH(h.ngayMua)) AS doanh_thu ON thang.thang = doanh_thu.thang "
+                + "LEFT JOIN (SELECT MONTH(p.ngayNhap) AS thang, SUM(ctpn.soLuong * ctpn.giaNhap) AS chi_phi "
+                + "           FROM phieunhap p JOIN chitietphieunhap ctpn ON p.maPhieuNhap = ctpn.maPhieuNhap "
+                + "           WHERE YEAR(p.ngayNhap) = ? AND p.isDelete = 0 "
+                + "           GROUP BY MONTH(p.ngayNhap)) AS chi_phi ON thang.thang = chi_phi.thang "
+                + "ORDER BY thang.thang";
+
+        try (Connection con = connect.connection(); PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, nam);
+            stmt.setInt(2, nam);
+            ResultSet rs = stmt.executeQuery();
+            ArrayList<thongkedoanhthuDTO> resultList = new ArrayList<>();
+            while (rs.next()) {
+                resultList.add(new thongkedoanhthuDTO(
+                        rs.getInt("thang"),
+                        rs.getLong("doanh_thu"),
+                        rs.getLong("chi_phi"),
+                        rs.getLong("loi_nhuan")
+                ));
+            }
+            return resultList;
+        }
+    }
+
+    public ArrayList<ThongKeSoLuongDTO> getTongSoLuongBanTheoThang(int nam) throws SQLException {
+        String sql = "SELECT thang.thang, IFNULL(so_luong.so_luong, 0) AS so_luong "
+                + "FROM " + MONTHS_SQL + " "
+                + "LEFT JOIN (SELECT MONTH(h.ngayMua) AS thang, SUM(cth.soLuong) AS so_luong "
+                + "           FROM hoadon h JOIN chitiethoadon cth ON h.maHoaDon = cth.maHoaDon "
+                + "           WHERE YEAR(h.ngayMua) = ? AND h.isDelete = 0 "
+                + "           GROUP BY MONTH(h.ngayMua)) AS so_luong ON thang.thang = so_luong.thang "
+                + "ORDER BY thang.thang";
+
+        try (Connection con = connect.connection(); PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, nam);
+            ResultSet rs = stmt.executeQuery();
+            ArrayList<ThongKeSoLuongDTO> resultList = new ArrayList<>();
+            while (rs.next()) {
+                resultList.add(new ThongKeSoLuongDTO(rs.getInt("thang"), rs.getLong("so_luong")));
+            }
+            return resultList;
+        }
+    }
+
+    public ArrayList<thongkedoanhthuDTO> getTongDoanhThuChiPhiTheoQuy(int nam) throws SQLException {
+        String sql = "SELECT quy.quy, IFNULL(doanh_thu.doanh_thu, 0) AS doanh_thu, IFNULL(chi_phi.chi_phi, 0) AS chi_phi, "
+                + "(IFNULL(doanh_thu.doanh_thu, 0) - IFNULL(chi_phi.chi_phi, 0)) AS loi_nhuan "
+                + "FROM (SELECT 1 AS quy UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) AS quy "
+                + "LEFT JOIN (SELECT ((MONTH(h.ngayMua)-1) DIV 3) + 1 AS quy, SUM(cth.soLuong * cth.donGia) AS doanh_thu "
+                + "           FROM hoadon h JOIN chitiethoadon cth ON h.maHoaDon = cth.maHoaDon "
+                + "           WHERE YEAR(h.ngayMua) = ? AND h.isDelete = 0 "
+                + "           GROUP BY ((MONTH(h.ngayMua)-1) DIV 3) + 1) AS doanh_thu ON quy.quy = doanh_thu.quy "
+                + "LEFT JOIN (SELECT ((MONTH(p.ngayNhap)-1) DIV 3) + 1 AS quy, SUM(ctpn.soLuong * ctpn.giaNhap) AS chi_phi "
+                + "           FROM phieunhap p JOIN chitietphieunhap ctpn ON p.maPhieuNhap = ctpn.maPhieuNhap "
+                + "           WHERE YEAR(p.ngayNhap) = ? AND p.isDelete = 0 "
+                + "           GROUP BY ((MONTH(p.ngayNhap)-1) DIV 3) + 1) AS chi_phi ON quy.quy = chi_phi.quy "
+                + "ORDER BY quy.quy";
+
+        try (Connection con = connect.connection(); PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, nam);
+            stmt.setInt(2, nam);
+            ResultSet rs = stmt.executeQuery();
+            ArrayList<thongkedoanhthuDTO> resultList = new ArrayList<>();
+            while (rs.next()) {
+                resultList.add(new thongkedoanhthuDTO(
+                        rs.getInt("quy"),
+                        rs.getLong("doanh_thu"),
+                        rs.getLong("chi_phi"),
+                        rs.getLong("loi_nhuan")
+                ));
+            }
+            return resultList;
+        }
+    }
+
+    public ArrayList<ThongKeSoLuongDTO> getTongSoLuongBanTheoQuy(int nam) throws SQLException {
+        String sql = "SELECT quy.quy, IFNULL(so_luong.so_luong, 0) AS so_luong "
+                + "FROM (SELECT 1 AS quy UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) AS quy "
+                + "LEFT JOIN (SELECT ((MONTH(h.ngayMua)-1) DIV 3) + 1 AS quy, SUM(cth.soLuong) AS so_luong "
+                + "           FROM hoadon h JOIN chitiethoadon cth ON h.maHoaDon = cth.maHoaDon "
+                + "           WHERE YEAR(h.ngayMua) = ? AND h.isDelete = 0 "
+                + "           GROUP BY ((MONTH(h.ngayMua)-1) DIV 3) + 1) AS so_luong ON quy.quy = so_luong.quy "
+                + "ORDER BY quy.quy";
+
+        try (Connection con = connect.connection(); PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, nam);
+            ResultSet rs = stmt.executeQuery();
+            ArrayList<ThongKeSoLuongDTO> resultList = new ArrayList<>();
+            while (rs.next()) {
+                resultList.add(new ThongKeSoLuongDTO(rs.getInt("quy"), rs.getLong("so_luong")));
+            }
+            return resultList;
+        }
+    }
 
     public ArrayList<ThongKeSanPhamDTO> getThongKeSanPham(java.sql.Date fromDate, java.sql.Date toDate) throws SQLException {
         String sql = "SELECT "
