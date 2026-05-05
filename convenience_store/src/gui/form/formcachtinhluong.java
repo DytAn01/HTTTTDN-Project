@@ -4,15 +4,19 @@ import bus.busluong;
 import bus.bushopdong;
 import com.formdev.flatlaf.FlatClientProperties;
 import dao.daoluong;
+import dao.daonhanvien;
 import dto.dtohopdong;
 import dto.dtoluong;
 import java.awt.Component;
+import java.io.FileOutputStream;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -20,13 +24,23 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import net.miginfocom.swing.MigLayout;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class formcachtinhluong extends JPanel {
 
     private final int maNhanVien;
     private final busluong busLuong = new busluong();
     private final bushopdong bushd = new bushopdong();
+    private final daonhanvien daoNhanVien = new daonhanvien();
 
     private JComboBox<String> cboMonth;
     private JComboBox<String> cboYear;
@@ -42,6 +56,20 @@ public class formcachtinhluong extends JPanel {
     private JTextField txtKhoanTru;
     private JTextField txtThue;
     private JTextField txtThucLanh;
+
+    private Integer selectedMonth;
+    private Integer selectedYear;
+    private double currentLuongCoBan;
+    private double currentGioLam;
+    private double currentGioLamThem;
+    private double currentLuongThucTe;
+    private double currentLuongLamThem;
+    private double currentPhuCap;
+    private double currentLuongThuong;
+    private double currentKhoanBaoHiem;
+    private double currentKhoanTru;
+    private double currentThue;
+    private double currentThucLanh;
 
     public formcachtinhluong(int maNhanVien) {
         this.maNhanVien = maNhanVien;
@@ -103,7 +131,7 @@ public class formcachtinhluong extends JPanel {
     }
 
     private Component createHeader() {
-        JPanel panel = new JPanel(new MigLayout("insets 5 20 5 20", "[fill]push[][]", ""));
+        JPanel panel = new JPanel(new MigLayout("insets 5 20 5 20", "[fill]push[][][]", ""));
 
         cboMonth = new JComboBox<>();
         cboMonth.addItem("Tất cả tháng");
@@ -120,9 +148,13 @@ public class formcachtinhluong extends JPanel {
         cboMonth.addActionListener(e -> refreshCalculation());
         cboYear.addActionListener(e -> refreshCalculation());
 
+        JButton btnExport = new JButton("Xuất Excel");
+        btnExport.addActionListener(e -> exportToExcel());
+
         panel.add(new JLabel("Chọn kỳ lương"));
         panel.add(cboMonth);
         panel.add(cboYear);
+        panel.add(btnExport);
         return panel;
     }
 
@@ -136,28 +168,39 @@ public class formcachtinhluong extends JPanel {
     }
 
     private void refreshCalculation() {
-        Integer month = parseMonth((String) cboMonth.getSelectedItem());
-        Integer year = parseYear((String) cboYear.getSelectedItem());
-        dtoluong luong = findLuong(month, year);
+        selectedMonth = parseMonth((String) cboMonth.getSelectedItem());
+        selectedYear = parseYear((String) cboYear.getSelectedItem());
+        dtoluong luong = findLuong(selectedMonth, selectedYear);
         dtohopdong hd = bushd.gethdnhanvien(maNhanVien);
-        double luongCoBan = hd != null ? hd.getLuongCoBan() : 0;
+        currentLuongCoBan = hd != null ? hd.getLuongCoBan() : 0;
 
         if (luong == null) {
-            setAllValues(luongCoBan, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            currentGioLam = 0;
+            currentGioLamThem = 0;
+            currentLuongThucTe = 0;
+            currentLuongLamThem = 0;
+            currentPhuCap = 0;
+            currentLuongThuong = 0;
+            currentKhoanBaoHiem = 0;
+            currentKhoanTru = 0;
+            currentThue = 0;
+            currentThucLanh = 0;
+            setAllValues(currentLuongCoBan, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
             return;
         }
 
-        double luongThucTe = luong.getLuongThucTe();
-        double gioLam = (luongCoBan > 0) ? (luongThucTe / luongCoBan) : 0;
-        double luongLamThem = luong.getLuongLamThem();
-        double phuCap = luong.getPhuCap();
-        double luongThuong = luong.getLuongThuong();
-        double khoanBaoHiem = luong.getKhoanBaoHiem();
-        double khoanTru = luong.getKhoanThue();
-        double thue = luong.getKhoanThue();
-        double thucLanh = luong.getThuclanh();
+        currentLuongThucTe = luong.getLuongThucTe();
+        currentGioLam = (currentLuongCoBan > 0) ? (currentLuongThucTe / currentLuongCoBan) : 0;
+        currentLuongLamThem = luong.getLuongLamThem();
+        currentGioLamThem = currentLuongCoBan > 0 ? currentLuongLamThem / currentLuongCoBan : 0;
+        currentPhuCap = luong.getPhuCap();
+        currentLuongThuong = luong.getLuongThuong();
+        currentKhoanBaoHiem = luong.getKhoanBaoHiem();
+        currentKhoanTru = luong.getKhoanThue();
+        currentThue = luong.getKhoanThue();
+        currentThucLanh = luong.getThuclanh();
 
-        setAllValues(luongCoBan, gioLam, luongLamThem / (luongCoBan > 0 ? luongCoBan : 1), luongThucTe, luongLamThem, phuCap, luongThuong, khoanBaoHiem, khoanTru, thue, thucLanh);
+        setAllValues(currentLuongCoBan, currentGioLam, currentGioLamThem, currentLuongThucTe, currentLuongLamThem, currentPhuCap, currentLuongThuong, currentKhoanBaoHiem, currentKhoanTru, currentThue, currentThucLanh);
     }
 
     private void setAllValues(double luongCoBan, double gioLam, double gioLamThem, double luongThucTe,
@@ -234,5 +277,91 @@ public class formcachtinhluong extends JPanel {
             }
         }
         return new ArrayList<>(years);
+    }
+
+    private void exportToExcel() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Lưu Excel");
+        chooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        String path = chooser.getSelectedFile().getAbsolutePath();
+        if (!path.toLowerCase().endsWith(".xlsx")) {
+            path += ".xlsx";
+        }
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Cach tinh luong");
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font font = workbook.createFont();
+            font.setBold(true);
+            headerStyle.setFont(font);
+            headerStyle.setFillForegroundColor(IndexedColors.ROYAL_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle moneyStyle = workbook.createCellStyle();
+            moneyStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+
+            String tenNV = daoNhanVien.getNhanVienById(maNhanVien) != null
+                    ? daoNhanVien.getNhanVienById(maNhanVien).getTennhanvien()
+                    : "";
+
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("Cách tính lương");
+            titleCell.setCellStyle(headerStyle);
+
+            int rowIndex = 2;
+            rowIndex = addLabelValue(sheet, rowIndex, "Mã nhân viên", String.valueOf(maNhanVien));
+            rowIndex = addLabelValue(sheet, rowIndex, "Tên nhân viên", tenNV);
+            rowIndex = addLabelValue(sheet, rowIndex, "Tháng", selectedMonth == null ? "Tất cả" : String.valueOf(selectedMonth));
+            rowIndex = addLabelValue(sheet, rowIndex, "Năm", selectedYear == null ? "Tất cả" : String.valueOf(selectedYear));
+            rowIndex = addLabelValue(sheet, rowIndex, "Lương cơ bản", currentLuongCoBan, moneyStyle);
+            rowIndex = addLabelValue(sheet, rowIndex, "Tổng giờ làm", currentGioLam);
+            rowIndex = addLabelValue(sheet, rowIndex, "Giờ làm thêm", currentGioLamThem);
+            rowIndex = addLabelValue(sheet, rowIndex, "Lương thực tế", currentLuongThucTe, moneyStyle);
+            rowIndex = addLabelValue(sheet, rowIndex, "Lương làm thêm", currentLuongLamThem, moneyStyle);
+            rowIndex = addLabelValue(sheet, rowIndex, "Phụ cấp", currentPhuCap, moneyStyle);
+            rowIndex = addLabelValue(sheet, rowIndex, "Lương thưởng", currentLuongThuong, moneyStyle);
+            rowIndex = addLabelValue(sheet, rowIndex, "Khoản bảo hiểm", currentKhoanBaoHiem, moneyStyle);
+            rowIndex = addLabelValue(sheet, rowIndex, "Khoản trừ", currentKhoanTru, moneyStyle);
+            rowIndex = addLabelValue(sheet, rowIndex, "Thuế TNCN", currentThue, moneyStyle);
+            addLabelValue(sheet, rowIndex, "Thực lãnh", currentThucLanh, moneyStyle);
+
+            sheet.autoSizeColumn(0);
+            sheet.autoSizeColumn(1);
+
+            try (FileOutputStream fos = new FileOutputStream(path)) {
+                workbook.write(fos);
+            }
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Lỗi khi xuất Excel: " + ex.getMessage(), "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private int addLabelValue(Sheet sheet, int rowIndex, String label, String value) {
+        Row row = sheet.createRow(rowIndex);
+        row.createCell(0).setCellValue(label);
+        row.createCell(1).setCellValue(value);
+        return rowIndex + 1;
+    }
+
+    private int addLabelValue(Sheet sheet, int rowIndex, String label, double value, CellStyle style) {
+        Row row = sheet.createRow(rowIndex);
+        row.createCell(0).setCellValue(label);
+        Cell cell = row.createCell(1);
+        cell.setCellValue(value);
+        cell.setCellStyle(style);
+        return rowIndex + 1;
+    }
+
+    private int addLabelValue(Sheet sheet, int rowIndex, String label, double value) {
+        Row row = sheet.createRow(rowIndex);
+        row.createCell(0).setCellValue(label);
+        row.createCell(1).setCellValue(value);
+        return rowIndex + 1;
     }
 }

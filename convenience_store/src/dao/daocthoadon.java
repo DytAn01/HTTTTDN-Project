@@ -28,7 +28,8 @@ public class daocthoadon {
     public ArrayList<dtocthoadon> getlist() {
         ArrayList<dtocthoadon> list = new ArrayList<>();
         Connection con = connect.connection(); 
-        String sql = "SELECT * FROM chitiethoadon";
+        String sql = "SELECT ct.*, sp.tenSanPham FROM chitiethoadon ct " +
+                     "LEFT JOIN sanpham sp ON ct.maSanPham = sp.maSanPham";
         try {
             PreparedStatement pst = con.prepareStatement(sql);
             ResultSet rs = pst.executeQuery();
@@ -40,6 +41,10 @@ public class daocthoadon {
                     rs.getDouble("donGia"),
                     rs.getInt("maCTHoaDon")
                 );
+                String tenSp = rs.getString("tenSanPham");
+                if (tenSp != null) {
+                    detail.setTensanpham(tenSp);
+                }
                 list.add(detail);
             }
         } catch (SQLException e) {
@@ -56,7 +61,9 @@ public class daocthoadon {
     public ArrayList<dtocthoadon> getlistbyhoadon(int mahd) {
         ArrayList<dtocthoadon> list = new ArrayList<>();
         Connection con = connect.connection(); 
-        String sql = "SELECT * FROM chitiethoadon WHERE maHoaDon = ?";
+        String sql = "SELECT ct.*, sp.tenSanPham FROM chitiethoadon ct " +
+                     "LEFT JOIN sanpham sp ON ct.maSanPham = sp.maSanPham " +
+                     "WHERE ct.maHoaDon = ?";
         try {
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setInt(1, mahd);
@@ -69,6 +76,10 @@ public class daocthoadon {
                     rs.getDouble("donGia"),
                     rs.getInt("maCTHoaDon")
                 );
+                String tenSp = rs.getString("tenSanPham");
+                if (tenSp != null) {
+                    detail.setTensanpham(tenSp);
+                }
                 list.add(detail);
             }
         } catch (SQLException e) {

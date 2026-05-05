@@ -4,7 +4,7 @@
  */
 package dto;
 
-import bus.bussanpham;
+import dao.daosanpham;
 import java.util.Date;
 
 /**
@@ -120,12 +120,28 @@ public class dtoctphieunhap {
     private String ghichu;
 
     public String getTenSP(int masp){
-        bussanpham sp = new bussanpham();
-        return sp.getById(masp).getTenSanPham();
+        if (masp <= 0) {
+            return "";
+        }
+        dtosanpham search = new dtosanpham();
+        search.setMaSanPham(masp);
+        dtosanpham product = new daosanpham().getsp(search);
+        if (product == null || product.getMaSanPham() <= 0 || product.getTenSanPham() == null || product.getTenSanPham().trim().isEmpty()) {
+            return "Sản phẩm #" + masp;
+        }
+        return product.getTenSanPham();
     }
     public int getMaNCC(int masp){
-        bussanpham sp = new bussanpham();
-        return sp.getById(masp).getMaNCC();
+        if (masp <= 0) {
+            return 0;
+        }
+        dtosanpham search = new dtosanpham();
+        search.setMaSanPham(masp);
+        dtosanpham product = new daosanpham().getsp(search);
+        if (product == null || product.getMaSanPham() <= 0) {
+            return 0;
+        }
+        return product.getMaNCC();
     }
     
     @Override

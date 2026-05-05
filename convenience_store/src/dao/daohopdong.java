@@ -45,11 +45,11 @@ public class daohopdong {
     public dtohopdong gethopdongnhanvien(int ma_nv){
             dtohopdong hd = new dtohopdong();
             try (java.sql.Connection con = connect.connection()) {
-            String sql = "select * from hopdonglaodong where maNhanVien = ? ";
+            String sql = "select * from hopdonglaodong where maNhanVien = ? order by denngay desc, mahopdong desc limit 1";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setInt(1,ma_nv);
             ResultSet rs = pst.executeQuery();
-            while(rs.next()){
+            if(rs.next()){
                 int mahd = rs.getInt("mahopdong");
                 String tungay = rs.getDate("tungay")+"";
                 String denngay = rs.getDate("denngay")+"";

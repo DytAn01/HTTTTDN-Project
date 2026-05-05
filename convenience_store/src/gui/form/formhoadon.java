@@ -243,7 +243,6 @@ public class formhoadon extends JPanel {
         p.add(sectionHeader("Ghi chú"));
         JTextArea note = new JTextArea(String.valueOf(hd.getGhiChu()));
         note.setEditable(false); note.setWrapStyleWord(true); note.setLineWrap(true);
-        note.putClientProperty(FlatClientProperties.STYLE, "arc:8;borderWidth:1;");
         p.add(new JScrollPane(note), "height 70!, growx");
         return p;
     }

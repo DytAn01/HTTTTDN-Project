@@ -3,15 +3,12 @@ package gui.form;
 import bus.*;
 import dto.*;
 import gui.comp.Combobox;
-import gui.comp.TableSorter;
-import gui.comp.HintTextArea;
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.awt.print.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,13 +16,16 @@ import java.util.Date;
 public class formthanhtoan extends JDialog {
 
     // ── Palette ───────────────────────────────────────────────────
-    private static final Color ACCENT = new Color(99, 102, 241);
-    private static final Color ACCENT_SOFT = new Color(238, 242, 255);
-    private static final Color SUCCESS = new Color(22, 163, 74);
+    private static final Color ACCENT = new Color(79, 70, 229);   // Indigo-600
+    private static final Color ACCENT_LIGHT = new Color(238, 242, 255); // Indigo-50
+    private static final Color SUCCESS = new Color(16, 185, 129);  // Emerald-500
     private static final Color DANGER = new Color(239, 68, 68);
-    private static final Color WARNING = new Color(234, 179, 8);
-    private static final Color TEXT_MUTED = new Color(100, 116, 139);
-    private static final Color BG_SUBTLE = new Color(248, 250, 252);
+    private static final Color TEXT_MAIN = new Color(17, 24, 39);    // Gray-900
+    private static final Color TEXT_MUTED = new Color(107, 114, 128); // Gray-500
+    private static final Color BORDER = new Color(229, 231, 235); // Gray-200
+    private static final Color BG_PAGE = new Color(249, 250, 251); // Gray-50
+    private static final Color BG_WHITE = Color.WHITE;
+    private static final Color ROW_STRIPE = new Color(248, 250, 252);
 
     // ── BUS ───────────────────────────────────────────────────────
     private final buskhuyenmai busKM = new buskhuyenmai();
@@ -47,7 +47,6 @@ public class formthanhtoan extends JDialog {
     private dtohoadon hd = new dtohoadon();
 
     private ArrayList<dtocthoadon> limenu;
-
     private double tongtien, tongtienkm, tongtienud, tongtienfi;
     private int diem;
     double bHeight = 0.0;
@@ -59,14 +58,18 @@ public class formthanhtoan extends JDialog {
     private Combobox cboKhuyenMai;
     private JTextArea txtNote;
 
-    // Read-only summary fields
     private JTextField tfDiscount, tfSale, tfCredit, tfTotal;
 
     // ─────────────────────────────────────────────────────────────
     public formthanhtoan(ArrayList<dtocthoadon> list, int ma_nv) {
         super((Frame) null, "Thanh toán", true);
         limenu = list;
-
+        System.out.println(">>> list size: " + (list == null ? "NULL" : list.size()));
+        if (list != null) {
+            for (dtocthoadon ct : list) {
+                System.out.println("    - maSP: " + ct.getMaSanPham() + ", SL: " + ct.getSoLuong());
+            }
+        }
         nv.setManhanvien(ma_nv);
         nv = busNV.getnv(nv);
         hd.setMaNhanVien(ma_nv);
@@ -78,11 +81,14 @@ public class formthanhtoan extends JDialog {
         tongtienfi = tongtien;
 
         buildUI();
-        loadPaymentTable(list);
+        SwingUtilities.invokeLater(() -> {
+            loadPaymentTable(limenu);
+        });
         loadKhuyenMai();
 
-        setSize(1100, 760);
-        setMinimumSize(new Dimension(900, 700));
+        setPreferredSize(new Dimension(1480, 920));
+        setMinimumSize(new Dimension(1100, 680));
+        pack();
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
@@ -93,7 +99,7 @@ public class formthanhtoan extends JDialog {
     private void buildUI() {
         JPanel root = new JPanel(new MigLayout(
                 "fill, insets 0", "[fill]", "[shrink 0][fill,grow][shrink 0]"));
-        root.setBackground(Color.WHITE);
+        root.setBackground(BG_PAGE);
 
         root.add(buildTitleBar(), "growx, wrap");
         root.add(buildBody(), "grow, wrap");
@@ -104,125 +110,134 @@ public class formthanhtoan extends JDialog {
 
     // ── Title bar ─────────────────────────────────────────────────
     private JPanel buildTitleBar() {
-        JPanel p = new JPanel(new MigLayout("fillx, insets 14 20 14 20", "[fill]push[]", "[]"));
+        JPanel p = new JPanel(new MigLayout(
+                "fillx, insets 0 24 0 24", "[fill]push[][]", "[]"));
         p.setBackground(ACCENT);
+        p.setPreferredSize(new Dimension(0, 56));
 
-        JLabel lbl = new JLabel("Thanh toán đơn hàng");
-        lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 16f));
+        // Icon + title
+        JLabel icon = new JLabel("🛒");
+        icon.setFont(icon.getFont().deriveFont(20f));
+        JLabel lbl = new JLabel("Xác nhận thanh toán");
+        lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 15f));
         lbl.setForeground(Color.WHITE);
-        p.add(lbl);
+        icon.setForeground(Color.WHITE);
+
+        JPanel titleGroup = new JPanel(new MigLayout("insets 0, gap 8", "[][]", "[]"));
+        titleGroup.setOpaque(false);
+        titleGroup.add(icon);
+        titleGroup.add(lbl);
 
         JButton btnClose = new JButton("✕");
-        btnClose.putClientProperty(FlatClientProperties.STYLE,
-                "background: #7c3aed; foreground: #ffffff; arc: 8; borderWidth: 0; focusWidth: 0;");
-        btnClose.setFocusPainted(false);
+        styleBtn(btnClose, new Color(99, 91, 255), Color.WHITE);
+        btnClose.setPreferredSize(new Dimension(32, 32));
         btnClose.addActionListener(e -> dispose());
-        p.add(btnClose, "width 32!, height 32!");
+
+        p.add(titleGroup);
+        p.add(btnClose, "width 32!, height 32!, align center");
         return p;
     }
 
-    // ── Body (2 columns) ──────────────────────────────────────────
+    // ── Body: LEFT (info) | RIGHT (table + totals) ────────────────
     private JPanel buildBody() {
         JPanel p = new JPanel(new MigLayout(
-                "fill, insets 16 20 8 20, gap 16",
-                "[grow 40][grow 60]",
+                "fill, insets 20 20 16 20, gap 18",
+                "[380!][fill,grow]",
                 "[fill]"
         ));
-        p.setBackground(Color.WHITE);
-
-        p.add(buildLeftPanel(), "grow");
+        p.setBackground(BG_PAGE);
+        p.add(buildLeftPanel(), "growy");
         p.add(buildRightPanel(), "grow");
         return p;
     }
 
-    // ── LEFT: Khách hàng + Khuyến mãi + Tóm tắt ─────────────────
+    // ── LEFT column ───────────────────────────────────────────────
     private JPanel buildLeftPanel() {
         JPanel p = new JPanel(new MigLayout(
-                "fillx, wrap, insets 0", "[fill,grow][8!][grow 30]", "[][16!][][16!][][16!][]"));
-        p.setBackground(Color.WHITE);
+                "fillx, wrap, insets 0, gap 14", "[grow]", "[]"));
+        p.setBackground(BG_PAGE);
+        p.add(buildCustomerCard(), "growx");
+        p.add(buildKhuyenMaiCard(), "growx");
+        p.add(buildNoteCard(), "growx");
+        return p;
+    }
 
-        // ── Customer card ─────────────────────────────────────────
-        JPanel custCard = card("Thông tin khách hàng");
-        JPanel content = (JPanel) custCard.getComponent(1);
-
-        content.setLayout(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]8[]8[]"));
+    private JPanel buildCustomerCard() {
+        JPanel card = card("👤  Thông tin khách hàng");
+        JPanel ct = getContent(card);
+        ct.setLayout(new MigLayout("fillx, insets 14 16 16 16, wrap 1", "[grow]", "[]5[]12[]5[]"));
 
         txtPhone = styledField("Nhập số điện thoại...");
         txtName = styledField("Tên khách hàng");
         txtName.setEnabled(false);
 
-        JPanel phoneRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][90!]", "[]"));
-        phoneRow.setBackground(Color.WHITE);
-        phoneRow.add(txtPhone, "height 34!");
         JButton btnCheck = accentBtn("Kiểm tra", ACCENT);
+        JButton btnNew = accentBtn("Tạo mới", SUCCESS);
         btnCheck.addActionListener(e -> checkPhone());
-        phoneRow.add(btnCheck, "height 34!");
-
-        JPanel nameRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][90!]", "[]"));
-        nameRow.setBackground(Color.WHITE);
-        nameRow.add(txtName, "height 34!");
-        JButton btnNew = accentBtn("Tạo mới", new Color(79, 70, 229));
         btnNew.addActionListener(e -> createNewCustomer());
-        nameRow.add(btnNew, "height 34!");
 
-        custCard.add(fieldLbl("Số điện thoại"));
-        custCard.add(phoneRow, "growx");
-        custCard.add(fieldLbl("Tên khách hàng"));
-        custCard.add(nameRow, "growx");
-        p.add(custCard, "growx");
+        JPanel rowPhone = inlineRow(txtPhone, btnCheck, 110);
+        JPanel rowName = inlineRow(txtName, btnNew, 110);
 
-        // ── Khuyến mãi card ───────────────────────────────────────
-        JPanel kmCard = card("Khuyến mãi");
-        kmCard.setLayout(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]8[]"));
+        ct.add(fieldLbl("Số điện thoại"), "growx");
+        ct.add(rowPhone, "growx");
+        ct.add(fieldLbl("Tên khách hàng"), "growx");
+        ct.add(rowName, "growx");
+        return card;
+    }
+
+    private JPanel buildKhuyenMaiCard() {
+        JPanel card = card("🎁  Khuyến mãi");
+        JPanel ct = getContent(card);
+        ct.setLayout(new MigLayout("fillx, insets 14 16 16 16, wrap 1", "[grow]", "[]5[]"));
 
         cboKhuyenMai = new Combobox();
-        cboKhuyenMai.setLabeText("Chọn khuyến mãi");
-        cboKhuyenMai.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
+        tfDiscount = readonlyField("0 đ");
         cboKhuyenMai.addActionListener(e -> onKhuyenMaiChanged());
 
-        tfDiscount = readonlyField("0 đ");
-        JPanel kmRow = new JPanel(new MigLayout("insets 0", "[fill,grow][8!][shrink 0]", "[]"));
-        kmRow.setBackground(Color.WHITE);
-        kmRow.add(cboKhuyenMai, "height 36!");
-        kmRow.add(tfDiscount, "height 36!, width 110!");
+        JPanel row = new JPanel(new MigLayout("fillx, insets 0", "[grow][130!]", "[]"));
+        row.setOpaque(false);
+        row.add(cboKhuyenMai, "growx, h 36!");
+        row.add(tfDiscount, "h 36!, gapleft 8");
 
-        kmCard.add(fieldLbl("Chương trình giảm giá"));
-        kmCard.add(kmRow, "growx");
-        p.add(kmCard, "growx");
+        ct.add(fieldLbl("Chương trình khuyến mãi"), "growx");
+        ct.add(row, "growx");
+        return card;
+    }
 
-        // ── Summary card ──────────────────────────────────────────
-        JPanel sumCard = card("Tóm tắt thanh toán");
-        sumCard.setLayout(new MigLayout("fillx, wrap, insets 12 14 12 14", "[fill]", "[]6[]6[]6[]"));
+    private JPanel buildNoteCard() {
+        JPanel card = card("📝  Ghi chú");
+        JPanel ct = getContent(card);
+        ct.setLayout(new MigLayout("fill, insets 14 16 16 16", "[fill]", "[fill]"));
 
-        tfSale = readonlyField("0 đ");
-        tfCredit = readonlyField("0 đ");
-        tfTotal = readonlyField(fmt(tongtien));
-        tfTotal.setFont(tfTotal.getFont().deriveFont(Font.BOLD, 14f));
-        tfTotal.setForeground(DANGER);
+        txtNote = new JTextArea(4, 0);
+        txtNote.setLineWrap(true);
+        txtNote.setWrapStyleWord(true);
+        txtNote.setFont(txtNote.getFont().deriveFont(13f));
 
-        sumCard.add(summaryRow("Ưu đãi khách hàng", tfSale));
-        sumCard.add(summaryRow("Điểm tích lũy", tfCredit));
+        JScrollPane sp = new JScrollPane(txtNote);
+        sp.setBorder(BorderFactory.createLineBorder(BORDER, 1, true));
+        ct.add(sp, "grow, h 90!");
+        return card;
+    }
 
-        JSeparator sep = new JSeparator();
-        sep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
-        sumCard.add(sep, "growx, height 1!");
-
-        sumCard.add(summaryRow("Thành tiền", tfTotal));
-        p.add(sumCard, "growx");
-
+    // ── RIGHT column: Table + Totals ──────────────────────────────
+    private JPanel buildRightPanel() {
+        JPanel p = new JPanel(new MigLayout(
+                "fill, insets 0, wrap 1",
+                "[fill]",
+                "[fill,grow][shrink 0]" // table grows, totals fixed
+        ));
+        p.setBackground(BG_PAGE);
+        p.add(buildTableCard(), "grow");
+        p.add(buildTotalsCard(), "growx");
         return p;
     }
 
-    // ── RIGHT: Bảng sản phẩm + Ghi chú ──────────────────────────
-    private JPanel buildRightPanel() {
-        JPanel p = new JPanel(new MigLayout(
-                "fill, wrap, insets 0", "[fill]", "[fill,grow][8!][shrink 0]"));
-        p.setBackground(Color.WHITE);
-
-        // Table card
-        JPanel tblCard = card("Danh sách sản phẩm");
-        tblCard.setLayout(new MigLayout("fill, insets 0", "[fill]", "[shrink 0][1!][fill,grow]"));
-
+    private JPanel buildTableCard() {
+        JPanel card = card("Danh sách sản phẩm");
+        JPanel ct = getContent(card);  // lấy content panel bên trong
+        ct.setLayout(new MigLayout("fill, insets 0, gap 0", "[fill]", "[1!][fill,grow]"));
         tableModel = new DefaultTableModel(
                 new Object[]{"#", "Tên sản phẩm", "SL", "Đơn giá", "Thành tiền"}, 0) {
             @Override
@@ -230,102 +245,137 @@ public class formthanhtoan extends JDialog {
                 return false;
             }
         };
-        paymentTable = new JTable(tableModel);
-        paymentTable.setRowHeight(34);
-        paymentTable.setShowGrid(false);
-        paymentTable.setFillsViewportHeight(true);
-        paymentTable.putClientProperty(FlatClientProperties.STYLE,
-                "rowHeight:34; showHorizontalLines:true; intercellSpacing:0,1;"
-                + "selectionBackground:$TableHeader.hoverBackground;"
-                + "selectionForeground:$Table.foreground;");
-        paymentTable.getTableHeader().putClientProperty(FlatClientProperties.STYLE,
-                "height:32; hoverBackground:null; pressedBackground:null;"
-                + "separatorColor:$TableHeader.background; font:bold;");
-        paymentTable.getTableHeader().setReorderingAllowed(false);
 
-        int[] widths = {30, 140, 40, 90, 90};
+        paymentTable = new JTable(tableModel);
+        paymentTable.setRowHeight(37);
+        paymentTable.setShowGrid(false);
+//        paymentTable.setFillsViewportHeight(true);
+        paymentTable.setBackground(BG_WHITE);
+        paymentTable.setSelectionBackground(ACCENT_LIGHT);
+        paymentTable.setSelectionForeground(TEXT_MAIN);
+        paymentTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        int[] widths = {45, 280, 55, 110, 130};
         for (int i = 0; i < widths.length; i++) {
-            paymentTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+            TableColumn col = paymentTable.getColumnModel().getColumn(i);
+            col.setPreferredWidth(widths[i]);
+            if (i != 1) {
+                col.setMaxWidth(widths[i] + 100);
+            }
         }
 
-        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-        center.setHorizontalAlignment(SwingConstants.CENTER);
-        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
-        right.setHorizontalAlignment(SwingConstants.RIGHT);
-        paymentTable.getColumnModel().getColumn(0).setCellRenderer(center);
-        paymentTable.getColumnModel().getColumn(2).setCellRenderer(center);
-        paymentTable.getColumnModel().getColumn(3).setCellRenderer(right);
-        paymentTable.getColumnModel().getColumn(4).setCellRenderer(right);
+        JSeparator sep = new JSeparator();
+        sep.setForeground(BORDER);
 
         JScrollPane scroll = new JScrollPane(paymentTable);
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.getVerticalScrollBar().putClientProperty(FlatClientProperties.STYLE,
-                "trackArc:$ScrollBar.thumbArc; thumbInsets:0,2,0,2; width:7;");
+        scroll.getViewport().setBackground(BG_WHITE);
 
-        JSeparator tblSep = new JSeparator();
-        tblSep.putClientProperty(FlatClientProperties.STYLE, "foreground: $Table.gridColor;");
+        ct.add(new JSeparator(), "growx, height 1!, wrap");
+        ct.add(scroll, "grow, push, hmin 200");
 
-        tblCard.add(new JLabel(), "height 0!");  // spacer for card header padding
-        tblCard.add(tblSep, "growx, height 1!");
-        tblCard.add(scroll, "grow");
+        return card;
+    }
 
-        p.add(tblCard, "grow, push");
+    // ── Totals card: ngay dưới bảng ──────────────────────────────
+    private JPanel buildTotalsCard() {
+        JPanel card = card("💰  Tổng kết thanh toán");
+        JPanel ct = getContent(card);
+        ct.setLayout(new MigLayout(
+                "fillx, insets 14 20 16 20",
+                "[grow][200!]",
+                "[]6[]6[]2[2!][]"
+        ));
 
-        // Note card
-        JPanel noteCard = card("Ghi chú");
-        noteCard.setLayout(new MigLayout("fill, insets 12 14 12 14", "[fill]", "[fill]"));
-        txtNote = new JTextArea();
-        txtNote.setRows(3);
-        txtNote.setLineWrap(true);
-        txtNote.setWrapStyleWord(true);
-        txtNote.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
-        JScrollPane noteScroll = new JScrollPane(txtNote);
-        noteScroll.putClientProperty(FlatClientProperties.STYLE, "arc: 8;");
-        noteScroll.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true));
-        noteCard.add(noteScroll, "grow, height 80!");
-        p.add(noteCard, "growx");
+        tfSale = readonlyField("0 đ");
+        tfCredit = readonlyField("0 đ");
+        tfTotal = readonlyField(fmt(tongtien));
 
-        return p;
+        // Style tfTotal to stand out
+        tfTotal.setFont(tfTotal.getFont().deriveFont(Font.BOLD, 16f));
+        tfTotal.setForeground(new Color(16, 185, 129));
+
+        // Row 1: Khuyến mãi
+        ct.add(summaryLabel("Giảm giá khuyến mãi", false));
+        ct.add(tfDiscount = readonlyField("0 đ"), "growx, h 34!, wrap");
+
+        // Row 2: Ưu đãi
+        ct.add(summaryLabel("Ưu đãi khách hàng", false));
+        ct.add(tfSale, "growx, h 34!, wrap");
+
+        // Row 3: Điểm
+        ct.add(summaryLabel("Điểm tích lũy nhận được", false));
+        ct.add(tfCredit, "growx, h 34!, wrap");
+
+        // Divider
+        JSeparator div = new JSeparator();
+        div.setForeground(BORDER);
+        ct.add(div, "span 2, growx, wrap");
+
+        // Row 4: Thành tiền (bold)
+        ct.add(summaryLabel("THÀNH TIỀN", true));
+        ct.add(tfTotal, "growx, h 40!, wrap");
+
+        return card;
     }
 
     // ── Footer ────────────────────────────────────────────────────
     private JPanel buildFooter() {
         JPanel p = new JPanel(new MigLayout(
-                "fillx, insets 12 20 16 20", "push[]16[]", "[]"));
-        p.setBackground(Color.WHITE);
-        p.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(226, 232, 240)));
+                "fillx, insets 14 24 16 24", "push[]16[]", "[]"));
+        p.setBackground(BG_WHITE);
+        p.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER));
 
-        JButton btnCancel = outlineBtn("Hủy");
+        JButton btnCancel = outlineBtn("✕  Hủy bỏ");
+        btnCancel.setPreferredSize(new Dimension(130, 44));
         btnCancel.addActionListener(e -> dispose());
 
         JButton btnPay = accentBtn("💳  Xác nhận thanh toán", SUCCESS);
-        btnPay.setFont(btnPay.getFont().deriveFont(Font.BOLD, 13f));
+        btnPay.setFont(btnPay.getFont().deriveFont(Font.BOLD, 14f));
+        btnPay.setPreferredSize(new Dimension(240, 44));
         btnPay.addActionListener(e -> processPayment());
 
-        p.add(btnCancel, "height 38!, width 100!");
-        p.add(btnPay, "height 38!, width 200!");
+        p.add(btnCancel, "height 44!, width 130!");
+        p.add(btnPay, "height 44!, width 240!");
         return p;
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  DATA
+    //  DATA LOADING
     // ─────────────────────────────────────────────────────────────
     private void loadPaymentTable(ArrayList<dtocthoadon> list) {
         tableModel.setRowCount(0);
         int i = 0;
         for (dtocthoadon ct : list) {
             i++;
-            dtosanpham sp = new dtosanpham();
-            sp.setMaSanPham(ct.getMaSanPham());
-            sp = busSP.getsp(sp);
-            dtoctphieunhap ctpn = busCTPN.getspnhap(ct.getMaSanPham());
-            double donGia = ctpn.getGiaBan();
-            double tongGia = ct.getSoLuong() * donGia;
-            tableModel.addRow(new Object[]{
-                i, sp.getTenSanPham(), ct.getSoLuong(),
-                fmt(donGia), fmt(tongGia)
-            });
+            try {
+                System.out.println(">>> Đang xử lý SP: " + ct.getMaSanPham());
+
+                dtosanpham sp = new dtosanpham();
+                sp.setMaSanPham(ct.getMaSanPham());
+                sp = busSP.getsp(sp);
+                System.out.println(">>> SP name: " + (sp != null ? sp.getTenSanPham() : "NULL"));
+
+                dtoctphieunhap ctpn = busCTPN.getspnhap(ct.getMaSanPham());
+                System.out.println(">>> CTPN: " + (ctpn != null ? ctpn.getGiaBan() : "NULL"));
+
+                double donGia = (ctpn != null) ? ctpn.getGiaBan() : 0;
+                double tongGia = ct.getSoLuong() * donGia;
+                String tenSP = (sp != null) ? sp.getTenSanPham() : "SP #" + ct.getMaSanPham();
+
+                tableModel.addRow(new Object[]{
+                    i, tenSP, ct.getSoLuong(), fmt(donGia), fmt(tongGia)
+                });
+                System.out.println(">>> Row added OK");
+
+            } catch (Exception ex) {
+                System.err.println(">>> Exception: " + ex.getMessage());
+                ex.printStackTrace();
+            }
         }
+        System.out.println(">>> Tổng rows: " + tableModel.getRowCount());
+        tableModel.fireTableDataChanged();
+        paymentTable.revalidate();
+        paymentTable.repaint();
     }
 
     private void loadKhuyenMai() {
@@ -345,6 +395,7 @@ public class formthanhtoan extends JDialog {
             warn("Chưa nhập số điện thoại!");
             return;
         }
+
         if (!busKH.checkphone(phone)) {
             kh = busKH.getkhbyphone(phone);
             hd.setMaKhachHang(kh.getMaKhachHang());
@@ -360,8 +411,8 @@ public class formthanhtoan extends JDialog {
             hd.setMaTichDiem(td.getMaTichDiem());
             diem = td.getDiemTichLuy();
 
-            tfSale.setText("- " + fmt(tienud) + "  (" + ud.getTiLeGiam() + "%)");
-            tfCredit.setText(diem + " điểm");
+            tfSale.setText("-  " + fmt(tienud) + "  (" + ud.getTiLeGiam() + "%)");
+            tfCredit.setText("+" + diem + " điểm");
             tfTotal.setText(fmt(tongtienfi));
             info("Đã tìm thấy khách hàng: " + kh.getTenKhachHang());
         } else {
@@ -373,7 +424,7 @@ public class formthanhtoan extends JDialog {
         String phone = txtPhone.getText().trim();
         String name = txtName.getText().trim();
         if (phone.isEmpty() || name.isEmpty()) {
-            warn("Vui lòng nhập số điện thoại và tên khách hàng!");
+            warn("Vui lòng nhập đầy đủ số điện thoại và tên!");
             return;
         }
         dtokhachhang khmoi = new dtokhachhang(1, phone, name, 0, 1);
@@ -388,6 +439,7 @@ public class formthanhtoan extends JDialog {
             return;
         }
         String ten = sel.toString();
+
         if (ten.equals("Bỏ chọn")) {
             tongtienkm = 0;
             tongtienfi = tongtien - tongtienud;
@@ -402,7 +454,7 @@ public class formthanhtoan extends JDialog {
         double tienkm = (tongtien * km.getPhanTram()) / 100;
         tongtienkm = tienkm;
         tongtienfi = tongtien - tongtienkm - tongtienud;
-        tfDiscount.setText("- " + fmt(tienkm));
+        tfDiscount.setText("-  " + fmt(tienkm) + "  (" + km.getPhanTram() + "%)");
         tfTotal.setText(fmt(tongtienfi));
         if (!"Bỏ chọn".equals(cboKhuyenMai.getItemAt(cboKhuyenMai.getItemCount() - 1))) {
             cboKhuyenMai.addItem("Bỏ chọn");
@@ -545,45 +597,64 @@ public class formthanhtoan extends JDialog {
     // ─────────────────────────────────────────────────────────────
     //  UI HELPERS
     // ─────────────────────────────────────────────────────────────
+    /**
+     * Card với border, tiêu đề — trả về container, content ở getComponent(1)
+     */
     private JPanel card(String title) {
-        JPanel container = new JPanel(new MigLayout(
-                "wrap, fillx, insets 0",
-                "[fill]",
-                "[][fill]"
-        ));
-
-        container.putClientProperty(FlatClientProperties.STYLE,
-                "background: $Panel.background; border: 1,1,1,1,$Component.borderColor,,10;");
+        JPanel container = new JPanel(new BorderLayout(0, 0));
+        container.setBackground(BG_WHITE);
+        container.setBorder(BorderFactory.createLineBorder(BORDER, 1, true));
 
         JLabel lbl = new JLabel(title);
-        lbl.putClientProperty(FlatClientProperties.STYLE, "font: bold +1;");
-        lbl.setBorder(BorderFactory.createEmptyBorder(10, 14, 8, 14));
+        lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 13.5f));
+        lbl.setForeground(TEXT_MAIN);
+        lbl.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
+                BorderFactory.createEmptyBorder(11, 16, 11, 16)
+        ));
+        lbl.setBackground(BG_PAGE);
+        lbl.setOpaque(true);
 
         JPanel content = new JPanel();
-        content.setOpaque(false);
+        content.setBackground(BG_WHITE);
+        content.setOpaque(true);
 
-        container.add(lbl);
-        container.add(content, "grow");
+        container.add(lbl, BorderLayout.NORTH);
+        container.add(content, BorderLayout.CENTER);
 
         return container;
     }
 
-    private JPanel summaryRow(String label, JTextField valueField) {
-        JPanel row = new JPanel(new MigLayout("fillx, insets 0", "[fill,grow][130!]", "[]"));
-        row.setBackground(Color.WHITE);
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(lbl.getFont().deriveFont(Font.PLAIN, 12f));
-        lbl.setForeground(TEXT_MUTED);
-        row.add(lbl);
-        row.add(valueField, "height 34!");
+    /**
+     * Lấy content panel từ card
+     */
+    private JPanel getContent(JPanel card) {
+        return (JPanel) card.getComponent(1);
+    }
+
+    /**
+     * Một hàng: field chiếm hết, button cố định bên phải
+     */
+    private JPanel inlineRow(JTextField field, JButton btn, int btnW) {
+        JPanel row = new JPanel(new MigLayout("fillx, insets 0", "[grow][]", "[]"));
+        row.setOpaque(false);
+        row.add(field, "growx, h 36!");
+        row.add(btn, "w " + btnW + "!, h 36!, gapleft 8");
         return row;
+    }
+
+    private JLabel summaryLabel(String text, boolean bold) {
+        JLabel l = new JLabel(text);
+        l.setFont(l.getFont().deriveFont(bold ? Font.BOLD : Font.PLAIN, bold ? 14f : 13f));
+        l.setForeground(bold ? TEXT_MAIN : TEXT_MUTED);
+        return l;
     }
 
     private JTextField styledField(String placeholder) {
         JTextField tf = new JTextField();
         tf.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, placeholder);
         tf.putClientProperty(FlatClientProperties.STYLE,
-                "arc: 8; borderWidth: 1; focusedBorderColor: #6366f1;");
+                "arc: 8; borderWidth: 1; focusedBorderColor: #4f46e5;");
         return tf;
     }
 
@@ -598,28 +669,33 @@ public class formthanhtoan extends JDialog {
 
     private JLabel fieldLbl(String text) {
         JLabel l = new JLabel(text);
-        l.setFont(l.getFont().deriveFont(Font.PLAIN, 11f));
+        l.setFont(l.getFont().deriveFont(Font.PLAIN, 11.5f));
         l.setForeground(TEXT_MUTED);
-        l.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
+        l.setBorder(BorderFactory.createEmptyBorder(0, 0, 3, 0));
         return l;
     }
 
     private JButton accentBtn(String text, Color bg) {
         JButton btn = new JButton(text);
-        btn.putClientProperty(FlatClientProperties.STYLE,
-                "background: " + hex(bg) + "; foreground: #ffffff;"
-                + "borderWidth: 0; arc: 8; focusWidth: 0;");
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        styleBtn(btn, bg, Color.WHITE);
         return btn;
     }
 
     private JButton outlineBtn(String text) {
         JButton btn = new JButton(text);
-        btn.putClientProperty(FlatClientProperties.STYLE, "arc: 8; borderWidth: 1; focusWidth: 0;");
+        btn.putClientProperty(FlatClientProperties.STYLE,
+                "arc: 8; borderWidth: 1; focusWidth: 0;");
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return btn;
+    }
+
+    private void styleBtn(JButton btn, Color bg, Color fg) {
+        btn.putClientProperty(FlatClientProperties.STYLE,
+                "background: " + hex(bg) + "; foreground: " + hex(fg) + ";"
+                + "borderWidth: 0; arc: 8; focusWidth: 0;");
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private static String hex(Color c) {
