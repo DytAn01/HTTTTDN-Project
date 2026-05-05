@@ -5,6 +5,7 @@ import bus.bussanpham;
 import bus.busthongke;
 import com.formdev.flatlaf.FlatClientProperties;
 import dto.dtophanloai;
+import dto.thongke.ThongKeSoLuongDTO;
 import dto.thongke.thongkedoanhthuDTO;
 import dto.thongke.ThongKeSanPhamDTO;
 import gui.comp.Combobox;
@@ -94,6 +95,7 @@ public class formthongkesp extends SimpleForm {
     // ── Global year selector ──────────────────────────────────────
     private Combobox comboBoxYear;
     private Integer[] years;
+    private JPanel contentPanel;
 
     // ─────────────────────────────────────────────────────────────
     public formthongkesp() throws SQLException {
@@ -117,7 +119,16 @@ public class formthongkesp extends SimpleForm {
     //  INIT
     // ─────────────────────────────────────────────────────────────
     private void init() throws SQLException {
-        setLayout(new MigLayout("wrap, fill, gap 10", "fill"));
+        setLayout(new BorderLayout());
+        contentPanel = new JPanel(new MigLayout("wrap, fillx, gap 10, insets 5", "[grow,fill]"));
+        contentPanel.putClientProperty(FlatClientProperties.STYLE, "background:null;");
+
+        JScrollPane scrollPane = new JScrollPane(contentPanel,
+            ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        add(scrollPane, BorderLayout.CENTER);
 
         bustk = new busthongke();
         bussp = new bussanpham();
@@ -145,7 +156,7 @@ public class formthongkesp extends SimpleForm {
                 }
             }
         });
-        add(comboBoxYear, "align right, width 150!, wrap");
+        contentPanel.add(comboBoxYear, "align right, width 150!, wrap");
 
         // Charts row
         createPieChart(currentYear);
@@ -154,8 +165,8 @@ public class formthongkesp extends SimpleForm {
         createBarChart(currentYear);
 
         // Tables
-        add(createProductStatsPanel(), "span, grow, wrap");
-        add(createSoLuongStatsPanel(), "span, grow, wrap");  // <── mới
+        contentPanel.add(createProductStatsPanel(), "span, growx, wrap");
+        contentPanel.add(createSoLuongStatsPanel(), "span, growx, wrap");  // <── mới
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -170,17 +181,17 @@ public class formthongkesp extends SimpleForm {
     pieChart2 = makePieChart("Chi phí theo loại",    createPieData(year, "chiPhi"),   pieType);
     pieChart3 = makePieChart("Lợi nhuận theo loại",  createPieData(year, "loiNhuan"), donutType);
 
-    add(pieChart1, "split 3, height 290");
-    add(pieChart2, "height 290");
-    add(pieChart3, "height 290");
+    pieChart1.setPreferredSize(new Dimension(360, 280));
+    pieChart2.setPreferredSize(new Dimension(360, 280));
+    pieChart3.setPreferredSize(new Dimension(360, 280));
+
+    contentPanel.add(pieChart1, "split 3, growx, height 290!, pushx");
+    contentPanel.add(pieChart2, "growx, height 290!, pushx");
+    contentPanel.add(pieChart3, "growx, height 290!, pushx");
 }
 
 private PieChart.ChartType getPieChartType(boolean donut) {
     PieChart.ChartType[] values = PieChart.ChartType.values();
-    // In ra để debug lần đầu
-    for (PieChart.ChartType t : values) {
-        System.out.println("PieChart.ChartType: " + t.name());
-    }
     for (PieChart.ChartType t : values) {
         String name = t.name().toUpperCase();
         if (donut && (name.contains("DONUT") || name.contains("DOUGHNUT"))) return t;
@@ -235,8 +246,9 @@ private PieChart.ChartType getPieChartType(boolean donut) {
         JPanel panel = new JPanel(new MigLayout("wrap 1, insets 0", "[grow]", "[]10[grow]"));
         panel.putClientProperty(FlatClientProperties.STYLE, "border:5,5,5,5,$Component.borderColor,,20");
         panel.add(header, "growx");
-        panel.add(lineChart, "grow");
-        add(panel);
+        lineChart.setPreferredSize(new Dimension(0, 220));
+        panel.add(lineChart, "grow, push, h 220!");
+        contentPanel.add(panel, "growx, h 280!, wrap");
         loadLineChartData(year);
     }
 
@@ -244,32 +256,15 @@ private PieChart.ChartType getPieChartType(boolean donut) {
         DefaultCategoryDataset<String, String> ds = new DefaultCategoryDataset<>();
         SimpleDateFormat df = new SimpleDateFormat("MMM yyyy");
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, year);
-        cal.set(Calendar.MONTH, 0);
-
         try {
-            for (int i = 0; i < 12; i++) {
+            ArrayList<thongkedoanhthuDTO> data = bustk.getTongDoanhThuChiPhiTheoThang(year);
+            for (thongkedoanhthuDTO item : data) {
+                cal.set(Calendar.YEAR, year);
+                cal.set(Calendar.MONTH, item.getThoigian() - 1);
                 String monthLabel = df.format(cal.getTime());
-                int m = cal.get(Calendar.MONTH) + 1;
-
-                // Thử lấy từ DB; nếu chưa có method, dùng placeholder
-                long income = 0, expense = 0;
-                try {
-                    // Giả sử busthongke có getDoanhThuThang(year, month) trả về long
-                    // income  = bustk.getDoanhThuThang(year, m);
-                    // expense = bustk.getChiPhiThang(year, m);
-                    // Dùng mock cho đến khi có method:
-                    income  = (long)(Math.random() * 50_000_000 + 10_000_000);
-                    expense = (long)(Math.random() * 30_000_000 +  5_000_000);
-                } catch (Exception ignored) {
-                    income  = (m + 1) * 1_000_000L;
-                    expense = (m + 1) *   800_000L;
-                }
-
-                ds.addValue(income,         "Doanh thu", monthLabel);
-                ds.addValue(expense,        "Chi phí",   monthLabel);
-                ds.addValue(income-expense, "Lợi nhuận", monthLabel);
-                cal.add(Calendar.MONTH, 1);
+                ds.addValue(item.getDoanhthu(), "Doanh thu", monthLabel);
+                ds.addValue(item.getChiphi(), "Chi phí", monthLabel);
+                ds.addValue(item.getLoinhuan(), "Lợi nhuận", monthLabel);
             }
         } catch (Exception e) {
             Logger.getLogger(formthongkesp.class.getName()).log(Level.WARNING, "loadLineChartData", e);
@@ -292,37 +287,32 @@ private PieChart.ChartType getPieChartType(boolean donut) {
         JPanel panel = new JPanel(new MigLayout("wrap 1, insets 0", "[grow]", "[]10[grow]"));
         panel.putClientProperty(FlatClientProperties.STYLE, "border:5,5,5,5,$Component.borderColor,,20");
         panel.add(header, "growx");
-        panel.add(soluongChart, "grow");
-        add(panel);
+        soluongChart.setPreferredSize(new Dimension(0, 220));
+        panel.add(soluongChart, "grow, push, h 220!");
+        contentPanel.add(panel, "growx, h 280!, wrap");
         loadSoLuongChartData(year);
     }
 
     private void loadSoLuongChartData(int year) {
-    DefaultCategoryDataset<String, String> ds = new DefaultCategoryDataset<>();
-    SimpleDateFormat df = new SimpleDateFormat("MMM");
-    Calendar cal = Calendar.getInstance();
-    cal.set(Calendar.YEAR, year);
-    cal.set(Calendar.MONTH, 0);
+        DefaultCategoryDataset<String, String> ds = new DefaultCategoryDataset<>();
+        SimpleDateFormat df = new SimpleDateFormat("MMM");
+        Calendar cal = Calendar.getInstance();
 
-    try {
-        ArrayList<dtophanloai> listpl = buspl.getlist();
-        for (int i = 0; i < 12; i++) {
-            String label = df.format(cal.getTime());
-            int m = cal.get(Calendar.MONTH) + 1;
-
-            for (dtophanloai pl : listpl) {
-                long sl = (long)(Math.random() * 200);
-                ds.addValue(sl, pl.getTenPhanLoai(), label);
+        try {
+            ArrayList<ThongKeSoLuongDTO> data = bustk.getTongSoLuongBanTheoThang(year);
+            for (ThongKeSoLuongDTO item : data) {
+                cal.set(Calendar.YEAR, year);
+                cal.set(Calendar.MONTH, item.getThoigian() - 1);
+                String label = df.format(cal.getTime());
+                ds.addValue(item.getSoLuong(), "Số lượng bán", label);
             }
-            cal.add(Calendar.MONTH, 1);
+        } catch (Exception ex) {
+            Logger.getLogger(formthongkesp.class.getName()).log(Level.SEVERE, null, ex);
         }
-    } catch (Exception ex) {
-        Logger.getLogger(formthongkesp.class.getName()).log(Level.SEVERE, null, ex);
-    }
 
-    soluongChart.setCategoryDataset(ds);
-    soluongChart.getChartColor().addColor(PIE_COLORS);
-}
+        soluongChart.setCategoryDataset(ds);
+        soluongChart.getChartColor().addColor(C_BLUE);
+    }
 
     // ─────────────────────────────────────────────────────────────
     //  BAR CHARTS
@@ -336,8 +326,10 @@ private PieChart.ChartType getPieChartType(boolean donut) {
 
         loadBarChartData(year);
 
-        add(p1, "split 2, gap 0 20");
-        add(p2);
+        p1.setPreferredSize(new Dimension(0, 240));
+        p2.setPreferredSize(new Dimension(0, 240));
+        contentPanel.add(p1, "split 2, gap 0 20, growx, h 250!, pushx");
+        contentPanel.add(p2, "growx, h 250!, pushx");
     }
 
     private HorizontalBarChart makeBarChart(String title, Color color) {
@@ -357,24 +349,29 @@ private PieChart.ChartType getPieChartType(boolean donut) {
     }
 
     private void loadBarChartData(int year) {
-        DefaultCategoryDataset<String, String> dsIncome  = new DefaultCategoryDataset<>();
-        DefaultCategoryDataset<String, String> dsExpense = new DefaultCategoryDataset<>();
+        DefaultPieDataset<String> dsIncome  = new DefaultPieDataset<>();
+        DefaultPieDataset<String> dsExpense = new DefaultPieDataset<>();
         SimpleDateFormat df = new SimpleDateFormat("MMM");
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, year);
-        cal.set(Calendar.MONTH, 0);
+        ArrayList<thongkedoanhthuDTO> data;
 
-        for (int i = 0; i < 12; i++) {
-            String label = df.format(cal.getTime());
-            long income  = (long)(Math.random() * 50_000_000);
-            long expense = (long)(Math.random() * 30_000_000);
-            dsIncome.addValue(income,  "Income",  label);
-            dsExpense.addValue(expense,"Expense", label);
-            cal.add(Calendar.MONTH, 1);
+        try {
+            data = bustk.getTongDoanhThuChiPhiTheoThang(year);
+        } catch (SQLException ex) {
+            Logger.getLogger(formthongkesp.class.getName()).log(Level.SEVERE, null, ex);
+            data = new ArrayList<>();
         }
-        // Note: HorizontalBarChart might not have dataset setter, skip for now
-        // barChart1.setDataset(dsIncome);
-        // barChart2.setDataset(dsExpense);
+
+        for (int i = 0; i < data.size(); i++) {
+            thongkedoanhthuDTO item = data.get(i);
+            cal.set(Calendar.YEAR, year);
+            cal.set(Calendar.MONTH, item.getThoigian() - 1);
+            String label = df.format(cal.getTime());
+            dsIncome.setValue(label, item.getDoanhthu());
+            dsExpense.setValue(label, item.getChiphi());
+        }
+        barChart1.setDataset(dsIncome);
+        barChart2.setDataset(dsExpense);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -552,6 +549,7 @@ private PieChart.ChartType getPieChartType(boolean donut) {
 
     private JPanel summaryTotalPanel;
     private JLabel lblSumQty, lblSumRevenue;
+    private JLabel lblSumProfit;
 
     private JPanel buildSummaryBar() {
         summaryTotalPanel = new JPanel(new MigLayout("insets 10 16 10 16", "[]32[]push[]32[]"));
@@ -568,10 +566,17 @@ private PieChart.ChartType getPieChartType(boolean donut) {
         lblSumRevenue = new JLabel("—");
         lblSumRevenue.putClientProperty(FlatClientProperties.STYLE, "font:bold; foreground:#22c55e;");
 
+        JLabel lProfit = new JLabel("Tổng lợi nhuận:");
+        lProfit.putClientProperty(FlatClientProperties.STYLE, "font:bold;");
+        lblSumProfit = new JLabel("—");
+        lblSumProfit.putClientProperty(FlatClientProperties.STYLE, "font:bold; foreground:#f97316;");
+
         summaryTotalPanel.add(lQty);
         summaryTotalPanel.add(lblSumQty);
         summaryTotalPanel.add(lRev);
         summaryTotalPanel.add(lblSumRevenue);
+        summaryTotalPanel.add(lProfit);
+        summaryTotalPanel.add(lblSumProfit);
         return summaryTotalPanel;
     }
 
@@ -614,7 +619,7 @@ private PieChart.ChartType getPieChartType(boolean donut) {
 
         try {
             ArrayList<ThongKeSanPhamDTO> data = bustk.getThongKeSanPham(from, to);
-            long totalQty = 0, totalRevenue = 0;
+            long totalQty = 0, totalRevenue = 0, totalProfit = 0;
             for (ThongKeSanPhamDTO item : data) {
                 slTableModel.addRow(new Object[]{
                     item.getMaSanPham(),
@@ -624,9 +629,11 @@ private PieChart.ChartType getPieChartType(boolean donut) {
                 });
                 totalQty     += item.getSoLuongBan();
                 totalRevenue += item.getDoanhThu();
+                totalProfit  += item.getLoiNhuan();
             }
             lblSumQty.setText(MONEY_FMT.format(totalQty) + " sp");
             lblSumRevenue.setText(MONEY_FMT.format(totalRevenue) + " ₫");
+            lblSumProfit.setText(MONEY_FMT.format(totalProfit) + " ₫");
         } catch (SQLException ex) {
             Logger.getLogger(formthongkesp.class.getName()).log(Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu SL bán: " + ex.getMessage());
