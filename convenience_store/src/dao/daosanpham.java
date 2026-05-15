@@ -117,26 +117,49 @@ public class daosanpham {
     public boolean addSanpham(dtosanpham sp) {
         String sql = "INSERT INTO sanpham (maPhanLoai, maSanPham, tenSanPham, soLuong, ngayThem, img, ishidden, maNhaCungCap) "
                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-        try (Connection con = connect.connection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
+        Connection con = null;
+        PreparedStatement pst = null;
+        try {
+            con = connect.connection();
+            if (con == null) {
+                Logger.getLogger(daosanpham.class.getName()).log(Level.SEVERE, "Database connection is null when inserting sanpham");
+                return false;
+            }
+            pst = con.prepareStatement(sql);
 
             pst.setInt(1, sp.getMaPhanLoai());
             pst.setInt(2, sp.getMaSanPham());
             pst.setString(3, sp.getTenSanPham());
-//            pst.setDouble(4, sp.getGiaBan());
             pst.setInt(4, sp.getSoLuong());
             pst.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
             pst.setString(6, sp.getImg());
             pst.setInt(7, sp.getIshidden());
             pst.setInt(8, sp.getMaNCC());
 
+            Logger.getLogger(daosanpham.class.getName()).log(Level.INFO, "Inserting sanpham: maSanPham={0}, tenSanPham={1}, maPhanLoai={2}, maNCC={3}", new Object[]{sp.getMaSanPham(), sp.getTenSanPham(), sp.getMaPhanLoai(), sp.getMaNCC()});
+
             int rowsInserted = pst.executeUpdate();
+            Logger.getLogger(daosanpham.class.getName()).log(Level.INFO, "Rows inserted: {0}", rowsInserted);
             return rowsInserted > 0;
 
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Logger.getLogger(daosanpham.class.getName()).log(Level.SEVERE, "Error inserting sanpham", e);
             return false;
+        } finally {
+            if (pst != null) {
+                try {
+                    pst.close();
+                } catch (SQLException ex) {
+                    Logger.getLogger(daosanpham.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException ex) {
+                    Logger.getLogger(daosanpham.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
         }
     }
     public void updateSanPham(dtosanpham sp) {

@@ -7,8 +7,6 @@ import dto.dtophieunhap;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,30 +50,27 @@ public class daophieunhap {
         return list;
     }
     
-    public void create(dtophieunhap phieunhap) {
+    public boolean create(dtophieunhap phieunhap) {
         String sql = "INSERT INTO phieunhap (maPhieuNhap, ngayNhap, tongTien, maNhaCungCap, maNhanVien, ghiChu, isDelete) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        java.sql.Connection con = connect.connection();
-
-        try {
+        try (java.sql.Connection con = connect.connection()) {
+            if (con == null) {
+                Logger.getLogger(daophieunhap.class.getName()).log(Level.SEVERE, "Khong the ket noi den database");
+                return false;
+            }
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setInt(1, phieunhap.getMaPhieuNhap());
-            pst.setTimestamp(2, (Timestamp) phieunhap.getNgayNhap());
+            pst.setTimestamp(2, phieunhap.getNgayNhap());
             pst.setDouble(3, phieunhap.getTongTien());
             pst.setInt(4, phieunhap.getMaNhaCungCap());
             pst.setInt(5, phieunhap.getMaNhanVien());
             pst.setString(6, phieunhap.getGhiChu());
             pst.setInt(7, 0);
 
-            pst.executeUpdate();
-        } catch (SQLException e) {
+            return pst.executeUpdate() > 0;
+        } catch (Exception e) {
             Logger.getLogger(daophieunhap.class.getName()).log(Level.SEVERE, null, e);
-        } finally {
-            try {
-                con.close();
-            } catch (SQLException e) {
-                Logger.getLogger(daophieunhap.class.getName()).log(Level.SEVERE, null, e);
-            }
         }
+        return false;
     }
     
     public int maxID() {

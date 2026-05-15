@@ -55,6 +55,7 @@ public class bussanpham {
         return list_sp;
     }
     public int updateslsanpham(dtosanpham i){
+        daoSanPham = new daosanpham();
         return daoSanPham.updatesoluong(i);
     }
     public dtosanpham getById(int maSp){

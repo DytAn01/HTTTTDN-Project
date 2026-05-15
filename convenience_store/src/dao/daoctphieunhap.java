@@ -8,11 +8,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Date;
 
 /**
  *
@@ -241,32 +239,33 @@ public class daoctphieunhap {
         return list;
     }
     
-    public void create(dtoctphieunhap ctphieunhap) {
+    public boolean create(dtoctphieunhap ctphieunhap) {
         String sql = "INSERT INTO chitietphieunhap ( soLuong, giaNhap, maPhieuNhap, maSanPham, ngayHetHan, ishidden, ghiChu, soLuongTonKho, giaBan) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        java.sql.Connection con = connect.connection();
-
-        try {
+        try (java.sql.Connection con = connect.connection()) {
+            if (con == null) {
+                Logger.getLogger(daoctphieunhap.class.getName()).log(Level.SEVERE, "Khong the ket noi den database");
+                return false;
+            }
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setInt(1, ctphieunhap.getSoLuong());
             pst.setDouble(2, ctphieunhap.getGiaNhap());
             pst.setInt(3, ctphieunhap.getMaPhieuNhap());
             pst.setInt(4, ctphieunhap.getMaSanPham());
-            pst.setDate(5, (java.sql.Date) ctphieunhap.getNgayhethan());
+            if (ctphieunhap.getNgayhethan() == null) {
+                pst.setNull(5, java.sql.Types.DATE);
+            } else {
+                pst.setDate(5, new java.sql.Date(ctphieunhap.getNgayhethan().getTime()));
+            }
             pst.setInt(6, 0);
             pst.setString(7, ctphieunhap.getGhichu());
             pst.setInt(8, ctphieunhap.getSoluongtonkho());
             pst.setDouble(9, ctphieunhap.getGiaBan());
 
-            pst.executeUpdate();
-        } catch (SQLException e) {
+            return pst.executeUpdate() > 0;
+        } catch (Exception e) {
             Logger.getLogger(daoctphieunhap.class.getName()).log(Level.SEVERE, null, e);
-        } finally {
-            try {
-                con.close();
-            } catch (SQLException e) {
-                Logger.getLogger(daoctphieunhap.class.getName()).log(Level.SEVERE, null, e);
-            }
         }
+        return false;
     }
     public static void updateEXP() {
         Connection con = connect.connection();

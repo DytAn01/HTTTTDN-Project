@@ -4,20 +4,10 @@
  */
 package dao;
 import dto.dtokhachhang;
-import dto.dtokhachhang;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-/**
- *
- * @author giavi
- */
-import java.sql.*;
-import java.util.ArrayList;
 
 public class daokhachhang {
 
@@ -26,7 +16,7 @@ public class daokhachhang {
 
     public ArrayList<dtokhachhang> getAllKhachHang() {
     ArrayList<dtokhachhang> list = new ArrayList<>();
-    String sql = "SELECT maKhachHang, SDT, TenKhachHang, diemTichLuy, maUuDai FROM khachhang"; // Cập nhật câu truy vấn phù hợp
+    String sql = "SELECT maKhachHang, SDT, TenKhachHang, diemTichLuy, maUuDai FROM khachhang WHERE isDelete = 0"; // Lọc chỉ khách hàng chưa xóa
     try (Connection conn = connect.connection();
          PreparedStatement ps = conn.prepareStatement(sql);
          ResultSet rs = ps.executeQuery()) {
@@ -44,6 +34,24 @@ public class daokhachhang {
     }
     return list;
 }
+
+    /**
+     * Soft-delete or restore a customer by setting isDelete = 1 (deleted) or 0 (active)
+     */
+    public boolean setIsDeleteKhachHang(int maKhachHang, int isDelete) {
+        Connection con = connect.connection();
+        String sql = "UPDATE khachhang SET isDelete = ? WHERE maKhachHang = ?";
+        try (PreparedStatement pst = con.prepareStatement(sql)) {
+            pst.setInt(1, isDelete);
+            pst.setInt(2, maKhachHang);
+            return pst.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            Logger.getLogger(daokhachhang.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        } finally {
+            try { con.close(); } catch (SQLException ex) { Logger.getLogger(daokhachhang.class.getName()).log(Level.SEVERE, null, ex); }
+        }
+    }
 
 
       // Phương thức thêm khách hàng mới

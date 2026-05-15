@@ -26,7 +26,9 @@ import gui.table.TableHeaderAlignment;
 import java.awt.Component;
 import java.awt.Font;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -224,23 +226,30 @@ public class formchucvu extends javax.swing.JPanel {
 
         // Thêm sự kiện cho nút "Sửa"
         cmdEdit.addActionListener(e -> {
-            int row = chucVuTable.getSelectedRow();  // Lấy dòng được chọn
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một chức vụ để chỉnh sửa.");
+            int viewRow = chucVuTable.getSelectedRow();
+            // Không bắt buộc phải chọn trước: mặc định lấy dòng đầu tiên đang hiển thị.
+            if (viewRow == -1 && chucVuTable.getRowCount() > 0) {
+                viewRow = 0;
+                chucVuTable.setRowSelectionInterval(0, 0);
+            }
+            if (viewRow == -1) {
+                JOptionPane.showMessageDialog(this, "Không có chức vụ nào để chỉnh sửa.");
+                return;
+            }
+
+            int row = chucVuTable.convertRowIndexToModel(viewRow);
+            // Lấy tên chức vụ từ cột thứ 3 (index 2)
+            String tenChucVu = (String) chucVuModel.getValueAt(row, 2);
+
+            // Kiểm tra nếu là "admin"
+            if ("admin".equalsIgnoreCase(tenChucVu)) {
+                JOptionPane.showMessageDialog(this, "Chức vụ 'admin' không thể chỉnh sửa.");
             } else {
-                // Lấy tên chức vụ từ cột thứ 3 (index 2)
-                String tenChucVu = (String) chucVuModel.getValueAt(row, 2);
+                // Lấy mã chức vụ từ cột thứ 2 (index 1)
+                int maChucVu = (int) chucVuModel.getValueAt(row, 1);
 
-                // Kiểm tra nếu là "admin"
-                if ("admin".equalsIgnoreCase(tenChucVu)) {
-                    JOptionPane.showMessageDialog(this, "Chức vụ 'admin' không thể chỉnh sửa.");
-                } else {
-                    // Lấy mã chức vụ từ cột thứ 2 (index 1)
-                    int maChucVu = (int) chucVuModel.getValueAt(row, 1);
-
-                    // Hiển thị modal chỉnh sửa
-                    showEditPositionModal(maChucVu, tenChucVu, chucVuModel, row);
-                }
+                // Hiển thị modal chỉnh sửa
+                showEditPositionModal(maChucVu, tenChucVu, chucVuModel, row);
             }
         });
 
@@ -564,24 +573,31 @@ public class formchucvu extends javax.swing.JPanel {
             }
         });
         cmdEdit.addActionListener(e -> {
-            int row = phanQuyenTable.getSelectedRow(); // Lấy hàng được chọn
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một bản ghi phân quyền để chỉnh sửa.");
-            } else {
-                String tenChucVu = (String) phanQuyenModel.getValueAt(row, 3);
-                int maChucVu = (int) phanQuyenModel.getValueAt(row, 4);
-                if ("admin".equalsIgnoreCase(tenChucVu)|| maChucVu == 1) {
-                    JOptionPane.showMessageDialog(this, "Bạn không được phép chỉnh sửa phân quyền của Admin!");
-                    return; // Thoát ra nếu chức vụ là Admin
-                }
+            int viewRow = phanQuyenTable.getSelectedRow(); // Lấy hàng được chọn trên view
+            // Không bắt buộc chọn trước: tự chọn dòng đầu tiên đang hiển thị.
+            if (viewRow == -1 && phanQuyenTable.getRowCount() > 0) {
+                viewRow = 0;
+                phanQuyenTable.setRowSelectionInterval(0, 0);
+            }
+            if (viewRow == -1) {
+                JOptionPane.showMessageDialog(this, "Không có bản ghi phân quyền để chỉnh sửa.");
+                return;
+            }
 
-                int maPhanQuyen = (int) phanQuyenModel.getValueAt(row, 1); // Lấy mã phân quyền từ cột 1
-                
-                try {
-                    showEditPhanQuyenModal(maChucVu, maPhanQuyen); // Hàm chỉnh sửa phân quyền
-                } catch (SQLException ex) {
-                    Logger.getLogger(formchucvu.class.getName()).log(Level.SEVERE, null, ex);
-                }
+            int row = phanQuyenTable.convertRowIndexToModel(viewRow); // Quy đổi về model để tránh lệch khi sort/filter
+            String tenChucVu = (String) phanQuyenModel.getValueAt(row, 2);
+            int maChucVu = (int) phanQuyenModel.getValueAt(row, 4);
+            if ("admin".equalsIgnoreCase(tenChucVu)|| maChucVu == 1) {
+                JOptionPane.showMessageDialog(this, "Bạn không được phép chỉnh sửa phân quyền của Admin!");
+                return; // Thoát ra nếu chức vụ là Admin
+            }
+
+            int maPhanQuyen = (int) phanQuyenModel.getValueAt(row, 1); // Lấy mã phân quyền từ cột 1
+
+            try {
+                showEditPhanQuyenModal(maChucVu, maPhanQuyen); // Hàm chỉnh sửa phân quyền
+            } catch (SQLException ex) {
+                Logger.getLogger(formchucvu.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
         cmdRefresh.addActionListener(e -> {
@@ -732,24 +748,14 @@ public class formchucvu extends javax.swing.JPanel {
 
     // Tạo form phân quyền
         SimpleInputPermissionForm permissionForm = new SimpleInputPermissionForm();
-         for (int i = 0; i < permissionForm.cboChucVu.getItemCount(); i++) {
-            dtochucvu chucVu = permissionForm.cboChucVu.getItemAt(i);
-            if (chucVu.getMachucvu() == maChucVu) {
-                permissionForm.cboChucVu.setSelectedItem(chucVu);
-                break;
-            }
-        }
+        permissionForm.setSelectedRoleId(maChucVu);
 
 
-        for (int i = 0; i < permissionForm.pnlChucNang.getComponentCount(); i++) {
-            JCheckBox chk = (JCheckBox) permissionForm.pnlChucNang.getComponent(i);
-            int maChucNang = (int) chk.getClientProperty("maChucNang");
-            for (dtophanquyen permission : permissions) {
-                if (maChucNang == permission.getMaChucNang()) {
-                    chk.setSelected(true);
-                }
-            }
+        Set<Integer> selectedFunctionIds = new HashSet<>();
+        for (dtophanquyen permission : permissions) {
+            selectedFunctionIds.add(permission.getMaChucNang());
         }
+        permissionForm.setSelectedFunctionIds(selectedFunctionIds);
 
 
     // Hiển thị modal với form
@@ -760,8 +766,17 @@ public class formchucvu extends javax.swing.JPanel {
                     int result = JOptionPane.showConfirmDialog(null, "Bạn có chắc chắn muốn cập nhật thông tin phân quyền?", "Xác nhận", JOptionPane.YES_NO_OPTION);
                     if (result == JOptionPane.YES_OPTION) {
                         try {
+                            Integer selectedRoleId = permissionForm.getSelectedRoleId();
+                            if (selectedRoleId == null) {
+                                JOptionPane.showMessageDialog(null, "Vui lòng chọn chức vụ cần cập nhật phân quyền.");
+                                return;
+                            }
+                            if (selectedRoleId == 1) {
+                                JOptionPane.showMessageDialog(null, "Bạn không được phép chỉnh sửa phân quyền của Admin!");
+                                return;
+                            }
                             // Lưu thay đổi
-                            permissionForm.updatePermission(maChucVu);
+                            permissionForm.updatePermission(selectedRoleId);
                             JOptionPane.showMessageDialog(null, "Cập nhật thông tin phân quyền thành công!");
                             loadPhanQuyenDataToTable(); // Tải lại bảng dữ liệu
                         } catch (Exception e) {

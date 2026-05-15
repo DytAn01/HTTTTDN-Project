@@ -241,6 +241,26 @@ public class formkhachhang extends JPanel {
         });
         p.add(btnReload, "height 32!");
 
+        // Soft-delete button
+        JButton btnDeleteSoft = accentButton("Xóa", DANGER);
+        btnDeleteSoft.addActionListener(e -> {
+            if (selectedMaKH < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn khách hàng để xóa.");
+                return;
+            }
+            int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa mềm khách hàng này?","Xác nhận", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+            boolean ok = busKH.setIsDeleteKhachHang(selectedMaKH, 1);
+            if (ok) {
+                loadDataToTable();
+                clearForm(null);
+                JOptionPane.showMessageDialog(this, "Đã xóa mềm khách hàng.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Xóa mềm thất bại. Vui lòng thử lại.");
+            }
+        });
+        p.add(btnDeleteSoft, "height 32!");
+
         return p;
     }
 

@@ -76,9 +76,13 @@ public class formnghiphep extends JPanel {
     public formnghiphep(int currentEmployeeId, boolean adminMode) {
         this.currentEmployeeId = currentEmployeeId;
         this.adminMode = adminMode;
-        setLayout(new MigLayout("fill, insets 16 20 16 20, wrap", "[fill]", "[shrink 0][fill,grow]"));
-        add(buildHeader(), "growx");
-        add(buildTabs(), "grow");
+        setLayout(new MigLayout(
+    "fill, insets 16 20 16 20, wrap, gapy 8",
+    "[fill]",
+    "[shrink 0][grow]"
+));
+        add(buildHeader(), "growx, gapy 0 8");
+add(buildTabs(), "grow");
     }
 
     private JPanel buildHeader() {
@@ -120,7 +124,11 @@ public class formnghiphep extends JPanel {
     }
 
     private JPanel buildEmployeeCard() {
-        JPanel card = new JPanel(new MigLayout("fill, insets 0, wrap", "[fill]", "[fill][shrink 0]"));
+       JPanel card = new JPanel(new MigLayout(
+        "fill, insets 0, wrap",
+        "[fill]",
+        "[shrink 0][shrink 0]"   // ✅ FIX
+    ));
         card.putClientProperty(FlatClientProperties.STYLE,
                 "background: $Panel.background; border: 1,1,1,1,$Component.borderColor,12;");
         LeaveRequestInputForm form = new LeaveRequestInputForm(null, false);
@@ -616,8 +624,12 @@ public class formnghiphep extends JPanel {
         private LeaveRequestInputForm(dtodonxinnghiep editData, boolean fullForm) {
             this.editData = editData;
             this.fullForm = fullForm;
-            setLayout(new MigLayout("fillx,wrap,insets 8 24 8 24,width 460", "[fill]", ""));
-            createTitle("Thông tin đơn nghỉ phép");
+           setLayout(new MigLayout(
+    "fillx, wrap, insets 8 24 8 24",
+    "[grow,fill]",
+    ""
+));
+            
             build();
             loadCombos();
             if (editData != null) {
@@ -763,7 +775,6 @@ public class formnghiphep extends JPanel {
                 don.setNgayKetThuc(dateKetThuc.getDate());
                 don.setSoNgayNghi(soNgay);
                 don.setTrangThai(fullForm ? (String) cboTrangThai.getSelectedItem() : "Chờ duyệt");
-                don.setNgayDuyet(null);
                 don.setGhiChu(txtGhiChu.getText().trim());
 
                 boolean ok = editData == null ? busDon.add(don) : busDon.update(don);

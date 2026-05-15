@@ -18,38 +18,6 @@ USE `qlcuahangtienloi`;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `chamcong`
---
-
-DROP TABLE IF EXISTS `chamcong`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `chamcong` (
-  `maChamCong` int NOT NULL AUTO_INCREMENT,
-  `maNhanVien` int NOT NULL,
-  `soGioLamViec` int DEFAULT NULL,
-  `soNgayLamViec` int DEFAULT NULL,
-  `soGioLamThem` int DEFAULT NULL,
-  `chiTiet` varchar(500) DEFAULT NULL,
-  `thangChamCong` int DEFAULT NULL,
-  `namChamCong` int DEFAULT NULL,
-  PRIMARY KEY (`maChamCong`),
-  KEY `fk_chamcong_nhanvien_idx` (`maNhanVien`),
-  CONSTRAINT `fk_chamcong_nhanvien` FOREIGN KEY (`maNhanVien`) REFERENCES `nhanvien` (`maNhanVien`)
-) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `chamcong`
---
-
-LOCK TABLES `chamcong` WRITE;
-/*!40000 ALTER TABLE `chamcong` DISABLE KEYS */;
-INSERT INTO `chamcong` VALUES (1,1,1,10,1,NULL,9,2024),(2,2,2,12,2,NULL,9,2024),(3,3,3,13,3,NULL,9,2024),(4,4,4,14,4,NULL,9,2024),(5,5,5,15,5,NULL,9,2024),(6,6,6,26,6,NULL,9,2024),(7,7,7,17,7,NULL,9,2024),(8,8,8,18,8,NULL,9,2024),(9,9,9,16,9,NULL,9,2024),(10,10,10,13,10,NULL,9,2024),(11,1,0,0,0,'',12,2024),(12,2,0,0,0,'',12,2024),(13,3,0,0,0,'',12,2024),(14,4,0,0,0,'',12,2024),(15,5,0,0,0,'',12,2024),(16,6,0,0,0,'',12,2024),(17,7,0,0,0,'',12,2024),(18,9,0,0,0,'',12,2024),(19,10,0,0,0,'',12,2024),(20,1,0,0,0,'',2,2025),(21,2,0,0,0,'',2,2025),(22,3,0,0,0,'',2,2025),(23,4,0,0,0,'',2,2025),(24,5,0,0,0,'',2,2025),(25,6,0,0,0,'',2,2025),(26,7,0,0,0,'',2,2025),(27,9,0,0,0,'',2,2025),(28,10,0,0,0,'',2,2025),(29,1,0,0,0,'',3,2025),(30,2,0,0,0,'',3,2025),(31,3,0,0,0,'',3,2025),(32,4,0,0,0,'',3,2025),(33,5,0,0,0,'',3,2025),(34,6,0,0,0,'',3,2025),(35,7,0,0,0,'',3,2025),(36,9,0,0,0,'',3,2025),(37,10,0,0,0,'',3,2025),(40,1,0,2,0,'',1,2026),(41,2,0,0,0,'',1,2026),(42,3,0,0,0,'',1,2026),(43,4,0,0,0,'',1,2026),(44,5,0,0,0,'',1,2026),(45,6,0,0,0,'',1,2026),(46,7,0,0,0,'',1,2026),(47,9,0,0,0,'',1,2026),(48,10,0,0,0,'',1,2026),(50,1,0,0,0,'',4,2026),(51,1,0,1,0,'',5,2026),(52,2,0,0,0,'',5,2026),(53,3,0,0,0,'',5,2026),(54,4,0,0,0,'',5,2026),(55,5,0,0,0,'',5,2026),(56,6,0,0,0,'',5,2026),(57,7,0,0,0,'',5,2026),(58,9,0,0,0,'',5,2026),(59,10,0,0,0,'',5,2026),(60,11,0,0,0,'',5,2026);
-/*!40000 ALTER TABLE `chamcong` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `chitiethoadon`
 --
 
@@ -67,7 +35,7 @@ CREATE TABLE `chitiethoadon` (
   KEY `maSanPham` (`maSanPham`,`maHoaDon`),
   CONSTRAINT `chitiethoadon_ibfk_1` FOREIGN KEY (`maSanPham`) REFERENCES `sanpham` (`maSanPham`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `chitiethoadon_ibfk_2` FOREIGN KEY (`maHoaDon`) REFERENCES `hoadon` (`maHoaDon`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=236 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=237 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -76,7 +44,7 @@ CREATE TABLE `chitiethoadon` (
 
 LOCK TABLES `chitiethoadon` WRITE;
 /*!40000 ALTER TABLE `chitiethoadon` DISABLE KEYS */;
-INSERT INTO `chitiethoadon` VALUES (223,108,1,5000,1),(224,108,2,5000,2),(225,113,1,22000,2),(226,109,1,31000,2),(227,108,1,5000,3),(228,118,1,29000,3),(229,108,4,5000,4),(230,108,5,5000,5),(231,108,1,44357,6),(232,108,1,44357,7),(233,108,1,44357,8),(234,108,1,44357,9),(235,108,5,44357,10);
+INSERT INTO `chitiethoadon` VALUES (223,108,1,5000,1),(224,108,2,5000,2),(225,113,1,22000,2),(226,109,1,31000,2),(227,108,1,5000,3),(228,118,1,29000,3),(229,108,4,5000,4),(230,108,5,5000,5),(231,108,1,44357,6),(232,108,1,44357,7),(233,108,1,44357,8),(234,108,1,44357,9),(235,108,5,44357,10),(236,108,1,44357,11);
 /*!40000 ALTER TABLE `chitiethoadon` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -103,7 +71,7 @@ CREATE TABLE `chitietphieunhap` (
   KEY `fk_CTPhieuNhap_sanPham` (`maSanPham`),
   CONSTRAINT `chitietphieunhap_ibfk_1` FOREIGN KEY (`maSanPham`) REFERENCES `sanpham` (`maSanPham`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `chitietphieunhap_ibfk_2` FOREIGN KEY (`maPhieuNhap`) REFERENCES `phieunhap` (`maPhieuNhap`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=102 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -112,7 +80,7 @@ CREATE TABLE `chitietphieunhap` (
 
 LOCK TABLES `chitietphieunhap` WRITE;
 /*!40000 ALTER TABLE `chitietphieunhap` DISABLE KEYS */;
-INSERT INTO `chitietphieunhap` VALUES (76,9,24000,1,109,'2024-12-24',1,'',1000,21073),(77,9,4000,2,138,'2024-12-17',1,'',1000,18475),(78,15,6000,3,139,'2024-12-09',1,'',1000,19158),(79,5,5000,3,140,'2024-12-28',1,'',1000,30367),(80,20,4000,4,108,'2027-12-21',0,'',991,44357),(81,1,25000,4,118,'2025-12-23',1,'',1000,40688),(82,30,6000,4,125,'2024-12-31',1,'',1000,20366),(83,1,15000,4,115,'2024-12-11',1,'',1000,49768),(84,1,20000,4,104,'2024-12-09',1,'',1000,17742),(85,8,55000,5,158,'2024-12-28',1,'',1000,49404),(86,5,9000,6,155,'2024-12-20',1,'',1000,23795),(87,10,4000,6,152,'2024-12-13',1,'',1000,40762),(88,1,8000,7,131,'2025-12-17',1,'',1000,42424),(89,1,6000,7,121,'2024-12-25',1,'',1000,39837),(90,15,12000,7,122,'2024-12-25',1,'',1000,21912),(91,1,9000,8,156,'2024-12-19',1,'',1000,20049),(92,10,6000,9,142,'2024-12-27',1,'',1000,24509),(93,1,5000,10,134,'2025-12-23',1,'',1000,12398),(94,20,9000,10,121,'2024-12-27',1,'',1000,18462),(95,9,20000,10,113,'2024-12-31',1,'',1000,45116),(96,1,6000,10,128,'2025-12-24',1,'',1000,40195),(97,1,9000,10,124,'2024-12-28',1,'',1000,15627),(98,1000,12000,10,60,'2027-12-31',0,'',1000,28800),(99,1,10000,11,144,'2026-01-31',1,'',1,10100),(100,1,8000,12,137,'2027-04-22',0,'',1,10000),(101,1,8000,12,137,'2027-04-22',0,'',1,10000);
+INSERT INTO `chitietphieunhap` VALUES (76,9,24000,1,109,'2024-12-24',1,'',1000,21073),(77,9,4000,2,138,'2024-12-17',1,'',1000,18475),(78,15,6000,3,139,'2024-12-09',1,'',1000,19158),(79,5,5000,3,140,'2024-12-28',1,'',1000,30367),(80,20,4000,4,108,'2027-12-21',0,'',990,44357),(81,1,25000,4,118,'2025-12-23',1,'',1000,40688),(82,30,6000,4,125,'2024-12-31',1,'',1000,20366),(83,1,15000,4,115,'2024-12-11',1,'',1000,49768),(84,1,20000,4,104,'2024-12-09',1,'',1000,17742),(85,8,55000,5,158,'2024-12-28',1,'',1000,49404),(86,5,9000,6,155,'2024-12-20',1,'',1000,23795),(87,10,4000,6,152,'2024-12-13',1,'',1000,40762),(88,1,8000,7,131,'2025-12-17',1,'',1000,42424),(89,1,6000,7,121,'2024-12-25',1,'',1000,39837),(90,15,12000,7,122,'2024-12-25',1,'',1000,21912),(91,1,9000,8,156,'2024-12-19',1,'',1000,20049),(92,10,6000,9,142,'2024-12-27',1,'',1000,24509),(93,1,5000,10,134,'2025-12-23',1,'',1000,12398),(94,20,9000,10,121,'2024-12-27',1,'',1000,18462),(95,9,20000,10,113,'2024-12-31',1,'',1000,45116),(96,1,6000,10,128,'2025-12-24',1,'',1000,40195),(97,1,9000,10,124,'2024-12-28',1,'',1000,15627),(98,1000,12000,10,60,'2027-12-31',0,'',1000,28800),(99,1,10000,11,144,'2026-01-31',1,'',1,10100),(100,1,8000,12,137,'2027-04-22',0,'',1,10000),(101,1,8000,12,137,'2027-04-22',0,'',1,10000),(102,1000,30000,13,153,'2028-05-18',0,'',1000,32000);
 /*!40000 ALTER TABLE `chitietphieunhap` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -140,7 +108,7 @@ CREATE TABLE `chucnang` (
 
 LOCK TABLES `chucnang` WRITE;
 /*!40000 ALTER TABLE `chucnang` DISABLE KEYS */;
-INSERT INTO `chucnang` VALUES (1,'Menu',1,0),(2,'Hóa đơn',1,0),(3,'Sản phẩm',2,0),(4,'Nhà cung cấp',2,0),(5,'Phiếu nhập',2,0),(6,'Thông tin nhân viên',3,0),(7,'Tài khoản',3,0),(8,'Chức vụ',3,0),(9,'Chấm công',3,0),(10,'Lương',3,0),(11,'Hợp đồng lao động',3,0),(12,'Thông tin khách hàng',4,0),(13,'Ưu đãi & khuyến mãi',4,0),(15,'Tổng quan',5,0),(16,'Thống kê sản phẩm',5,0),(20,'Phân loại',6,0),(21,'Chấm công hàng ngày',6,0),(28,'Xuat va loi nhuan',1,0),(29,'Xuat va loi nhuan',1,0);
+INSERT INTO `chucnang` VALUES (1,'Menu',1,0),(2,'Hóa đơn',1,0),(3,'Sản phẩm',2,0),(4,'Nhà cung cấp',2,0),(5,'Phiếu nhập',2,0),(6,'Thông tin nhân viên',3,0),(7,'Tài khoản',3,0),(8,'Chức vụ',3,0),(10,'Lương',3,0),(11,'Hợp đồng lao động',3,0),(12,'Thông tin khách hàng',4,0),(13,'Ưu đãi & khuyến mãi',4,0),(15,'Tổng quan',5,0),(16,'Thống kê sản phẩm',5,0),(20,'Phân loại',6,0),(28,'Xuat va loi nhuan',1,0),(29,'Xuat va loi nhuan',1,0);
 /*!40000 ALTER TABLE `chucnang` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -209,22 +177,16 @@ CREATE TABLE `donxinnghiep` (
   `ngayBatDau` date NOT NULL,
   `ngayKetThuc` date NOT NULL,
   `soNgayNghi` int NOT NULL,
-  `lyDo` varchar(500) DEFAULT NULL,
-  `giayChungMinh` varchar(255) DEFAULT NULL,
   `trangThai` varchar(20) DEFAULT 'Chờ duyệt',
-  `nguoiDuyet` int DEFAULT NULL,
-  `ngayDuyet` date DEFAULT NULL,
   `ghiChu` varchar(500) DEFAULT NULL,
   `ngayTao` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `ngayCapNhat` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`maDonXin`),
   KEY `maNhanVien` (`maNhanVien`),
   KEY `maLoaiDon` (`maLoaiDon`),
-  KEY `nguoiDuyet` (`nguoiDuyet`),
   CONSTRAINT `donxinnghiep_ibfk_1` FOREIGN KEY (`maNhanVien`) REFERENCES `nhanvien` (`maNhanVien`),
-  CONSTRAINT `donxinnghiep_ibfk_2` FOREIGN KEY (`maLoaiDon`) REFERENCES `loaidonxinnghiep` (`maLoaiDon`),
-  CONSTRAINT `donxinnghiep_ibfk_3` FOREIGN KEY (`nguoiDuyet`) REFERENCES `nhanvien` (`maNhanVien`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+  CONSTRAINT `donxinnghiep_ibfk_2` FOREIGN KEY (`maLoaiDon`) REFERENCES `loaidonxinnghiep` (`maLoaiDon`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -233,6 +195,7 @@ CREATE TABLE `donxinnghiep` (
 
 LOCK TABLES `donxinnghiep` WRITE;
 /*!40000 ALTER TABLE `donxinnghiep` DISABLE KEYS */;
+INSERT INTO `donxinnghiep` VALUES (1,11,5,'2026-05-04','2026-05-05',2,'Đã duyệt','ádasd','2026-05-02 13:29:58','2026-05-02 13:34:15'),(2,11,7,'2026-05-17','2026-05-31',15,'Từ chối','','2026-05-05 13:36:16','2026-05-05 13:37:14'),(3,11,6,'2026-06-30','2026-07-14',15,'Đã duyệt','','2026-05-05 13:36:35','2026-05-05 13:37:17'),(4,11,5,'2026-08-18','2026-09-29',43,'Từ chối','','2026-05-05 13:36:51','2026-05-05 13:37:18'),(5,6,6,'2026-05-11','2026-05-26',16,'Chờ duyệt','','2026-05-05 15:18:15','2026-05-05 15:18:15');
 /*!40000 ALTER TABLE `donxinnghiep` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -271,7 +234,7 @@ CREATE TABLE `hoadon` (
 
 LOCK TABLES `hoadon` WRITE;
 /*!40000 ALTER TABLE `hoadon` DISABLE KEYS */;
-INSERT INTO `hoadon` VALUES (1,1,5000.00,NULL,NULL,'2024-12-10 23:53:28','',NULL,0),(2,1,63000.00,NULL,NULL,'2024-12-10 23:54:44','',NULL,0),(3,1,34000.00,NULL,NULL,'2025-01-07 20:41:46','',NULL,0),(4,9,20000.00,NULL,NULL,'2026-01-13 13:56:39','',NULL,0),(5,1,25000.00,NULL,NULL,'2026-01-25 19:25:47','',NULL,0),(6,1,44357.00,NULL,NULL,'2026-03-04 16:20:36','',NULL,0),(7,1,43026.29,13,NULL,'2026-04-08 21:13:34','ghhdfghh',1,0),(8,1,44357.00,NULL,NULL,'2026-04-08 21:37:43','',NULL,0),(9,1,0.00,NULL,NULL,'2026-04-08 22:07:16','',NULL,0),(10,1,215131.45,13,NULL,'2026-05-01 21:55:18','',13,0);
+INSERT INTO `hoadon` VALUES (1,1,5000.00,NULL,NULL,'2024-12-10 23:53:28','',NULL,0),(2,1,63000.00,NULL,NULL,'2024-12-10 23:54:44','',NULL,0),(3,1,34000.00,NULL,NULL,'2025-01-07 20:41:46','',NULL,0),(4,9,20000.00,NULL,NULL,'2026-01-13 13:56:39','',NULL,0),(5,1,25000.00,NULL,NULL,'2026-01-25 19:25:47','',NULL,0),(6,1,44357.00,NULL,NULL,'2026-03-04 16:20:36','',NULL,0),(7,1,43026.29,13,NULL,'2026-04-08 21:13:34','ghhdfghh',1,0),(8,1,44357.00,NULL,NULL,'2026-04-08 21:37:43','',NULL,0),(9,1,0.00,NULL,NULL,'2026-04-08 22:07:16','',NULL,0),(10,1,215131.45,13,NULL,'2026-05-01 21:55:18','',13,0),(11,1,43026.29,13,NULL,'2026-05-02 22:01:35','',1,0);
 /*!40000 ALTER TABLE `hoadon` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -301,7 +264,7 @@ CREATE TABLE `hopdonglaodong` (
 
 LOCK TABLES `hopdonglaodong` WRITE;
 /*!40000 ALTER TABLE `hopdonglaodong` DISABLE KEYS */;
-INSERT INTO `hopdonglaodong` VALUES (1,'2024-01-10','2024-01-30',10000,1,0),(2,'2024-01-09','2024-01-30',20000,2,0),(3,'2024-01-08','2024-01-30',30000,3,0),(4,'2024-01-07','2024-01-30',40000,4,0),(5,'2024-01-06','2024-01-30',50000,5,0),(6,'2024-01-05','2024-01-30',60000,6,0),(7,'2024-01-04','2024-01-30',70000,7,0),(8,'2024-01-03','2024-01-30',80000,8,0),(9,'2024-01-02','2024-01-30',90000,9,0),(10,'2024-01-01','2024-01-30',100000,10,0),(11,'2026-01-27','2026-12-27',27000,11,0),(12,'2026-05-01','2026-06-01',25000,11,0);
+INSERT INTO `hopdonglaodong` VALUES (1,'2024-01-10','2024-01-30',10000,1,0),(2,'2024-01-09','2024-01-30',20000,2,0),(3,'2024-01-08','2024-01-30',30000,3,0),(4,'2024-01-07','2024-01-30',40000,4,0),(5,'2024-01-06','2024-01-30',50000,5,0),(6,'2024-01-05','2024-01-30',60000,6,0),(7,'2024-01-04','2024-01-30',70000,7,0),(8,'2024-01-03','2024-01-30',80000,6,0),(9,'2024-01-02','2024-01-30',90000,9,0),(10,'2024-01-01','2024-01-30',100000,10,0),(11,'2026-01-27','2026-12-27',27000,11,0),(12,'2026-05-01','2026-06-01',25000,11,0);
 /*!40000 ALTER TABLE `hopdonglaodong` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -318,6 +281,7 @@ CREATE TABLE `khachhang` (
   `tenKhachHang` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `diemTichLuy` int NOT NULL,
   `maUuDai` int NOT NULL,
+  `isDelete` int DEFAULT NULL,
   PRIMARY KEY (`maKhachHang`),
   KEY `fk_khachhang_uudai_idx` (`maUuDai`),
   CONSTRAINT `fk_khachhang_uudai` FOREIGN KEY (`maUuDai`) REFERENCES `uudai` (`maUuDai`)
@@ -330,7 +294,7 @@ CREATE TABLE `khachhang` (
 
 LOCK TABLES `khachhang` WRITE;
 /*!40000 ALTER TABLE `khachhang` DISABLE KEYS */;
-INSERT INTO `khachhang` VALUES (1,'0908898765','Nguyễn Minh Thắng',0,1),(2,'0976898735','Lê Trung',0,1),(3,'0955444333','Hoàng Minh Tiến',0,1),(4,'0945663712','Lê Hoàng An',0,1),(5,'0917661222','Hà Xuân Anh',0,1),(6,'0963714255','Lê Anh Nam',0,4),(7,'0917685441','Lê Hoàng Minh',0,1),(8,'0944111517','Nguyễn Ngọc Tuấn',0,1),(13,'0843109787','Tanle1298',4,1);
+INSERT INTO `khachhang` VALUES (1,'0908898765','Nguyễn Minh Thắng',0,1,1),(2,'0976898735','Lê Trung',0,1,1),(3,'0955444333','Hoàng Minh Tiến',0,1,1),(4,'0945663712','Lê Hoàng An',0,1,1),(5,'0917661222','Hà Xuân Anh',0,1,1),(6,'0963714255','Lê Anh Nam',0,4,1),(7,'0917685441','Lê Hoàng Minh',0,1,1),(8,'0944111517','Nguyễn Ngọc Tuấn',0,1,1),(13,'0843109787','Tanle1298',5,1,1);
 /*!40000 ALTER TABLE `khachhang` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -484,7 +448,7 @@ CREATE TABLE `nhanvien` (
 
 LOCK TABLES `nhanvien` WRITE;
 /*!40000 ALTER TABLE `nhanvien` DISABLE KEYS */;
-INSERT INTO `nhanvien` VALUES (1,'Lê Xuân Anh',1,'1','1994-12-06','Quận 7, TP Hồ Chí Minh','duytan100104@gmail.com','0993566471',0,'2023-11-10 08:33:25','nv1.png'),(2,'Hoàng Minh Huy',2,'1','1996-11-05','Quận 8, TP Hồ Chí Minh','mhuy96@gmail.com','0914523617',0,'2023-11-10 08:35:19','nv2.png'),(3,'Nguyễn Tấn Hiệu',3,'1','2003-11-04','Quận 3, TP Hồ Chí Minh','tuilahiju7@gmail.com','0913517899',0,'2023-11-10 08:37:03','nv3.png'),(4,'Lê Văn Tâm',3,'1','2002-03-05','Quận 1, TP Hồ Chí Minh','tamle22@gmail.com','0935663719',0,'2023-11-10 08:38:37','nv4.png'),(5,'Bùi Lê Bích Nhung',5,'0','2003-06-08','Quận Tân Bình, TP Hồ Chí Minh','bnhun03@gmail.com','0925663781',0,'2023-11-10 08:40:05','nv5.png'),(6,'Nguyễn Ngọc Minh An',4,'0','2000-03-08','Quận Bình Tân, TP Hồ Chí Minh','man2k@gmail.com','0912788372',0,'2023-11-10 08:42:35','nv6.png'),(7,'Nguyễn Thị Xinh',3,'0','2001-03-05','Quận 6, TP Hồ Chí Minh','txinh011@gmail.com','0995342671',0,'2023-11-10 08:47:31','nv7.png'),(8,'Lê Hoàng Minh',2,'1','2002-06-10','Quận 6, TP Hồ Chí Minh','hmin02@gmail.com','0935667112',1,'2023-11-10 08:55:22','nv8.png'),(9,'Nguyễn Ngọc Hoàng',3,'1','1992-03-12','Quận 3, TP Hồ Chí Minh','nhoang92@gmail.com','0356417284',0,'2023-11-10 08:56:45','nv9.png'),(10,'Lê Hoàng Thắng',3,'1','1994-12-02','Quận 3, TP Hồ Chí Minh','hthang7@gmail.com','0944225671',0,'2023-12-02 06:38:20','nv10.png'),(11,'Duy Tân',3,'1','2004-01-10','aaa','xinemdung1298@gmail.com','0845410104',0,'2026-01-27 06:29:33','cult-of-the-lamb-game-hd-wallpaper-uhdpaper.com-199@1@j.jpg');
+INSERT INTO `nhanvien` VALUES (1,'Lê Xuân Anh',1,'1','1994-12-06','Quận 7, TP Hồ Chí Minh','duytan100104@gmail.com','0993566471',0,'2023-11-10 08:33:25','nv1.png'),(2,'Hoàng Minh Huy',2,'1','1996-11-05','Quận 8, TP Hồ Chí Minh','mhuy96@gmail.com','0914523617',0,'2023-11-10 08:35:19','nv2.png'),(3,'Nguyễn Tấn Hiệu',3,'1','2003-11-04','Quận 3, TP Hồ Chí Minh','tuilahiju7@gmail.com','0913517899',0,'2023-11-10 08:37:03','nv3.png'),(4,'Lê Văn Tâm',3,'1','2002-03-05','Quận 1, TP Hồ Chí Minh','tamle22@gmail.com','0935663719',0,'2023-11-10 08:38:37','nv4.png'),(5,'Bùi Lê Bích Nhung',5,'0','2003-06-08','Quận Tân Bình, TP Hồ Chí Minh','bnhun03@gmail.com','0925663781',0,'2023-11-10 08:40:05','nv5.png'),(6,'Nguyễn Ngọc Minh An',5,'0','2000-03-08','Quận Bình Tân, TP Hồ Chí Minh','man2k@gmail.com','0912788372',0,'2023-11-10 08:42:35','nv6.png'),(7,'Nguyễn Thị Xinh',3,'0','2001-03-05','Quận 6, TP Hồ Chí Minh','txinh011@gmail.com','0995342671',0,'2023-11-10 08:47:31','nv7.png'),(8,'Lê Hoàng Minh',2,'1','2002-06-10','Quận 6, TP Hồ Chí Minh','hmin02@gmail.com','0935667112',1,'2023-11-10 08:55:22','nv8.png'),(9,'Nguyễn Ngọc Hoàng',3,'1','1992-03-12','Quận 3, TP Hồ Chí Minh','nhoang92@gmail.com','0356417284',0,'2023-11-10 08:56:45','nv9.png'),(10,'Lê Hoàng Thắng',3,'1','1994-12-02','Quận 3, TP Hồ Chí Minh','hthang7@gmail.com','0944225671',0,'2023-12-02 06:38:20','nv10.png'),(11,'Duy Tân',3,'1','2004-01-10','aaa','xinemdung1298@gmail.com','0845410104',0,'2026-01-27 06:29:33','cult-of-the-lamb-game-hd-wallpaper-uhdpaper.com-199@1@j.jpg');
 /*!40000 ALTER TABLE `nhanvien` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -555,7 +519,7 @@ CREATE TABLE `phanquyen` (
   KEY `fk_chucvu_idx` (`maChucVu`),
   CONSTRAINT `fk_chucnang` FOREIGN KEY (`maChucNang`) REFERENCES `chucnang` (`maChucNang`),
   CONSTRAINT `fk_chucvu` FOREIGN KEY (`maChucVu`) REFERENCES `chucvu` (`maChucVu`)
-) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=85 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -564,7 +528,7 @@ CREATE TABLE `phanquyen` (
 
 LOCK TABLES `phanquyen` WRITE;
 /*!40000 ALTER TABLE `phanquyen` DISABLE KEYS */;
-INSERT INTO `phanquyen` VALUES (1,1,1),(2,1,2),(3,1,3),(4,1,4),(6,1,5),(8,1,6),(9,1,7),(10,1,8),(14,1,9),(17,1,10),(25,1,11),(27,1,12),(28,1,13),(35,1,15),(36,1,16),(40,1,20),(42,1,21),(44,2,3),(45,2,4),(46,2,5),(47,2,21),(48,3,1),(49,3,2),(50,3,13),(52,3,21),(53,4,2),(54,4,3),(55,4,4),(56,4,5),(57,4,6),(58,4,9),(59,4,10),(60,4,11),(61,4,13),(63,4,15),(64,4,16),(67,4,20),(69,4,21),(75,5,2),(76,5,5),(77,5,9),(78,5,10),(79,5,11),(80,5,21);
+INSERT INTO `phanquyen` VALUES (1,1,1),(2,1,2),(3,1,3),(4,1,4),(6,1,5),(8,1,6),(9,1,7),(10,1,8),(17,1,10),(25,1,11),(27,1,12),(28,1,13),(35,1,15),(36,1,16),(40,1,20),(48,3,1),(49,3,2),(50,3,13),(53,4,2),(54,4,3),(55,4,4),(56,4,5),(57,4,6),(59,4,10),(60,4,11),(61,4,13),(63,4,15),(64,4,16),(67,4,20),(75,5,2),(76,5,5),(78,5,10),(79,5,11),(81,2,3),(82,2,4),(83,2,5),(84,2,10);
 /*!40000 ALTER TABLE `phanquyen` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -598,7 +562,7 @@ CREATE TABLE `phieunhap` (
 
 LOCK TABLES `phieunhap` WRITE;
 /*!40000 ALTER TABLE `phieunhap` DISABLE KEYS */;
-INSERT INTO `phieunhap` VALUES (1,'2023-12-08 22:12:54',216000,1,1,'',0),(2,'2024-12-08 22:13:26',36000,11,1,'',0),(3,'2024-12-08 22:14:17',115000,12,1,'',0),(4,'2024-12-08 22:15:51',320000,1,1,'',0),(5,'2024-12-08 22:16:25',440000,21,1,'',0),(6,'2024-12-08 22:17:18',85000,7,1,'',0),(7,'2024-12-08 22:18:24',194000,1,1,'',0),(8,'2024-12-08 22:18:51',9000,20,1,'',0),(9,'2024-12-08 22:19:20',60000,17,1,'',0),(10,'2024-12-08 22:21:07',380000,1,1,'',0),(11,'2026-01-25 20:38:39',10000,4,1,'ưedfdf',0),(12,'2026-04-13 13:46:50',16000,11,1,'',0);
+INSERT INTO `phieunhap` VALUES (1,'2023-12-08 22:12:54',216000,1,1,'',0),(2,'2024-12-08 22:13:26',36000,11,1,'',0),(3,'2024-12-08 22:14:17',115000,12,1,'',0),(4,'2024-12-08 22:15:51',320000,1,1,'',0),(5,'2024-12-08 22:16:25',440000,21,1,'',0),(6,'2024-12-08 22:17:18',85000,7,1,'',0),(7,'2024-12-08 22:18:24',194000,1,1,'',0),(8,'2024-12-08 22:18:51',9000,20,1,'',0),(9,'2024-12-08 22:19:20',60000,17,1,'',0),(10,'2024-12-08 22:21:07',380000,1,1,'',0),(11,'2026-01-25 20:38:39',10000,4,1,'ưedfdf',0),(12,'2026-04-13 13:46:50',16000,11,1,'',0),(13,'2026-05-04 22:13:18',30000000,7,1,'',0);
 /*!40000 ALTER TABLE `phieunhap` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -726,4 +690,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-02 15:37:18
+-- Dump completed on 2026-05-06 21:49:15

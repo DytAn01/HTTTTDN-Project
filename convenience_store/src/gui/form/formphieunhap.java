@@ -496,9 +496,20 @@ public class formphieunhap extends JPanel {
                 Timestamp.valueOf(LocalDateTime.now().withNano(
                         (LocalDateTime.now().getNano() / 1_000_000) * 1_000_000)),
                 doubleVal(txtTotal), intVal(txtNCCid), manv, txtNote.getText());
-        buspn.create(pn);
+        if (!buspn.create(pn)) {
+            warn("Không thể tạo phiếu nhập trong database. Vui lòng kiểm tra log lỗi DAO.");
+            return;
+        }
         for (dtoctphieunhap ct : nhapHangList) {
-            busctpn.create(ct);
+            if (!busctpn.create(ct)) {
+                warn("Không thể lưu chi tiết phiếu nhập vào database. Vui lòng kiểm tra log lỗi DAO.");
+                return;
+            }
+            dtosanpham sp = bussp.getById(ct.getMaSanPham());
+            if (sp != null) {
+                sp.setSoLuong(sp.getSoLuong() + ct.getSoLuong());
+                bussp.updateslsanpham(sp);
+            }
         }
         info("Nhập hàng thành công!");
         reset();

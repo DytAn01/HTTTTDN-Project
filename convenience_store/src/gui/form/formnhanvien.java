@@ -17,6 +17,11 @@ import gui.swing.dashboard.Form;
 import gui.swing.dashboard.SystemForm;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -570,6 +575,7 @@ public class formnhanvien extends Form {
 
         JButton cmdCreate = new JButton("Thêm");
         JButton cmdDelete = new JButton("Khóa");
+        JButton btnExportExcel = outlineButton("Xuất Excel");
         
         
         btnSearch.addActionListener(e -> {
@@ -669,11 +675,21 @@ public class formnhanvien extends Form {
             }
         });
 
+        btnExportExcel.addActionListener(e -> {
+            try {
+                exportEmployeesToExcel();
+            } catch (Exception ex) {
+                Logger.getLogger(formnhanvien.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(this, "Xuất Excel thất bại: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
         panel.add(txtSearch, "span 1 1"); // Mở rộng không gian của trường tìm kiếm
         panel.add(comboMacv);
         panel.add(btnSearch);
         panel.add(btnReset);
         panel.add(selectAllCheckbox);
+        panel.add(btnExportExcel);
         panel.add(cmdCreate);
         panel.add(cmdDelete);
 
@@ -696,6 +712,7 @@ public class formnhanvien extends Form {
                     selectedCards.add(card);
                 }
             }
+
 
             // Kiểm tra nếu không có nhân viên nào được chọn
             if (selectedCards.isEmpty()) {
@@ -745,6 +762,92 @@ public class formnhanvien extends Form {
                 JOptionPane.showMessageDialog(this, "Không có nhân viên nào được xóa.");
             }
         }
+
+    private void exportEmployeesToExcel() throws Exception {
+        busNV = new busnhanvien();
+        ArrayList<dtonhanvien> employees = busNV.getNhanVienList();
+
+        if (employees == null || employees.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "Không có dữ liệu nhân viên để xuất.", "Thông báo",
+                JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Chọn nơi lưu
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle("Lưu file Excel");
+        fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+            "Excel Workbook (*.xlsx)", "xlsx"));
+        fc.setSelectedFile(new File(System.getProperty("user.home"),
+            "DanhSachNhanVien_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".xlsx"));
+        if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        File outFile = fc.getSelectedFile();
+        if (!outFile.getName().toLowerCase().endsWith(".xlsx"))
+            outFile = new File(outFile.getAbsolutePath() + ".xlsx");
+
+        try (Workbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Danh sách nhân viên");
+            sheet.setDefaultColumnWidth(20);
+
+            // Header style (bold)
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = wb.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+
+            // Data style
+            org.apache.poi.ss.usermodel.CellStyle dataStyle = wb.createCellStyle();
+            dataStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.LEFT);
+
+            // Create header row
+            String[] cols = {"STT", "Mã NV", "Họ và tên", "Giới tính", "Ngày sinh",
+                             "SĐT", "Email", "Địa chỉ", "Chức vụ"};
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < cols.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(cols[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Create data rows
+            int rowIdx = 1;
+            for (dtonhanvien nv : employees) {
+                Row row = sheet.createRow(rowIdx);
+                String tenCV = "";
+                try { tenCV = busNV.getTenChucVu(nv.getMachucvu()); } catch (Exception ignored) {}
+                
+                String ngaySinh = nv.getNgaysinh() == null ? "" :
+                    new SimpleDateFormat("dd/MM/yyyy").format(nv.getNgaysinh());
+
+                Object[] values = {
+                    rowIdx, nv.getManhanvien(), nv.getTennhanvien(),
+                    (nv.getGioitinh() == 1 ? "Nam" : "Nữ"), ngaySinh,
+                    (nv.getSdt() == null ? "" : nv.getSdt()),
+                    (nv.getEmail() == null ? "" : nv.getEmail()),
+                    (nv.getDiachi() == null ? "" : nv.getDiachi()), tenCV
+                };
+
+                for (int c = 0; c < values.length; c++) {
+                    Cell cell = row.createCell(c);
+                    cell.setCellValue(values[c].toString());
+                    cell.setCellStyle(dataStyle);
+                }
+                rowIdx++;
+            }
+
+            // Write file
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(outFile)) {
+                wb.write(out);
+            }
+        }
+
+        JOptionPane.showMessageDialog(this,
+            "Xuất Excel thành công!\n" + outFile.getAbsolutePath(),
+            "Hoàn tất", JOptionPane.INFORMATION_MESSAGE);
+    }
 
     public boolean check_NV(dtonhanvien nv) throws SQLException{
         String regexTenNV = "^[A-Za-zÀ-ỹ]+( [A-Za-zÀ-ỹ]+)*$";
@@ -933,6 +1036,15 @@ public class formnhanvien extends Form {
     Image img = icon.getImage();
     Image newImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
     return new ImageIcon(newImg);
+    }
+    
+    private JButton outlineButton(String text) {
+        JButton btn = new JButton(text);
+        btn.putClientProperty(FlatClientProperties.STYLE,
+            "arc: 8; borderWidth: 1; focusWidth: 0;");
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
     }
     private List<NVCard> cards;
     private JPanel panelCard;

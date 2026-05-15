@@ -7,6 +7,8 @@ package dao;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -22,7 +24,7 @@ public class connect {
         // luu y cho Toan: 3307 con lai: 3306
         String username = "root";
 
-        String password = "123456789toan"; // password tuy moi nguoi dat cho cai connect trong mysql
+        String password = "Tanle1298"; // password tuy moi nguoi dat cho cai connect trong mysql
 
         /*Hieu: ToilaHieuday7 */
         Connection con = null;
@@ -30,6 +32,7 @@ public class connect {
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(url, username, password);
         }catch(ClassNotFoundException | SQLException e){
+            Logger.getLogger(connect.class.getName()).log(Level.SEVERE, "Khong the ket noi den database", e);
         }
         return con;
     }

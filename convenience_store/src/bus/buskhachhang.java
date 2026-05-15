@@ -61,6 +61,11 @@ public class buskhachhang {
     public dtokhachhang getKhachHangById(int maKhachHang) {
         return daoKhachHang.getKhachHangById(maKhachHang);  // Lấy khách hàng theo ID
     }
+    
+    // Soft-delete / restore customer by isDelete flag
+    public boolean setIsDeleteKhachHang(int maKhachHang, int isDelete) {
+        return daoKhachHang.setIsDeleteKhachHang(maKhachHang, isDelete);
+    }
 public ArrayList<dtokhachhang> searchKhachHangByName(String name) {
     return daoKhachHang.searchKhachHangByName(name);
 }

@@ -12,16 +12,23 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SimpleInputPermissionForm extends JPanel {
     public JComboBox<dtochucvu> cboChucVu; // ComboBox cho chức vụ
     public JPanel pnlChucNang; // Panel chứa các checkbox chức năng
+    private JTextField txtChucVu;
     private daochucvu daoChucVu; // DAO cho chức vụ
     private daochucnang daoChucNang; // DAO cho chức năng
     private daophanquyen daoPhanQuyen; // DAO cho phân quyền
     private JLabel lblLoadingChucVu;
     private JLabel lblLoadingChucNang;
+    private Set<Integer> selectedFunctionIds = new HashSet<>();
+    private Integer selectedRoleId;
+    private boolean suppressRoleSelectionEvent;
 
     public SimpleInputPermissionForm() throws SQLException {
         daoChucVu = new daochucvu(); // Khởi tạo DAO chức vụ
@@ -44,6 +51,10 @@ public class SimpleInputPermissionForm extends JPanel {
             }
             return label;
         });
+        cboChucVu.addActionListener(e -> onRoleSelectionChanged());
+        txtChucVu = new JTextField("Đang tải...");
+        txtChucVu.setEditable(false);
+        txtChucVu.setFocusable(false);
         pnlChucNang = new JPanel(new MigLayout("wrap 2", "[fill]"));
         lblLoadingChucVu = new JLabel("Đang tải chức vụ...");
         lblLoadingChucNang = new JLabel("Đang tải chức năng...");
@@ -54,7 +65,7 @@ public class SimpleInputPermissionForm extends JPanel {
 
         // Tên chức vụ
         add(new JLabel("Chọn chức vụ"), "gapy 5 0");
-        add(cboChucVu);
+        add(txtChucVu);
 
         // Danh sách chức năng
         add(new JLabel("Chọn chức năng"), "gapy 5 0");
@@ -99,16 +110,54 @@ public class SimpleInputPermissionForm extends JPanel {
     }
 
     private void applyChucVuList(List<dtochucvu> chucVuList) {
+        suppressRoleSelectionEvent = true;
         cboChucVu.removeAllItems();
         for (dtochucvu chucVu : chucVuList) {
             cboChucVu.addItem(chucVu);
         }
-        cboChucVu.setEnabled(true);
+        applySelectedRoleId();
+        cboChucVu.setEnabled(false);
+        suppressRoleSelectionEvent = false;
+        syncRoleTextField();
         if (lblLoadingChucVu != null) {
             remove(lblLoadingChucVu);
             lblLoadingChucVu = null;
             revalidate();
             repaint();
+        }
+    }
+
+    private void onRoleSelectionChanged() {
+        if (suppressRoleSelectionEvent) {
+            return;
+        }
+        dtochucvu selectedChucVu = (dtochucvu) cboChucVu.getSelectedItem();
+        if (selectedChucVu == null) {
+            return;
+        }
+        syncRoleTextField();
+        loadPermissionsByRole(selectedChucVu.getMachucvu());
+    }
+
+    private void syncRoleTextField() {
+        dtochucvu selectedChucVu = (dtochucvu) cboChucVu.getSelectedItem();
+        if (selectedChucVu == null) {
+            txtChucVu.setText("");
+            return;
+        }
+        txtChucVu.setText(selectedChucVu.getDropdownDisplay());
+    }
+
+    private void loadPermissionsByRole(int maChucVu) {
+        try {
+            List<dtophanquyen> permissions = daoPhanQuyen.getByChucVu(maChucVu, 0);
+            Set<Integer> functionIds = new HashSet<>();
+            for (dtophanquyen permission : permissions) {
+                functionIds.add(permission.getMaChucNang());
+            }
+            setSelectedFunctionIds(functionIds);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Không tải được phân quyền theo chức vụ: " + ex.getMessage());
         }
     }
 
@@ -119,8 +168,57 @@ public class SimpleInputPermissionForm extends JPanel {
             chk.putClientProperty("maChucNang", chucNang.getMaChucNang()); // Gắn mã chức năng vào thuộc tính
             pnlChucNang.add(chk);
         }
+        applySelectedFunctionIds();
         pnlChucNang.revalidate();
         pnlChucNang.repaint();
+    }
+
+    public void setSelectedFunctionIds(Collection<Integer> functionIds) {
+        selectedFunctionIds.clear();
+        if (functionIds != null) {
+            selectedFunctionIds.addAll(functionIds);
+        }
+        applySelectedFunctionIds();
+    }
+
+    public void setSelectedRoleId(Integer roleId) {
+        selectedRoleId = roleId;
+        applySelectedRoleId();
+    }
+
+    private void applySelectedRoleId() {
+        if (selectedRoleId == null || cboChucVu.getItemCount() == 0) {
+            return;
+        }
+        for (int i = 0; i < cboChucVu.getItemCount(); i++) {
+            dtochucvu chucVu = cboChucVu.getItemAt(i);
+            if (chucVu != null && chucVu.getMachucvu() == selectedRoleId) {
+                suppressRoleSelectionEvent = true;
+                cboChucVu.setSelectedIndex(i);
+                suppressRoleSelectionEvent = false;
+                syncRoleTextField();
+                break;
+            }
+        }
+    }
+
+    public Integer getSelectedRoleId() {
+        dtochucvu selectedChucVu = (dtochucvu) cboChucVu.getSelectedItem();
+        return selectedChucVu == null ? null : selectedChucVu.getMachucvu();
+    }
+
+    private void applySelectedFunctionIds() {
+        for (int i = 0; i < pnlChucNang.getComponentCount(); i++) {
+            java.awt.Component component = pnlChucNang.getComponent(i);
+            if (!(component instanceof JCheckBox)) {
+                continue;
+            }
+            JCheckBox chk = (JCheckBox) component;
+            Object value = chk.getClientProperty("maChucNang");
+            if (value instanceof Integer) {
+                chk.setSelected(selectedFunctionIds.contains((Integer) value));
+            }
+        }
     }
 
     private static class PermissionData {
@@ -139,7 +237,11 @@ public class SimpleInputPermissionForm extends JPanel {
             // Lấy danh sách chức năng đã chọn
             List<dtophanquyen> permissions = new ArrayList<>();
             for (int i = 0; i < pnlChucNang.getComponentCount(); i++) {
-                JCheckBox chk = (JCheckBox) pnlChucNang.getComponent(i);
+                java.awt.Component component = pnlChucNang.getComponent(i);
+                if (!(component instanceof JCheckBox)) {
+                    continue;
+                }
+                JCheckBox chk = (JCheckBox) component;
                 if (chk.isSelected()) {
                     int maChucNang = (int) chk.getClientProperty("maChucNang");
                     permissions.add(new dtophanquyen(0, maChucVu, maChucNang));
@@ -173,7 +275,11 @@ public class SimpleInputPermissionForm extends JPanel {
             // Lấy danh sách chức năng đã chọn
             List<dtophanquyen> permissions = new ArrayList<>();
             for (int i = 0; i < pnlChucNang.getComponentCount(); i++) {
-                JCheckBox chk = (JCheckBox) pnlChucNang.getComponent(i);
+                java.awt.Component component = pnlChucNang.getComponent(i);
+                if (!(component instanceof JCheckBox)) {
+                    continue;
+                }
+                JCheckBox chk = (JCheckBox) component;
                 if (chk.isSelected()) {
                     int maChucNang = (int) chk.getClientProperty("maChucNang");
                     permissions.add(new dtophanquyen(0, maChucVu, maChucNang)); // Tạo đối tượng phân quyền

@@ -71,34 +71,61 @@ public class daodonxinnghiep {
     }
 
     public void add(dtodonxinnghiep don) {
-        String sql = "INSERT INTO donxinnghiep (maNhanVien, maLoaiDon, ngayBatDau, ngayKetThuc, soNgayNghi, trangThai, ngayDuyet, ghiChu) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection con = connect.connection(); PreparedStatement pst = con.prepareStatement(sql)) {
-            fillStatement(pst, don, false);
-            pst.executeUpdate();
+        try (Connection con = connect.connection()) {
+            boolean hasNgayDuyet = tableHasColumn(con, "ngayDuyet");
+            String sql;
+            if (hasNgayDuyet) {
+                sql = "INSERT INTO donxinnghiep (maNhanVien, maLoaiDon, ngayBatDau, ngayKetThuc, soNgayNghi, trangThai, ngayDuyet, ghiChu) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            } else {
+                sql = "INSERT INTO donxinnghiep (maNhanVien, maLoaiDon, ngayBatDau, ngayKetThuc, soNgayNghi, trangThai, ghiChu) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            }
+            try (PreparedStatement pst = con.prepareStatement(sql)) {
+                fillStatement(pst, don, false, hasNgayDuyet);
+                pst.executeUpdate();
+            }
         } catch (SQLException ex) {
             Logger.getLogger(daodonxinnghiep.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void update(dtodonxinnghiep don) {
-        String sql = "UPDATE donxinnghiep SET maNhanVien = ?, maLoaiDon = ?, ngayBatDau = ?, ngayKetThuc = ?, soNgayNghi = ?, trangThai = ?, ngayDuyet = ?, ghiChu = ? WHERE maDonXin = ?";
-        try (Connection con = connect.connection(); PreparedStatement pst = con.prepareStatement(sql)) {
-            fillStatement(pst, don, true);
-            pst.executeUpdate();
+        try (Connection con = connect.connection()) {
+            boolean hasNgayDuyet = tableHasColumn(con, "ngayDuyet");
+            String sql;
+            if (hasNgayDuyet) {
+                sql = "UPDATE donxinnghiep SET maNhanVien = ?, maLoaiDon = ?, ngayBatDau = ?, ngayKetThuc = ?, soNgayNghi = ?, trangThai = ?, ngayDuyet = ?, ghiChu = ? WHERE maDonXin = ?";
+            } else {
+                sql = "UPDATE donxinnghiep SET maNhanVien = ?, maLoaiDon = ?, ngayBatDau = ?, ngayKetThuc = ?, soNgayNghi = ?, trangThai = ?, ghiChu = ? WHERE maDonXin = ?";
+            }
+            try (PreparedStatement pst = con.prepareStatement(sql)) {
+                fillStatement(pst, don, true, hasNgayDuyet);
+                pst.executeUpdate();
+            }
         } catch (SQLException ex) {
             Logger.getLogger(daodonxinnghiep.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public boolean updateStatus(int maDonXin, String trangThai) {
-        String sql = "UPDATE donxinnghiep SET trangThai = ?, ngayDuyet = ? WHERE maDonXin = ?";
-        try (Connection con = connect.connection(); PreparedStatement pst = con.prepareStatement(sql)) {
-            pst.setString(1, trangThai);
-            pst.setDate(2, new java.sql.Date(System.currentTimeMillis()));
-            pst.setInt(3, maDonXin);
-            pst.executeUpdate();
-            return true;
+        try (Connection con = connect.connection()) {
+            boolean hasNgayDuyet = tableHasColumn(con, "ngayDuyet");
+            String sql;
+            if (hasNgayDuyet) {
+                sql = "UPDATE donxinnghiep SET trangThai = ?, ngayDuyet = ? WHERE maDonXin = ?";
+            } else {
+                sql = "UPDATE donxinnghiep SET trangThai = ? WHERE maDonXin = ?";
+            }
+            try (PreparedStatement pst = con.prepareStatement(sql)) {
+                pst.setString(1, trangThai);
+                if (hasNgayDuyet) {
+                    pst.setDate(2, new java.sql.Date(System.currentTimeMillis()));
+                    pst.setInt(3, maDonXin);
+                } else {
+                    pst.setInt(2, maDonXin);
+                }
+                pst.executeUpdate();
+                return true;
+            }
         } catch (SQLException ex) {
             Logger.getLogger(daodonxinnghiep.class.getName()).log(Level.SEVERE, null, ex);
             return false;
@@ -115,42 +142,75 @@ public class daodonxinnghiep {
         }
     }
 
-    private void fillStatement(PreparedStatement pst, dtodonxinnghiep don, boolean includeId) throws SQLException {
-        pst.setInt(1, don.getMaNhanVien());
-        pst.setInt(2, don.getMaLoaiDon());
-        pst.setDate(3, new java.sql.Date(don.getNgayBatDau().getTime()));
-        pst.setDate(4, new java.sql.Date(don.getNgayKetThuc().getTime()));
-        pst.setInt(5, don.getSoNgayNghi());
-        pst.setString(6, don.getTrangThai());
-        if (don.getNgayDuyet() == null) {
-            pst.setNull(7, java.sql.Types.DATE);
-        } else {
-            pst.setDate(7, new java.sql.Date(don.getNgayDuyet().getTime()));
+    private void fillStatement(PreparedStatement pst, dtodonxinnghiep don, boolean includeId, boolean includeNgayDuyet) throws SQLException {
+        int idx = 1;
+        pst.setInt(idx++, don.getMaNhanVien());
+        pst.setInt(idx++, don.getMaLoaiDon());
+        pst.setDate(idx++, new java.sql.Date(don.getNgayBatDau().getTime()));
+        pst.setDate(idx++, new java.sql.Date(don.getNgayKetThuc().getTime()));
+        pst.setInt(idx++, don.getSoNgayNghi());
+        pst.setString(idx++, don.getTrangThai());
+        if (includeNgayDuyet) {
+            if (don.getNgayDuyet() == null) {
+                pst.setNull(idx++, java.sql.Types.DATE);
+            } else {
+                pst.setDate(idx++, new java.sql.Date(don.getNgayDuyet().getTime()));
+            }
         }
-        pst.setString(8, don.getGhiChu());
+        pst.setString(idx++, don.getGhiChu());
         if (includeId) {
-            pst.setInt(9, don.getMaDonXin());
+            pst.setInt(idx++, don.getMaDonXin());
         }
     }
 
     private dtodonxinnghiep mapRow(ResultSet rs) throws SQLException {
         dtodonxinnghiep don = new dtodonxinnghiep(
-                rs.getInt("maDonXin"),
-                rs.getInt("maNhanVien"),
-                rs.getInt("maLoaiDon"),
-                rs.getDate("ngayBatDau"),
-                rs.getDate("ngayKetThuc"),
-                rs.getInt("soNgayNghi"),
-                null,
-                null,
-                rs.getString("trangThai"),
-                null,
-                rs.getDate("ngayDuyet"),
-                rs.getString("ghiChu"),
-                rs.getTimestamp("ngayTao"),
-                rs.getTimestamp("ngayCapNhat"));
+            rs.getInt("maDonXin"),
+            rs.getInt("maNhanVien"),
+            rs.getInt("maLoaiDon"),
+            rs.getDate("ngayBatDau"),
+            rs.getDate("ngayKetThuc"),
+            rs.getInt("soNgayNghi"),
+            null,
+            null,
+            rs.getString("trangThai"),
+            null,
+            (hasColumn(rs, "ngayDuyet") ? rs.getDate("ngayDuyet") : null),
+            rs.getString("ghiChu"),
+            (hasColumn(rs, "ngayTao") ? rs.getTimestamp("ngayTao") : null),
+            (hasColumn(rs, "ngayCapNhat") ? rs.getTimestamp("ngayCapNhat") : null));
         don.setTenNhanVien(rs.getString("tenNhanVien"));
         don.setTenLoaiDon(rs.getString("tenLoaiDon"));
         return don;
+    }
+
+    private boolean hasColumn(ResultSet rs, String columnName) {
+        try {
+            rs.findColumn(columnName);
+            return true;
+        } catch (SQLException ex) {
+            return false;
+        }
+    }
+
+    private boolean tableHasColumn(Connection con, String columnName) {
+        try {
+            java.sql.DatabaseMetaData md = con.getMetaData();
+            // try exact name
+            try (ResultSet rs = md.getColumns(null, null, "donxinnghiep", columnName)) {
+                if (rs.next()) return true;
+            }
+            // try uppercase
+            try (ResultSet rs = md.getColumns(null, null, "donxinnghiep", columnName.toUpperCase())) {
+                if (rs.next()) return true;
+            }
+            // try lowercase
+            try (ResultSet rs = md.getColumns(null, null, "donxinnghiep", columnName.toLowerCase())) {
+                if (rs.next()) return true;
+            }
+        } catch (SQLException ex) {
+            // ignore and fall through
+        }
+        return false;
     }
 }

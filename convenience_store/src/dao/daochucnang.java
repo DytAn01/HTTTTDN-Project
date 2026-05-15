@@ -10,10 +10,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class daochucnang {
+    private static final String EXCLUDED_CHUCNANG_SQL =
+        " AND LOWER(tenChucNang) NOT IN ('chấm công', 'cham cong', 'chamcong', "
+        + "'chấm công hàng ngày', 'cham cong hang ngay', 'chamconghangngay')";
+
     public ArrayList<dtochucnang> getListChucNangByDanhMuc(int maDanhMuc) {
     ArrayList<dtochucnang> chucNangList = new ArrayList<>();
     // Cập nhật câu truy vấn để chỉ lấy những chức năng chưa bị xóa (isDelete = 0)
-    String sql = "SELECT maChucNang, tenChucNang, maDanhMuc FROM chucnang WHERE maDanhMuc = ? AND isDelete = 0";
+    String sql = "SELECT maChucNang, tenChucNang, maDanhMuc FROM chucnang WHERE maDanhMuc = ? AND isDelete = 0"
+        + EXCLUDED_CHUCNANG_SQL;
     Connection con = connect.connection();
 
     try {
@@ -164,7 +169,7 @@ public class daochucnang {
     public ArrayList<dtochucnang> getList() {
         ArrayList<dtochucnang> list = new ArrayList<>();
         Connection con = connect.connection();
-        String sql = "SELECT * FROM chucnang WHERE isDelete = 0";
+        String sql = "SELECT * FROM chucnang WHERE isDelete = 0" + EXCLUDED_CHUCNANG_SQL;
 
         try {
             PreparedStatement pst = con.prepareStatement(sql);

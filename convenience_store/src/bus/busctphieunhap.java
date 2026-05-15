@@ -5,7 +5,6 @@
 package bus;
 import dao.daoctphieunhap;
 import dto.dtoctphieunhap;
-
 import java.util.ArrayList;
 /**
  *
@@ -41,8 +40,8 @@ public class busctphieunhap {
     }
     
     // Business logic method to add a new HD record
-    public void add (dtoctphieunhap HD) {
-        daoHD.create(HD);
+    public boolean add (dtoctphieunhap HD) {
+        return daoHD.create(HD);
     }
     public void update(dtoctphieunhap ctpn){
         daoHD.updatectphieunhap(ctpn);
@@ -82,7 +81,7 @@ public class busctphieunhap {
         }
     }
 
-    public void create(dtoctphieunhap ct) {
-        daoHD.create(ct);
+    public boolean create(dtoctphieunhap ct) {
+        return daoHD.create(ct);
     }
 }

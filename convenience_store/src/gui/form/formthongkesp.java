@@ -30,6 +30,14 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
 
 import net.miginfocom.swing.MigLayout;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import raven.chart.ChartLegendRenderer;
 import raven.chart.bar.HorizontalBarChart;
 import raven.chart.data.category.DefaultCategoryDataset;
@@ -405,7 +413,7 @@ private PieChart.ChartType getPieChartType(boolean donut) {
         for (Integer y : years) yearCombo.addItem(String.valueOf(y));
 
         filterButton = styledButton("🔍 Lọc", Color.decode("#4361ee"), Color.WHITE);
-        exportButton = styledButton("⬇ Xuất CSV", Color.decode("#22c55e"), Color.WHITE);
+        exportButton = styledButton("⬇ Xuất Excel", Color.decode("#22c55e"), Color.WHITE);
 
         filterButton.addActionListener(e -> applyProductFilter());
         exportButton.addActionListener(e -> exportProductStats());
@@ -498,7 +506,7 @@ private PieChart.ChartType getPieChartType(boolean donut) {
         slQuarterCombo.setVisible(false);
 
         slFilterBtn = styledButton("🔍 Xem thống kê", Color.decode("#4361ee"), Color.WHITE);
-        slExportBtn = styledButton("⬇ Xuất CSV", Color.decode("#22c55e"), Color.WHITE);
+        slExportBtn = styledButton("⬇ Xuất Excel", Color.decode("#22c55e"), Color.WHITE);
 
         // Show/hide quarter or month selector
         slModeCombo.addActionListener(e -> {
@@ -641,7 +649,7 @@ private PieChart.ChartType getPieChartType(boolean donut) {
     }
 
     private void exportSoLuongStats() {
-        exportTableToCSV(slTable, slTableModel, "sl_ban_theo_ky");
+        exportTableToExcel(slTable, slTableModel, "sl_ban_theo_ky");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -718,7 +726,7 @@ private PieChart.ChartType getPieChartType(boolean donut) {
     }
 
     private void exportProductStats() {
-        exportTableToCSV(productTable, productTableModel, "thongke_sanpham");
+        exportTableToExcel(productTable, productTableModel, "thongke_sanpham");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -774,6 +782,73 @@ private PieChart.ChartType getPieChartType(boolean donut) {
             JOptionPane.showMessageDialog(this, "✅ Xuất thành công: " + file.getName());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Xuất thất bại: " + ex.getMessage());
+        }
+    }
+
+    private void exportTableToExcel(JTable tbl, DefaultTableModel mdl, String defaultName) {
+        if (mdl.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất.");
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Lưu Excel");
+        chooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+        chooser.setSelectedFile(new File(defaultName + ".xlsx"));
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        String path = chooser.getSelectedFile().getAbsolutePath();
+        if (!path.toLowerCase().endsWith(".xlsx")) path += ".xlsx";
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet(defaultName);
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font font = workbook.createFont();
+            font.setBold(true);
+            headerStyle.setFont(font);
+            headerStyle.setFillForegroundColor(IndexedColors.ROYAL_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle moneyStyle = workbook.createCellStyle();
+            moneyStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+
+            // Header row
+            Row headerRow = sheet.createRow(0);
+            int cols = mdl.getColumnCount();
+            for (int c = 0; c < cols; c++) {
+                Cell cell = headerRow.createCell(c);
+                cell.setCellValue(mdl.getColumnName(c));
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Data rows
+            int rowIndex = 1;
+            for (int r = 0; r < mdl.getRowCount(); r++) {
+                Row row = sheet.createRow(rowIndex++);
+                for (int c = 0; c < cols; c++) {
+                    Object val = mdl.getValueAt(r, c);
+                    Cell cell = row.createCell(c);
+                    if (val instanceof Number) {
+                        cell.setCellValue(((Number) val).doubleValue());
+                        String colName = mdl.getColumnName(c).toLowerCase();
+                        if (colName.contains("doanh") || colName.contains("chi") || colName.contains("lợi") || colName.contains("₫")) {
+                            cell.setCellStyle(moneyStyle);
+                        }
+                    } else {
+                        cell.setCellValue(val == null ? "" : String.valueOf(val));
+                    }
+                }
+            }
+
+            for (int c = 0; c < cols; c++) sheet.autoSizeColumn(c);
+
+            try (FileOutputStream fos = new FileOutputStream(path)) {
+                workbook.write(fos);
+            }
+            JOptionPane.showMessageDialog(this, "✅ Xuất thành công: " + new File(path).getName());
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi xuất Excel: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
