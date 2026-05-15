@@ -2,7 +2,6 @@
 
 Hệ thống quản lý cửa hàng tiện lợi được xây dựng bằng Java Swing và MySQL, mô phỏng quy trình vận hành của một cửa hàng bán lẻ từ bán hàng, nhập kho, chăm sóc khách hàng đến quản trị nhân sự và báo cáo.
 
-Dự án được phát triển với định hướng chuyển đổi yêu cầu nghiệp vụ thành các chức năng phần mềm cụ thể, phù hợp để minh họa năng lực phân tích quy trình và triển khai giải pháp trong hồ sơ ứng tuyển vị trí **IT Consultant Intern**.
 
 <!-- Thêm ảnh tổng quan giao diện chính của hệ thống tại đây -->
 <!-- Ví dụ:
